@@ -133,14 +133,16 @@ algoritmo do agente (Minimax puro ou com poda Alfa-Beta).
    que BFS/UCS/A* empatam no custo ótimo, DFS geralmente encontra um caminho bem mais longo, e A*
    expande muito menos nós que BFS. Editar manualmente uma parede com o pincel e reexecutar para
    mostrar a reatividade do agente a mudanças no ambiente.
-2. **Cubo Mágico**: embaralhar com profundidade 4-5 e resolver com BFS para ver a "pré-visualização
-   da busca" — antes da animação da solução, o cubo pisca rapidamente por uma amostra dos estados
-   que o algoritmo realmente visitou (`exploredOrder`, devolvido pelo mesmo `search()` genérico do
-   labirinto), com um contador ao vivo ("Explorando nó X / N nós expandidos"), tornando visível a
-   diferença entre BFS "tateando" muitos estados e A*/Gulosa indo quase direto à solução. Depois
-   "Comparar algoritmos" e destacar BFS/UCS/A* chegando ao mesmo custo ótimo com esforços muito
-   diferentes, e a Gulosa eventualmente encontrando uma solução muito mais longa (ilustra o risco
-   de usar só a heurística, sem custo acumulado).
+2. **Cubo Mágico**: embaralhar com profundidade 4-5 e resolver com BFS para ver a solução animada
+   movimento a movimento. Opcionalmente, nos Parâmetros avançados, ativar a "Pré-visualização da
+   busca" (desligada por padrão — pisca em ~35 quadros/s, acima do limiar de 3 flashes/s associado
+   a epilepsia fotossensível, então é opt-in) para ver, antes da solução, o cubo passando por uma
+   amostra dos estados que o algoritmo realmente visitou (`exploredOrder`, devolvido pelo mesmo
+   `search()` genérico do labirinto) com um contador ao vivo ("Explorando nó X / N nós
+   expandidos") — evidencia BFS "tateando" muitos estados versus A*/Gulosa indo quase direto à
+   solução. Depois "Comparar algoritmos" e destacar BFS/UCS/A* chegando ao mesmo custo ótimo com
+   esforços muito diferentes, e a Gulosa eventualmente encontrando uma solução muito mais longa
+   (ilustra o risco de usar só a heurística, sem custo acumulado).
 3. **Jogo da Velha**: jogar uma partida 3×3 contra o agente (mostrar que ele nunca perde — no
    máximo empata), depois "Comparar Minimax vs. Alfa-Beta" na mesma posição e destacar a redução
    de nós explorados. Trocar para um tabuleiro 4×4/5×5 e modo agente-vs-agente para mostrar a
@@ -231,4 +233,10 @@ No **Labirinto**, A* consistentemente expande igual ou menos nós que UCS/BFS pa
   na mesma velocidade — quem expande menos nós termina visivelmente primeiro, transformando a
   eficiência de um número abstrato em algo que se vê acontecer. Limitação atual: cada mini-tabuleiro
   é uma cena Three.js independente (5 canvases simultâneos), o que não escalaria para labirintos
-  muito maiores sem otimizações como *instanced meshes*.
+  muito maiores sem otimizações como *instanced meshes*. A mesma ideia foi tentada no Cubo Mágico
+  (piscar por uma amostra de `exploredOrder` antes da solução), mas ali o efeito troca a cena
+  inteira de cor a ~35 quadros/s — acima do limiar de 3 flashes/s associado a crises epilépticas
+  fotossensíveis (diretriz WCAG). Em vez de descartar a ideia, deixamos como opt-in (desligado por
+  padrão, ativável nos Parâmetros avançados do cubo): a lição foi que "mostrar o algoritmo
+  pensando" tem que ser avaliado também pelo risco de acessibilidade da técnica de animação
+  escolhida, não só pelo efeito visual.

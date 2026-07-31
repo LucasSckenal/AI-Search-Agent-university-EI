@@ -5,6 +5,7 @@ import dynamic from "next/dynamic";
 import { Field, Icon } from "@/components/shared/Panel";
 import { Select } from "@/components/shared/Select";
 import { Modal } from "@/components/shared/Modal";
+import { Toggle } from "@/components/shared/Toggle";
 import { SearchStatsTable, ALGO_COLOR } from "@/components/shared/SearchStatsTable";
 import {
   CubeSize,
@@ -60,6 +61,9 @@ export default function CuboPage() {
   // the states the algorithm actually visited (result.exploredOrder, already full cube snapshots
   // from the shared search() engine) - the same "make the search process visible" idea as the
   // maze's cell-reveal animation and race mode, adapted to a state-space search instead of a grid.
+  // Off by default: a full-board flicker at ~35 frames/second is well above the WCAG threshold for
+  // photosensitive-epilepsy triggers (3 flashes/second), so it must be an explicit opt-in.
+  const [exploreEnabled, setExploreEnabled] = useState(false);
   const [exploreFrames, setExploreFrames] = useState<CubeState[] | null>(null);
   const [exploreRealIndices, setExploreRealIndices] = useState<number[]>([]);
   const [exploreStep, setExploreStep] = useState(0);
@@ -98,7 +102,7 @@ export default function CuboPage() {
       setStep(0);
       setAnimatingMove(null);
       setBusy(false);
-      if (res.found && res.exploredOrder.length > 1) {
+      if (exploreEnabled && res.found && res.exploredOrder.length > 1) {
         const indices = sampleIndices(res.exploredOrder.length, 90);
         setExploreRealIndices(indices);
         setExploreFrames(indices.map((i) => res.exploredOrder[i]));
@@ -371,6 +375,18 @@ export default function CuboPage() {
             options={ALGOS.map((a) => ({ value: a, label: ALGORITHM_LABELS[a] }))}
           />
         </Field>
+        <div className="border-t border-outline-variant pt-4">
+          <Toggle
+            checked={exploreEnabled}
+            onChange={setExploreEnabled}
+            label="Pré-visualização da busca (piscar rápido)"
+          />
+          <p className="mt-1.5 text-[11px] leading-relaxed text-on-surface-variant">
+            Antes da solução, o cubo pisca por uma amostra dos estados explorados (~35 quadros/s).
+            Desativado por padrão: acima de 3 flashes por segundo é um gatilho conhecido de
+            epilepsia fotossensível. Ative só se souber que é seguro para quem for assistir.
+          </p>
+        </div>
         <div className="border-t border-outline-variant pt-4">
           <h4 className="mb-1.5 text-[11px] font-semibold uppercase tracking-wider text-on-surface-variant/70">
             Heurística (Gulosa / A*)
