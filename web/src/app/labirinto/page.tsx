@@ -520,6 +520,7 @@ export default function LabirintoPage() {
                         visited={raceVisited}
                         path={done && r.found ? r.path : []}
                         controls={false}
+                        view="top"
                       />
                     </div>
                   </div>

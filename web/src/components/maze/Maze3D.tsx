@@ -180,6 +180,7 @@ export function MazeCanvas({
   interactive = false,
   onCellClick,
   controls = true,
+  view = "iso",
 }: {
   maze: MazeState;
   visited?: Set<number>;
@@ -188,13 +189,18 @@ export function MazeCanvas({
   onCellClick?: (index: number) => void;
   /** Set false for read-only previews (e.g. the algorithm race grid) to skip OrbitControls entirely. */
   controls?: boolean;
+  /** "top" gives a near-overhead, flat map-like read (used by the race grid for legibility at
+   *  small size); "iso" is the default corner view used by the main interactive maze. */
+  view?: "iso" | "top";
 }) {
   const maxDim = Math.max(maze.rows, maze.cols);
   const dist = maxDim * 0.85 + 4;
+  const cameraPosition: [number, number, number] =
+    view === "top" ? [0.01, dist * 1.05, dist * 0.32] : [dist * 0.55, dist * 0.75, dist * 0.55];
 
   return (
     <Canvas
-      camera={{ position: [dist * 0.55, dist * 0.75, dist * 0.55], fov: 42 }}
+      camera={{ position: cameraPosition, fov: view === "top" ? 38 : 42 }}
       gl={{ antialias: true, alpha: true }}
       onContextMenu={(e) => e.preventDefault()}
     >
