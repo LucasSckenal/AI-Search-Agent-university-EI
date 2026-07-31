@@ -23,12 +23,15 @@ Outros comandos úteis:
 
 ```bash
 npm run build      # build de produção (verifica tipos e compila as 4 rotas estaticamente)
-npm run test       # testes rápidos: motor de busca, labirinto e jogo da velha
-npm run test:cube  # testes do cubo mágico, incluindo BFS exaustiva do espaço de estados (~2-3 min)
+npm run test       # testes rápidos: motor de busca, labirinto, jogo da velha e cubo (smoke test)
+npm run test:cube  # suíte completa do cubo, incluindo BFS exaustiva do espaço de estados (~2-3 min)
 npm run lint       # ESLint
 ```
 
 Nenhuma variável de ambiente ou serviço externo é necessário — é uma aplicação 100% client-side.
+O workflow em [`.github/workflows/ci.yml`](.github/workflows/ci.yml) roda typecheck, lint, os
+testes rápidos, a suíte completa do cubo (incluindo a BFS exaustiva) e o build a cada push/PR,
+então nada disso fica só "de memória" antes de entregar.
 
 ## Design
 
