@@ -1,12 +1,12 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import dynamic from "next/dynamic";
 import { Field, Icon } from "@/components/shared/Panel";
 import { Toggle } from "@/components/shared/Toggle";
 import { Select } from "@/components/shared/Select";
 import { Modal } from "@/components/shared/Modal";
-import { SearchStatsTable } from "@/components/shared/SearchStatsTable";
+import { SearchStatsTable, ALGO_COLOR } from "@/components/shared/SearchStatsTable";
 import {
   MazeState,
   CellKind,
@@ -57,6 +57,23 @@ export default function LabirintoPage() {
   const [playing, setPlaying] = useState(false);
   const [showPath, setShowPath] = useState(false);
 
+  // Algorithm race: all 5 algorithms run on the same maze and animate simultaneously in real
+  // time, so the difference in nodes explored shows up directly as a difference in finish time.
+  const [raceOpen, setRaceOpen] = useState(false);
+  const [raceResults, setRaceResults] = useState<Record<AlgorithmId, SearchResult<number, string>> | null>(null);
+  const [raceReveal, setRaceReveal] = useState<Record<AlgorithmId, number>>({} as Record<AlgorithmId, number>);
+  const [racePlaying, setRacePlaying] = useState(false);
+  const [raceSpeed, setRaceSpeed] = useState(6);
+  const [raceFinishOrder, setRaceFinishOrder] = useState<{ algo: AlgorithmId; ms: number }[]>([]);
+  const raceStartRef = useRef(0);
+
+  const resetRace = () => {
+    setRaceOpen(false);
+    setRacePlaying(false);
+    setRaceResults(null);
+    setRaceFinishOrder([]);
+  };
+
   const regenerate = (mode: GenMode = genMode) => {
     let next: MazeState;
     if (mode === "perfect") next = generatePerfectMaze(rows, cols);
@@ -68,6 +85,7 @@ export default function LabirintoPage() {
     setRevealCount(0);
     setShowPath(false);
     setPlaying(false);
+    resetRace();
   };
 
   // Regenerate whenever size/mode/density change.
@@ -98,6 +116,20 @@ export default function LabirintoPage() {
     setCompareOpen(true);
   };
 
+  const startRace = () => {
+    const problem = buildMazeProblem(maze, { allowDiagonal, heuristic });
+    const results = Object.fromEntries(ALGOS.map((a) => [a, search(problem, a, { maxNodes: 300_000 })])) as Record<
+      AlgorithmId,
+      SearchResult<number, string>
+    >;
+    setRaceResults(results);
+    setRaceReveal(Object.fromEntries(ALGOS.map((a) => [a, 0])) as Record<AlgorithmId, number>);
+    setRaceFinishOrder([]);
+    raceStartRef.current = performance.now();
+    setRacePlaying(true);
+    setRaceOpen(true);
+  };
+
   // Playback timer.
   useEffect(() => {
     if (!playing || !result) return;
@@ -110,6 +142,43 @@ export default function LabirintoPage() {
     const t = setTimeout(() => setRevealCount((c) => Math.min(c + Math.max(1, speed), result.exploredOrder.length)), 16);
     return () => clearTimeout(t);
   }, [playing, revealCount, result, speed]);
+
+  // Race playback timer: advances every algorithm's reveal count by the same step each tick, so
+  // an algorithm that explores fewer nodes visibly finishes sooner - efficiency becomes duration.
+  useEffect(() => {
+    if (!racePlaying || !raceResults) return;
+    const allDone = ALGOS.every((a) => (raceReveal[a] ?? 0) >= raceResults[a].exploredOrder.length);
+    if (allDone) {
+      // eslint-disable-next-line react-hooks/set-state-in-effect -- stopping the playback loop it owns
+      setRacePlaying(false);
+      return;
+    }
+    const t = setTimeout(() => {
+      setRaceReveal((prev) => {
+        const next = { ...prev };
+        for (const a of ALGOS) {
+          const total = raceResults[a].exploredOrder.length;
+          next[a] = Math.min((prev[a] ?? 0) + Math.max(1, raceSpeed), total);
+        }
+        return next;
+      });
+    }, 16);
+    return () => clearTimeout(t);
+  }, [racePlaying, raceReveal, raceResults, raceSpeed]);
+
+  // Records finish times (relative to race start) the moment each algorithm's reveal catches up
+  // to its own exploredOrder - kept separate from the tick effect so state updaters stay pure.
+  useEffect(() => {
+    if (!raceResults) return;
+    const finished = new Set(raceFinishOrder.map((f) => f.algo));
+    const newlyFinished = ALGOS.filter(
+      (a) => !finished.has(a) && raceResults[a].found && (raceReveal[a] ?? 0) >= raceResults[a].exploredOrder.length
+    );
+    if (newlyFinished.length > 0) {
+      const now = performance.now();
+      setRaceFinishOrder((order) => [...order, ...newlyFinished.map((a) => ({ algo: a, ms: now - raceStartRef.current }))]);
+    }
+  }, [raceReveal, raceResults, raceFinishOrder]);
 
   const visited = useMemo(() => {
     if (!result) return new Set<number>();
@@ -143,6 +212,7 @@ export default function LabirintoPage() {
     setCompareResults([]);
     setRevealCount(0);
     setShowPath(false);
+    resetRace();
   };
 
   const status = playing ? "ANIMANDO" : result ? (result.found ? "CONCLUÍDO" : "SEM SOLUÇÃO") : "PRONTO";
@@ -249,6 +319,9 @@ export default function LabirintoPage() {
               <Icon name="compare_arrows" className="text-[18px]" />
             </button>
           </div>
+          <button className="btn btn-secondary" onClick={startRace}>
+            <Icon name="flag" className="text-[16px]" /> Corrida entre algoritmos
+          </button>
         </div>
       </aside>
 
@@ -361,6 +434,100 @@ export default function LabirintoPage() {
       >
         <SearchStatsTable results={compareResults} />
       </Modal>
+
+      {raceOpen && raceResults && (
+        <div
+          className="fixed inset-0 z-[100] flex items-center justify-center bg-black/80 p-6"
+          onClick={() => setRaceOpen(false)}
+        >
+          <div
+            className="panel-flat flex max-h-[92vh] w-[min(1400px,96vw)] flex-col overflow-hidden rounded-3xl shadow-2xl"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div className="flex items-center justify-between border-b border-outline-variant px-6 py-4">
+              <div>
+                <h3 className="text-sm font-semibold text-on-surface">Corrida entre algoritmos</h3>
+                <p className="mt-0.5 text-[11px] text-on-surface-variant">
+                  Mesmo labirinto, os 5 algoritmos explorando ao mesmo tempo, na mesma velocidade — quem expande menos
+                  nós termina primeiro.
+                </p>
+              </div>
+              <button
+                onClick={() => setRaceOpen(false)}
+                className="flex h-7 w-7 items-center justify-center rounded-full text-on-surface-variant transition-colors hover:bg-white/10 hover:text-on-surface"
+              >
+                <Icon name="close" className="text-[18px]" />
+              </button>
+            </div>
+
+            <div className="flex flex-wrap items-center gap-3 border-b border-outline-variant px-6 py-3">
+              <button className="btn btn-secondary" onClick={() => setRacePlaying((p) => !p)}>
+                <Icon name={racePlaying ? "pause" : "play_arrow"} className="text-[16px]" />
+                {racePlaying ? "Pausar" : "Continuar"}
+              </button>
+              <button className="btn btn-secondary" onClick={startRace}>
+                <Icon name="refresh" className="text-[16px]" /> Reiniciar corrida
+              </button>
+              <div className="flex min-w-[220px] flex-1 items-center gap-2">
+                <span className="whitespace-nowrap text-[11px] text-on-surface-variant">Velocidade</span>
+                <input
+                  type="range"
+                  min={1}
+                  max={40}
+                  value={raceSpeed}
+                  onChange={(e) => setRaceSpeed(Number(e.target.value))}
+                  className="flex-1"
+                />
+              </div>
+            </div>
+
+            <div className="grid flex-1 grid-cols-1 gap-3 overflow-y-auto p-4 sm:grid-cols-2 xl:grid-cols-3">
+              {ALGOS.map((a) => {
+                const r = raceResults[a];
+                const reveal = raceReveal[a] ?? 0;
+                const total = r.exploredOrder.length;
+                const done = reveal >= total;
+                const finishIndex = raceFinishOrder.findIndex((f) => f.algo === a);
+                const raceVisited = new Set(r.exploredOrder.slice(0, reveal));
+                return (
+                  <div key={a} className="flex flex-col overflow-hidden rounded-2xl bg-white/5">
+                    <div className="flex items-center justify-between px-3 py-2 text-[11px]">
+                      <span className="inline-flex items-center gap-1.5 font-medium text-on-surface">
+                        <span
+                          className="h-2 w-2 rounded-full"
+                          style={{ background: ALGO_COLOR[a], boxShadow: `0 0 6px ${ALGO_COLOR[a]}66` }}
+                        />
+                        {ALGORITHM_LABELS[a]}
+                      </span>
+                      {done ? (
+                        r.found ? (
+                          <span className="font-mono text-primary">
+                            🏁 {finishIndex + 1}º · {(raceFinishOrder[finishIndex]?.ms ?? 0).toFixed(0)}ms
+                          </span>
+                        ) : (
+                          <span className="text-error">sem solução</span>
+                        )
+                      ) : (
+                        <span className="font-mono text-on-surface-variant">
+                          {reveal}/{total}
+                        </span>
+                      )}
+                    </div>
+                    <div className="h-[220px] w-full">
+                      <MazeCanvas
+                        maze={maze}
+                        visited={raceVisited}
+                        path={done && r.found ? r.path : []}
+                        controls={false}
+                      />
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

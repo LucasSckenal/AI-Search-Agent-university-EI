@@ -179,12 +179,15 @@ export function MazeCanvas({
   path,
   interactive = false,
   onCellClick,
+  controls = true,
 }: {
   maze: MazeState;
   visited?: Set<number>;
   path?: number[];
   interactive?: boolean;
   onCellClick?: (index: number) => void;
+  /** Set false for read-only previews (e.g. the algorithm race grid) to skip OrbitControls entirely. */
+  controls?: boolean;
 }) {
   const maxDim = Math.max(maze.rows, maze.cols);
   const dist = maxDim * 0.85 + 4;
@@ -196,18 +199,20 @@ export function MazeCanvas({
       onContextMenu={(e) => e.preventDefault()}
     >
       <Scene maze={maze} visited={visited ?? new Set()} path={path ?? []} interactive={interactive} onCellClick={onCellClick} />
-      <OrbitControls
-        enablePan={false}
-        enableDamping
-        dampingFactor={0.08}
-        minDistance={maxDim * 0.3}
-        maxDistance={maxDim * 1.6}
-        minPolarAngle={0.15}
-        maxPolarAngle={Math.PI / 2 - 0.05}
-        rotateSpeed={0.6}
-        mouseButtons={{ LEFT: undefined, MIDDLE: THREE.MOUSE.DOLLY, RIGHT: THREE.MOUSE.ROTATE }}
-        touches={{ ONE: THREE.TOUCH.ROTATE, TWO: THREE.TOUCH.DOLLY_ROTATE }}
-      />
+      {controls && (
+        <OrbitControls
+          enablePan={false}
+          enableDamping
+          dampingFactor={0.08}
+          minDistance={maxDim * 0.3}
+          maxDistance={maxDim * 1.6}
+          minPolarAngle={0.15}
+          maxPolarAngle={Math.PI / 2 - 0.05}
+          rotateSpeed={0.6}
+          mouseButtons={{ LEFT: undefined, MIDDLE: THREE.MOUSE.DOLLY, RIGHT: THREE.MOUSE.ROTATE }}
+          touches={{ ONE: THREE.TOUCH.ROTATE, TWO: THREE.TOUCH.DOLLY_ROTATE }}
+        />
+      )}
     </Canvas>
   );
 }

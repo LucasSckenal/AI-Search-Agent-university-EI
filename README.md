@@ -220,3 +220,11 @@ No **Labirinto**, A* consistentemente expande igual ou menos nós que UCS/BFS pa
   jogos, mas significa que o agente deixa de jogar de forma comprovadamente ótima nesses tamanhos.
   Melhorias possíveis: ordenação de jogadas mais sofisticada (killer moves), tabela de
   transposição, ou aprofundamento iterativo (*iterative deepening*) com orçamento de tempo.
+- **Tornar visível a diferença entre algoritmos, não só os números**: a tabela comparativa (seção
+  f) mostra custo/nós/tempo, mas não *por que* BFS explora mais nós que A* no mesmo labirinto.
+  Implementamos um "modo corrida" (labirinto → Corrida entre algoritmos) que roda os 5 algoritmos
+  simultaneamente sobre a mesma instância, revelando as células exploradas de cada um em tempo real
+  na mesma velocidade — quem expande menos nós termina visivelmente primeiro, transformando a
+  eficiência de um número abstrato em algo que se vê acontecer. Limitação atual: cada mini-tabuleiro
+  é uma cena Three.js independente (5 canvases simultâneos), o que não escalaria para labirintos
+  muito maiores sem otimizações como *instanced meshes*.

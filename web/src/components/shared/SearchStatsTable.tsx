@@ -1,6 +1,6 @@
 import { AlgorithmId, ALGORITHM_LABELS, SearchResult } from "@/lib/core/search";
 
-const ALGO_COLOR: Record<AlgorithmId, string> = {
+export const ALGO_COLOR: Record<AlgorithmId, string> = {
   bfs: "#afc6ff",
   dfs: "#cebdff",
   ucs: "#ffb77b",
