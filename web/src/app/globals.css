@@ -1,0 +1,271 @@
+@import "tailwindcss";
+
+/*
+ * Design tokens copied verbatim from the "Obsidian Flux" design system generated in Stitch
+ * (project 15468603465819223420 — screens "AI Visualizer - Maze Challenge", "Flow Field",
+ * "Network Graph"). Kept under the exact same names Stitch used so the Tailwind utility classes
+ * (bg-surface-container-lowest, text-on-surface-variant, ...) match 1:1.
+ */
+:root {
+  --background: #11131a;
+  --surface: #11131a;
+  --surface-dim: #11131a;
+  --surface-bright: #373941;
+  --surface-container-lowest: #0b0e15;
+  --surface-container-low: #191b22;
+  --surface-container: #1d1f27;
+  --surface-container-high: #272a31;
+  --surface-container-highest: #32353c;
+  --surface-variant: #32353c;
+
+  --on-surface: #e1e2ec;
+  --on-surface-variant: #c2c6d6;
+  --outline: #8c909f;
+  --outline-variant: #424753;
+  --inverse-surface: #e1e2ec;
+  --inverse-on-surface: #2e3038;
+  --surface-tint: #afc6ff;
+
+  --primary: #afc6ff;
+  --on-primary: #002d6c;
+  --primary-container: #528dff;
+  --on-primary-container: #00275f;
+  --inverse-primary: #0059c6;
+
+  --secondary: #cebdff;
+  --on-secondary: #380094;
+  --secondary-container: #4f28ad;
+  --on-secondary-container: #bea8ff;
+
+  --tertiary: #ffb77b;
+  --on-tertiary: #4d2700;
+  --tertiary-container: #d87802;
+  --on-tertiary-container: #432100;
+
+  --error: #ffb4ab;
+  --on-error: #690005;
+  --error-container: #93000a;
+  --on-error-container: #ffdad6;
+
+  --font-inter: "Inter", ui-sans-serif, system-ui, sans-serif;
+  --font-jbmono: "JetBrains Mono", ui-monospace, SFMono-Regular, monospace;
+}
+
+@theme inline {
+  --color-background: var(--background);
+  --color-surface: var(--surface);
+  --color-surface-dim: var(--surface-dim);
+  --color-surface-bright: var(--surface-bright);
+  --color-surface-container-lowest: var(--surface-container-lowest);
+  --color-surface-container-low: var(--surface-container-low);
+  --color-surface-container: var(--surface-container);
+  --color-surface-container-high: var(--surface-container-high);
+  --color-surface-container-highest: var(--surface-container-highest);
+  --color-surface-variant: var(--surface-variant);
+
+  --color-on-surface: var(--on-surface);
+  --color-on-surface-variant: var(--on-surface-variant);
+  --color-outline: var(--outline);
+  --color-outline-variant: var(--outline-variant);
+  --color-inverse-surface: var(--inverse-surface);
+  --color-inverse-on-surface: var(--inverse-on-surface);
+  --color-surface-tint: var(--surface-tint);
+
+  --color-primary: var(--primary);
+  --color-on-primary: var(--on-primary);
+  --color-primary-container: var(--primary-container);
+  --color-on-primary-container: var(--on-primary-container);
+  --color-inverse-primary: var(--inverse-primary);
+
+  --color-secondary: var(--secondary);
+  --color-on-secondary: var(--on-secondary);
+  --color-secondary-container: var(--secondary-container);
+  --color-on-secondary-container: var(--on-secondary-container);
+
+  --color-tertiary: var(--tertiary);
+  --color-on-tertiary: var(--on-tertiary);
+  --color-tertiary-container: var(--tertiary-container);
+  --color-on-tertiary-container: var(--on-tertiary-container);
+
+  --color-error: var(--error);
+  --color-on-error: var(--on-error);
+  --color-error-container: var(--error-container);
+  --color-on-error-container: var(--on-error-container);
+
+  --font-sans: var(--font-inter);
+  --font-mono: var(--font-jbmono);
+}
+
+html {
+  color-scheme: dark;
+}
+
+body {
+  background: var(--background);
+  color: var(--on-surface);
+  font-family: var(--font-sans);
+}
+
+/* ---------- Glassmorphism primitives (from the Stitch "AI Visualizer" screens) ---------- */
+
+.glass {
+  background: color-mix(in srgb, var(--surface-container-lowest) 50%, transparent);
+  backdrop-filter: blur(24px);
+  -webkit-backdrop-filter: blur(24px);
+  border: 1px solid rgba(255, 255, 255, 0.05);
+}
+
+.glass-strong {
+  background: color-mix(in srgb, var(--surface-container-highest) 40%, transparent);
+  backdrop-filter: blur(24px);
+  -webkit-backdrop-filter: blur(24px);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+/* Flat, fully opaque panel for modals — no blur/see-through, easier on the eyes than glass. */
+.panel-flat {
+  background: var(--surface-container);
+  border: 1px solid var(--outline-variant);
+}
+
+.glow-hover {
+  transition: box-shadow 200ms ease, transform 200ms ease;
+}
+.glow-hover:hover {
+  box-shadow: 0 0 24px rgba(175, 198, 255, 0.15);
+}
+
+.chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.25rem;
+  border-radius: 9999px;
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+  padding: 0.2rem 0.6rem;
+}
+
+.btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.4rem;
+  border-radius: 0.75rem;
+  font-size: 13px;
+  font-weight: 500;
+  padding: 0.55rem 0.9rem;
+  transition: background-color 150ms ease, border-color 150ms ease, opacity 150ms ease, transform 150ms ease;
+  cursor: pointer;
+  border: 1px solid transparent;
+  backdrop-filter: blur(8px);
+}
+.btn:active:not(:disabled) {
+  transform: scale(0.98);
+}
+.btn:disabled {
+  opacity: 0.35;
+  cursor: not-allowed;
+}
+
+.btn-primary {
+  background: color-mix(in srgb, var(--primary) 90%, transparent);
+  color: var(--on-primary);
+  font-weight: 600;
+  box-shadow: 0 4px 14px rgba(175, 198, 255, 0.3);
+}
+.btn-primary:hover:not(:disabled) {
+  background: var(--primary);
+  transform: scale(1.02);
+}
+
+.btn-secondary {
+  background: rgba(255, 255, 255, 0.05);
+  border-color: rgba(255, 255, 255, 0.1);
+  color: var(--on-surface);
+}
+.btn-secondary:hover:not(:disabled) {
+  background: rgba(255, 255, 255, 0.1);
+  border-color: rgba(255, 255, 255, 0.2);
+}
+
+.btn-ghost {
+  background: transparent;
+  color: var(--on-surface-variant);
+}
+.btn-ghost:hover:not(:disabled) {
+  color: var(--primary);
+  background: rgba(255, 255, 255, 0.04);
+}
+
+input[type="range"] {
+  accent-color: var(--primary);
+}
+
+input[type="number"] {
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 0.75rem;
+  color: var(--on-surface);
+  padding: 0.5rem 0.7rem;
+  font-size: 13px;
+  backdrop-filter: blur(8px);
+  transition: background-color 150ms ease, border-color 150ms ease;
+}
+input[type="number"]:hover {
+  background: rgba(255, 255, 255, 0.1);
+  border-color: rgba(255, 255, 255, 0.2);
+}
+
+/* Custom toggle switch (matches the Stitch pill-switch pattern) */
+.toggle-track {
+  width: 2.5rem;
+  height: 1.25rem;
+  border-radius: 9999px;
+  position: relative;
+  transition: background-color 150ms ease, box-shadow 150ms ease;
+  flex-shrink: 0;
+}
+.toggle-track[data-on="true"] {
+  background: color-mix(in srgb, var(--primary) 80%, transparent);
+  box-shadow: 0 0 8px rgba(175, 198, 255, 0.35);
+}
+.toggle-track[data-on="false"] {
+  background: rgba(255, 255, 255, 0.1);
+}
+.toggle-thumb {
+  position: absolute;
+  top: 2px;
+  width: 1rem;
+  height: 1rem;
+  border-radius: 9999px;
+  background: white;
+  transition: left 150ms ease, opacity 150ms ease;
+}
+.toggle-track[data-on="true"] .toggle-thumb {
+  left: calc(100% - 1.125rem);
+  opacity: 1;
+}
+.toggle-track[data-on="false"] .toggle-thumb {
+  left: 2px;
+  opacity: 0.5;
+}
+
+.material-symbols-outlined {
+  font-variation-settings: "FILL" 0, "wght" 400, "GRAD" 0, "opsz" 20;
+  line-height: 1;
+  vertical-align: middle;
+}
+
+::-webkit-scrollbar {
+  width: 10px;
+  height: 10px;
+}
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+::-webkit-scrollbar-thumb {
+  background: var(--surface-container-highest);
+  border-radius: 8px;
+}
