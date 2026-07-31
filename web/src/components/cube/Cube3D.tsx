@@ -161,11 +161,14 @@ export function CubeCanvas({
   size,
   animatingMove,
   onMoveSettled,
+  idle = false,
 }: {
   cube: CubeState;
   size: CubeSize;
   animatingMove: MoveId | null;
   onMoveSettled: () => void;
+  /** Gentle showroom auto-rotate when nothing is actively animating/searching. */
+  idle?: boolean;
 }) {
   return (
     <Canvas camera={{ position: [3.4, 2.8, 3.8], fov: 38 }} gl={{ antialias: true, alpha: true }}>
@@ -179,6 +182,8 @@ export function CubeCanvas({
         minPolarAngle={0.3}
         maxPolarAngle={Math.PI - 0.3}
         rotateSpeed={0.6}
+        autoRotate={idle}
+        autoRotateSpeed={0.7}
       />
     </Canvas>
   );

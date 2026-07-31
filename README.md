@@ -133,10 +133,14 @@ algoritmo do agente (Minimax puro ou com poda Alfa-Beta).
    que BFS/UCS/A* empatam no custo ótimo, DFS geralmente encontra um caminho bem mais longo, e A*
    expande muito menos nós que BFS. Editar manualmente uma parede com o pincel e reexecutar para
    mostrar a reatividade do agente a mudanças no ambiente.
-2. **Cubo Mágico**: embaralhar com profundidade 4-5, resolver com A* (poucos nós, poucos ms),
-   depois "Comparar algoritmos" e destacar BFS/UCS/A* chegando ao mesmo custo ótimo com esforços
-   muito diferentes, e a Gulosa eventualmente encontrando uma solução muito mais longa (ilustra o
-   risco de usar só a heurística, sem custo acumulado).
+2. **Cubo Mágico**: embaralhar com profundidade 4-5 e resolver com BFS para ver a "pré-visualização
+   da busca" — antes da animação da solução, o cubo pisca rapidamente por uma amostra dos estados
+   que o algoritmo realmente visitou (`exploredOrder`, devolvido pelo mesmo `search()` genérico do
+   labirinto), com um contador ao vivo ("Explorando nó X / N nós expandidos"), tornando visível a
+   diferença entre BFS "tateando" muitos estados e A*/Gulosa indo quase direto à solução. Depois
+   "Comparar algoritmos" e destacar BFS/UCS/A* chegando ao mesmo custo ótimo com esforços muito
+   diferentes, e a Gulosa eventualmente encontrando uma solução muito mais longa (ilustra o risco
+   de usar só a heurística, sem custo acumulado).
 3. **Jogo da Velha**: jogar uma partida 3×3 contra o agente (mostrar que ele nunca perde — no
    máximo empata), depois "Comparar Minimax vs. Alfa-Beta" na mesma posição e destacar a redução
    de nós explorados. Trocar para um tabuleiro 4×4/5×5 e modo agente-vs-agente para mostrar a

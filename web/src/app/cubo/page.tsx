@@ -5,7 +5,7 @@ import dynamic from "next/dynamic";
 import { Field, Icon } from "@/components/shared/Panel";
 import { Select } from "@/components/shared/Select";
 import { Modal } from "@/components/shared/Modal";
-import { SearchStatsTable } from "@/components/shared/SearchStatsTable";
+import { SearchStatsTable, ALGO_COLOR } from "@/components/shared/SearchStatsTable";
 import {
   CubeSize,
   CubeState,
@@ -33,6 +33,12 @@ import { search, AlgorithmId, ALGORITHM_LABELS, SearchResult } from "@/lib/core/
 
 const ALGOS: AlgorithmId[] = ["bfs", "ucs", "greedy", "astar"];
 
+/** Picks up to `maxFrames` evenly spaced indices from [0, length), always including the last one. */
+function sampleIndices(length: number, maxFrames: number): number[] {
+  if (length <= maxFrames) return Array.from({ length }, (_, i) => i);
+  return Array.from({ length: maxFrames }, (_, i) => Math.round((i * (length - 1)) / (maxFrames - 1)));
+}
+
 export default function CuboPage() {
   const [size, setSize] = useState<CubeSize>(2);
   const [scrambleLen, setScrambleLen] = useState(4);
@@ -50,6 +56,15 @@ export default function CuboPage() {
   const [advancedOpen, setAdvancedOpen] = useState(false);
   const [compareOpen, setCompareOpen] = useState(false);
 
+  // Search-exploration preview: before playing the real solution, flip rapidly through a sample of
+  // the states the algorithm actually visited (result.exploredOrder, already full cube snapshots
+  // from the shared search() engine) - the same "make the search process visible" idea as the
+  // maze's cell-reveal animation and race mode, adapted to a state-space search instead of a grid.
+  const [exploreFrames, setExploreFrames] = useState<CubeState[] | null>(null);
+  const [exploreRealIndices, setExploreRealIndices] = useState<number[]>([]);
+  const [exploreStep, setExploreStep] = useState(0);
+  const [exploring, setExploring] = useState(false);
+
   const doScramble = (forSize: CubeSize = size) => {
     const moves = generateScramble(scrambleLen, forSize);
     const cube = applyMoves(solvedCube(forSize), moves);
@@ -61,6 +76,8 @@ export default function CuboPage() {
     setStep(0);
     setPlaying(false);
     setAnimatingMove(null);
+    setExploring(false);
+    setExploreFrames(null);
   };
 
   // Re-scrambles on mount and whenever the cube size changes (a 2x2 scramble makes no sense once
@@ -79,10 +96,20 @@ export default function CuboPage() {
       setResult(res);
       setCompareResults([]);
       setStep(0);
-      setDisplayCube(startCube);
       setAnimatingMove(null);
       setBusy(false);
-      setPlaying(res.found);
+      if (res.found && res.exploredOrder.length > 1) {
+        const indices = sampleIndices(res.exploredOrder.length, 90);
+        setExploreRealIndices(indices);
+        setExploreFrames(indices.map((i) => res.exploredOrder[i]));
+        setExploreStep(0);
+        setExploring(true);
+        setPlaying(false);
+      } else {
+        setDisplayCube(startCube);
+        setExploring(false);
+        setPlaying(res.found);
+      }
     }, 20);
   };
 
@@ -97,23 +124,42 @@ export default function CuboPage() {
       setStep(chosen.actions.length);
       setDisplayCube(chosen.found ? applyMoves(startCube, chosen.actions) : startCube);
       setAnimatingMove(null);
+      setExploring(false);
+      setExploreFrames(null);
       setBusy(false);
       setPlaying(false);
       setCompareOpen(true);
     }, 20);
   };
 
+  // Exploration-preview playback: snaps displayCube directly to each sampled state (there's no
+  // single rotation that connects two arbitrary search states, so this is a hard cut, not a tween)
+  // - once the sample is exhausted, hands off to the real move-by-move solve animation below.
+  useEffect(() => {
+    if (!exploring || !exploreFrames) return;
+    if (exploreStep >= exploreFrames.length) {
+      // eslint-disable-next-line react-hooks/set-state-in-effect -- stopping the playback loop it owns
+      setExploring(false);
+      setDisplayCube(startCube);
+      setPlaying(true);
+      return;
+    }
+    setDisplayCube(exploreFrames[exploreStep]);
+    const t = setTimeout(() => setExploreStep((s) => s + 1), 28);
+    return () => clearTimeout(t);
+  }, [exploring, exploreStep, exploreFrames, startCube]);
+
   // Kicks off the 3D animation for the current step; the 3D component calls handleMoveSettled
   // once the turn finishes, which commits the move and advances to the next one (if still playing).
   useEffect(() => {
-    if (!playing || !result || !result.found) return;
+    if (!playing || exploring || !result || !result.found) return;
     if (step >= result.actions.length) {
       // eslint-disable-next-line react-hooks/set-state-in-effect -- stopping the playback loop it owns
       setPlaying(false);
       return;
     }
     setAnimatingMove(result.actions[step]);
-  }, [playing, step, result]);
+  }, [playing, exploring, step, result]);
 
   const handleMoveSettled = () => {
     if (!result) return;
@@ -124,7 +170,17 @@ export default function CuboPage() {
   };
 
   const solved = isSolved(displayCube);
-  const status = busy ? "CALCULANDO" : playing ? "ANIMANDO" : result ? (result.found ? "RESOLVIDO" : "SEM SOLUÇÃO") : "PRONTO";
+  const status = busy
+    ? "CALCULANDO"
+    : exploring
+      ? "EXPLORANDO ESTADOS"
+      : playing
+        ? "ANIMANDO SOLUÇÃO"
+        : result
+          ? result.found
+            ? "RESOLVIDO"
+            : "SEM SOLUÇÃO"
+          : "PRONTO";
 
   return (
     <div className="relative h-full w-full overflow-hidden">
@@ -147,7 +203,7 @@ export default function CuboPage() {
           <h3 className="text-[11px] font-semibold uppercase tracking-wider text-on-surface-variant/70">
             Ações
           </h3>
-          <button className="btn btn-secondary" onClick={() => doScramble()}>
+          <button className="btn btn-secondary" onClick={() => doScramble()} disabled={busy || exploring}>
             <Icon name="casino" className="text-[16px]" /> Embaralhar
           </button>
           <div className="rounded-xl bg-white/5 px-3 py-2 text-[12px]">
@@ -157,17 +213,22 @@ export default function CuboPage() {
         </div>
 
         <div className="mt-auto flex flex-col gap-3 border-t border-white/5 pt-4">
-          <button className="btn btn-primary" onClick={() => runSolve()} disabled={busy}>
+          <button className="btn btn-primary" onClick={() => runSolve()} disabled={busy || exploring}>
             <Icon name="play_arrow" /> {busy ? "Calculando…" : "Resolver e animar"}
           </button>
           <div className="grid grid-cols-2 gap-1.5">
-            <button className="btn btn-secondary" onClick={() => setPlaying((p) => !p)} disabled={!result?.found}>
+            <button
+              className="btn btn-secondary"
+              onClick={() => setPlaying((p) => !p)}
+              disabled={!result?.found || exploring}
+            >
               <Icon name={playing ? "pause" : "play_arrow"} className="text-[18px]" />
             </button>
             <button
               className="btn btn-secondary"
               onClick={() => {
                 if (!result?.found) return;
+                setExploring(false);
                 setDisplayCube(applyMoves(startCube, result.actions));
                 setStep(result.actions.length);
                 setAnimatingMove(null);
@@ -178,7 +239,7 @@ export default function CuboPage() {
               <Icon name="skip_next" className="text-[18px]" />
             </button>
           </div>
-          <button className="btn btn-secondary" onClick={runComparison} disabled={busy}>
+          <button className="btn btn-secondary" onClick={runComparison} disabled={busy || exploring}>
             <Icon name="compare_arrows" className="text-[16px]" /> Comparar algoritmos
           </button>
         </div>
@@ -187,8 +248,32 @@ export default function CuboPage() {
       {/* Center visualization */}
       <div className="flex h-full w-full items-center justify-center overflow-auto py-24 pl-[338px] pr-8">
         <div className="glass flex flex-col items-center gap-4 rounded-3xl p-6 shadow-2xl">
-          <div className="h-[440px] w-[440px] overflow-hidden rounded-2xl">
-            <CubeCanvas cube={displayCube} size={size} animatingMove={animatingMove} onMoveSettled={handleMoveSettled} />
+          <div
+            className="relative h-[440px] w-[440px] overflow-hidden rounded-2xl"
+            style={{ background: "radial-gradient(circle at 50% 38%, rgba(175,198,255,0.1), transparent 70%)" }}
+          >
+            <CubeCanvas
+              cube={displayCube}
+              size={size}
+              animatingMove={animatingMove}
+              onMoveSettled={handleMoveSettled}
+              idle={!busy && !exploring && !playing}
+            />
+            {exploring && (
+              <>
+                <div
+                  className="pointer-events-none absolute inset-0 animate-pulse rounded-2xl"
+                  style={{ boxShadow: `inset 0 0 42px ${ALGO_COLOR[algorithm]}66` }}
+                />
+                <div
+                  className="pointer-events-none absolute left-1/2 top-3 -translate-x-1/2 rounded-full bg-black/70 px-3 py-1 text-[11px] font-mono backdrop-blur-sm"
+                  style={{ color: ALGO_COLOR[algorithm] }}
+                >
+                  🔍 Explorando nó {((exploreRealIndices[exploreStep] ?? 0) + 1).toLocaleString("pt-BR")} /{" "}
+                  {(result?.nodesExpanded ?? 0).toLocaleString("pt-BR")}
+                </div>
+              </>
+            )}
           </div>
           <p
             className={`rounded-full px-3 py-1 text-[11px] font-medium ${
@@ -230,7 +315,7 @@ export default function CuboPage() {
       <footer className="glass-strong fixed bottom-6 left-1/2 z-50 flex -translate-x-1/2 items-center gap-6 rounded-full px-6 py-2 text-[11px] font-medium shadow-xl">
         <div className="flex items-center gap-2">
           <span
-            className={`h-2 w-2 rounded-full ${busy || playing ? "animate-pulse" : ""}`}
+            className={`h-2 w-2 rounded-full ${busy || exploring || playing ? "animate-pulse" : ""}`}
             style={{ background: "var(--tertiary)", boxShadow: "0 0 8px rgba(255,183,123,0.6)" }}
           />
           <span className="tracking-wide text-on-surface-variant/80">{status}</span>
