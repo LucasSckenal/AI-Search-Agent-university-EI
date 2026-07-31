@@ -7,6 +7,10 @@ import { Toggle } from "@/components/shared/Toggle";
 import { Select } from "@/components/shared/Select";
 import { Modal } from "@/components/shared/Modal";
 import { SearchStatsTable, ALGO_COLOR } from "@/components/shared/SearchStatsTable";
+import { Sidebar } from "@/components/shared/Sidebar";
+import { CanvasStage, CanvasBox } from "@/components/shared/CanvasStage";
+import { StatsPanel } from "@/components/shared/StatsPanel";
+import { StatusFooter } from "@/components/shared/StatusFooter";
 import {
   MazeState,
   CellKind,
@@ -24,7 +28,7 @@ import { search, AlgorithmId, ALGORITHM_LABELS, SearchResult } from "@/lib/core/
 const MazeCanvas = dynamic(() => import("@/components/maze/Maze3D").then((m) => m.MazeCanvas), {
   ssr: false,
   loading: () => (
-    <div className="flex h-[560px] w-[720px] items-center justify-center text-xs text-on-surface-variant">
+    <div className="flex h-full w-full items-center justify-center text-xs text-on-surface-variant">
       Carregando labirinto 3D…
     </div>
   ),
@@ -220,7 +224,7 @@ export default function LabirintoPage() {
   return (
     <div className="relative h-full w-full overflow-hidden">
       {/* Left floating sidebar: problem + brush + run controls */}
-      <aside className="glass fixed left-6 top-20 bottom-20 z-40 flex w-[290px] flex-col gap-3 overflow-y-auto rounded-3xl p-4 shadow-2xl">
+      <Sidebar>
         <p className="text-[11px] leading-relaxed text-on-surface-variant">
           Início (lavanda) até o objetivo (laranja) num grid com paredes e lama (custo 5). Arraste
           com o botão esquerdo para pintar, botão direito para girar a câmera.
@@ -323,58 +327,38 @@ export default function LabirintoPage() {
             <Icon name="flag" className="text-[16px]" /> Corrida entre algoritmos
           </button>
         </div>
-      </aside>
+      </Sidebar>
 
       {/* Center visualization */}
-      <div className="flex h-full w-full items-center justify-center overflow-auto py-24 pl-[338px] pr-8">
-        <div className="glass overflow-hidden rounded-2xl p-2 shadow-2xl">
-          <div className="h-[560px] w-[720px] overflow-hidden rounded-xl">
-            <MazeCanvas maze={maze} visited={visited} path={path} interactive onCellClick={handleCellClick} />
-          </div>
-        </div>
-      </div>
+      <CanvasStage>
+        <CanvasBox width={720} height={560}>
+          <MazeCanvas maze={maze} visited={visited} path={path} interactive onCellClick={handleCellClick} />
+        </CanvasBox>
+      </CanvasStage>
 
       {/* Small floating stats panel (bottom-right) */}
       {result && (
-        <aside className="glass fixed bottom-24 right-6 z-40 flex flex-col gap-3 rounded-2xl p-4 shadow-2xl">
-          <div className="grid grid-cols-3 gap-3">
-            {[
-              ["Status", result.found ? "OK" : "falhou"],
-              ["Custo", result.found ? result.cost.toFixed(2) : "—"],
-              ["Expandidos", result.nodesExpanded.toLocaleString("pt-BR")],
-              ["Gerados", result.nodesGenerated.toLocaleString("pt-BR")],
-              ["Tempo", `${result.timeMs.toFixed(1)}ms`],
-              ["Algoritmo", ALGORITHM_LABELS[result.algorithm].split(" ")[0]],
-            ].map(([label, value]) => (
-              <div key={label} className="flex min-w-[80px] flex-col items-center justify-center rounded-xl bg-white/5 px-4 py-2">
-                <div className="text-[10px] uppercase tracking-wider text-on-surface-variant/70">{label}</div>
-                <div className="truncate font-mono text-[14px] font-medium text-on-surface">{value}</div>
-              </div>
-            ))}
-          </div>
-        </aside>
+        <StatsPanel
+          items={[
+            ["Status", result.found ? "OK" : "falhou"],
+            ["Custo", result.found ? result.cost.toFixed(2) : "—"],
+            ["Expandidos", result.nodesExpanded.toLocaleString("pt-BR")],
+            ["Gerados", result.nodesGenerated.toLocaleString("pt-BR")],
+            ["Tempo", `${result.timeMs.toFixed(1)}ms`],
+            ["Algoritmo", ALGORITHM_LABELS[result.algorithm].split(" ")[0]],
+          ]}
+        />
       )}
 
       {/* Floating status pill */}
-      <footer className="glass-strong fixed bottom-6 left-1/2 z-50 flex -translate-x-1/2 items-center gap-6 rounded-full px-6 py-2 text-[11px] font-medium shadow-xl">
-        <div className="flex items-center gap-2">
-          <span
-            className={`h-2 w-2 rounded-full ${playing ? "animate-pulse" : ""}`}
-            style={{ background: "var(--tertiary)", boxShadow: "0 0 8px rgba(255,183,123,0.6)" }}
-          />
-          <span className="tracking-wide text-on-surface-variant/80">{status}</span>
-        </div>
-        <div className="flex items-center gap-2 border-l border-white/10 pl-4">
-          <span className="uppercase text-on-surface-variant/60">Algoritmo:</span>
-          <span className="font-mono text-primary/90">{ALGORITHM_LABELS[algorithm]}</span>
-        </div>
-        <div className="flex items-center gap-2 border-l border-white/10 pl-4">
-          <span className="uppercase text-on-surface-variant/60">Grid:</span>
-          <span className="font-mono text-on-surface/90">
-            {rows}×{cols}
-          </span>
-        </div>
-      </footer>
+      <StatusFooter
+        status={status}
+        pulsing={playing}
+        segments={[
+          { label: "Algoritmo", value: ALGORITHM_LABELS[algorithm], accent: true },
+          { label: "Grid", value: `${rows}×${cols}` },
+        ]}
+      />
 
       <Modal
         open={advancedOpen}

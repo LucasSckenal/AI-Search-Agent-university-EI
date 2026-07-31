@@ -7,6 +7,10 @@ import { Select } from "@/components/shared/Select";
 import { Modal } from "@/components/shared/Modal";
 import { Toggle } from "@/components/shared/Toggle";
 import { SearchStatsTable, ALGO_COLOR } from "@/components/shared/SearchStatsTable";
+import { Sidebar } from "@/components/shared/Sidebar";
+import { CanvasStage, CanvasBox } from "@/components/shared/CanvasStage";
+import { StatsPanel } from "@/components/shared/StatsPanel";
+import { StatusFooter } from "@/components/shared/StatusFooter";
 import {
   CubeSize,
   CubeState,
@@ -25,7 +29,7 @@ import {
 const CubeCanvas = dynamic(() => import("@/components/cube/Cube3D").then((m) => m.CubeCanvas), {
   ssr: false,
   loading: () => (
-    <div className="flex h-[440px] w-[440px] items-center justify-center text-xs text-on-surface-variant">
+    <div className="flex h-full w-full items-center justify-center text-xs text-on-surface-variant">
       Carregando cubo 3D…
     </div>
   ),
@@ -189,7 +193,7 @@ export default function CuboPage() {
   return (
     <div className="relative h-full w-full overflow-hidden">
       {/* Left floating sidebar: actions only, all parameters live in the modal */}
-      <aside className="glass fixed left-6 top-24 bottom-24 z-40 flex w-[280px] flex-col gap-5 overflow-y-auto rounded-3xl p-5 shadow-2xl">
+      <Sidebar>
         <div>
           <h1 className="text-sm font-semibold tracking-tight">Cubo Mágico {size}x{size}</h1>
           <p className="mt-1 text-[11px] leading-relaxed text-on-surface-variant">
@@ -247,96 +251,77 @@ export default function CuboPage() {
             <Icon name="compare_arrows" className="text-[16px]" /> Comparar algoritmos
           </button>
         </div>
-      </aside>
+      </Sidebar>
 
       {/* Center visualization */}
-      <div className="flex h-full w-full items-center justify-center overflow-auto py-24 pl-[338px] pr-8">
-        <div className="glass flex flex-col items-center gap-4 rounded-3xl p-6 shadow-2xl">
-          <div
-            className="relative h-[440px] w-[440px] overflow-hidden rounded-2xl"
-            style={{ background: "radial-gradient(circle at 50% 38%, rgba(175,198,255,0.1), transparent 70%)" }}
-          >
-            <CubeCanvas
-              cube={displayCube}
-              size={size}
-              animatingMove={animatingMove}
-              onMoveSettled={handleMoveSettled}
-              idle={!busy && !exploring && !playing}
-            />
-            {exploring && (
-              <>
-                <div
-                  className="pointer-events-none absolute inset-0 animate-pulse rounded-2xl"
-                  style={{ boxShadow: `inset 0 0 42px ${ALGO_COLOR[algorithm]}66` }}
-                />
-                <div
-                  className="pointer-events-none absolute left-1/2 top-3 -translate-x-1/2 rounded-full bg-black/70 px-3 py-1 text-[11px] font-mono backdrop-blur-sm"
-                  style={{ color: ALGO_COLOR[algorithm] }}
-                >
-                  🔍 Explorando nó {((exploreRealIndices[exploreStep] ?? 0) + 1).toLocaleString("pt-BR")} /{" "}
-                  {(result?.nodesExpanded ?? 0).toLocaleString("pt-BR")}
-                </div>
-              </>
-            )}
-          </div>
-          <p
-            className={`rounded-full px-3 py-1 text-[11px] font-medium ${
-              solved ? "bg-primary/20 text-primary" : "bg-white/5 text-on-surface-variant"
-            }`}
-          >
-            {solved ? "✓ Resolvido" : "Não resolvido"}
-          </p>
-        </div>
-      </div>
+      <CanvasStage>
+        <CanvasBox
+          width={440}
+          height={440}
+          className="bg-[radial-gradient(circle_at_50%_38%,rgba(175,198,255,0.1),transparent_70%)]"
+        >
+          <CubeCanvas
+            cube={displayCube}
+            size={size}
+            animatingMove={animatingMove}
+            onMoveSettled={handleMoveSettled}
+            idle={!busy && !exploring && !playing}
+          />
+          {exploring && (
+            <>
+              <div
+                className="pointer-events-none absolute inset-0 animate-pulse rounded-2xl"
+                style={{ boxShadow: `inset 0 0 42px ${ALGO_COLOR[algorithm]}66` }}
+              />
+              <div
+                className="pointer-events-none absolute left-1/2 top-3 -translate-x-1/2 rounded-full bg-black/70 px-3 py-1 text-[11px] font-mono backdrop-blur-sm"
+                style={{ color: ALGO_COLOR[algorithm] }}
+              >
+                🔍 Explorando nó {((exploreRealIndices[exploreStep] ?? 0) + 1).toLocaleString("pt-BR")} /{" "}
+                {(result?.nodesExpanded ?? 0).toLocaleString("pt-BR")}
+              </div>
+            </>
+          )}
+        </CanvasBox>
+        <p
+          className={`rounded-full px-3 py-1 text-[11px] font-medium ${
+            solved ? "bg-primary/20 text-primary" : "bg-white/5 text-on-surface-variant"
+          }`}
+        >
+          {solved ? "✓ Resolvido" : "Não resolvido"}
+        </p>
+      </CanvasStage>
 
       {/* Small floating stats panel (bottom-right) */}
       {result && (
-        <aside className="glass fixed bottom-24 right-6 z-40 flex flex-col gap-3 rounded-2xl p-4 shadow-2xl">
-          <div className="grid grid-cols-3 gap-3">
-            {[
-              ["Status", result.found ? "OK" : result.truncated ? "limite" : "falhou"],
-              ["Movimentos", result.found ? String(result.actions.length) : "—"],
-              ["Expandidos", result.nodesExpanded.toLocaleString("pt-BR")],
-              ["Tempo", `${result.timeMs.toFixed(1)}ms`],
-              ["Algoritmo", ALGORITHM_LABELS[result.algorithm].split(" ")[0]],
-            ].map(([label, value]) => (
-              <div key={label} className="flex min-w-[80px] flex-col items-center justify-center rounded-xl bg-white/5 px-4 py-2">
-                <div className="text-[10px] uppercase tracking-wider text-on-surface-variant/70">{label}</div>
-                <div className="truncate font-mono text-[14px] font-medium text-on-surface">{value}</div>
-              </div>
-            ))}
-          </div>
+        <StatsPanel
+          items={[
+            ["Status", result.found ? "OK" : result.truncated ? "limite" : "falhou"],
+            ["Movimentos", result.found ? String(result.actions.length) : "—"],
+            ["Expandidos", result.nodesExpanded.toLocaleString("pt-BR")],
+            ["Tempo", `${result.timeMs.toFixed(1)}ms`],
+            ["Algoritmo", ALGORITHM_LABELS[result.algorithm].split(" ")[0]],
+          ]}
+        >
           {result.found && (
             <div className="rounded-xl bg-white/5 px-3 py-2 text-[12px]">
               <span className="text-on-surface-variant">Solução: </span>
               <span className="font-mono text-on-surface">{result.actions.join(" ")}</span>
             </div>
           )}
-        </aside>
+        </StatsPanel>
       )}
 
       {/* Floating status pill */}
-      <footer className="glass-strong fixed bottom-6 left-1/2 z-50 flex -translate-x-1/2 items-center gap-6 rounded-full px-6 py-2 text-[11px] font-medium shadow-xl">
-        <div className="flex items-center gap-2">
-          <span
-            className={`h-2 w-2 rounded-full ${busy || exploring || playing ? "animate-pulse" : ""}`}
-            style={{ background: "var(--tertiary)", boxShadow: "0 0 8px rgba(255,183,123,0.6)" }}
-          />
-          <span className="tracking-wide text-on-surface-variant/80">{status}</span>
-        </div>
-        <div className="flex items-center gap-2 border-l border-white/10 pl-4">
-          <span className="uppercase text-on-surface-variant/60">Algoritmo:</span>
-          <span className="font-mono text-primary/90">{ALGORITHM_LABELS[algorithm]}</span>
-        </div>
-        <div className="flex items-center gap-2 border-l border-white/10 pl-4">
-          <span className="uppercase text-on-surface-variant/60">Embaralhamento:</span>
-          <span className="font-mono text-on-surface/90">{scrambleLen} movimentos</span>
-        </div>
-        <div className="flex items-center gap-2 border-l border-white/10 pl-4">
-          <span className="uppercase text-on-surface-variant/60">Cubo:</span>
-          <span className="font-mono text-on-surface/90">{size}x{size}</span>
-        </div>
-      </footer>
+      <StatusFooter
+        status={status}
+        pulsing={busy || exploring || playing}
+        segments={[
+          { label: "Algoritmo", value: ALGORITHM_LABELS[algorithm], accent: true },
+          { label: "Embaralhamento", value: `${scrambleLen} movimentos` },
+          { label: "Cubo", value: `${size}x${size}` },
+        ]}
+      />
 
       <Modal
         open={advancedOpen}

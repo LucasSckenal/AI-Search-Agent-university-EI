@@ -5,6 +5,10 @@ import dynamic from "next/dynamic";
 import { Field, Icon } from "@/components/shared/Panel";
 import { Select } from "@/components/shared/Select";
 import { Modal } from "@/components/shared/Modal";
+import { Sidebar } from "@/components/shared/Sidebar";
+import { CanvasStage, CanvasBox } from "@/components/shared/CanvasStage";
+import { StatsPanel } from "@/components/shared/StatsPanel";
+import { StatusFooter } from "@/components/shared/StatusFooter";
 import {
   Board,
   Player,
@@ -23,7 +27,7 @@ import {
 const BoardCanvas = dynamic(() => import("@/components/game/Game3D").then((m) => m.BoardCanvas), {
   ssr: false,
   loading: () => (
-    <div className="flex h-[520px] w-[520px] items-center justify-center text-xs text-on-surface-variant">
+    <div className="flex h-full w-full items-center justify-center text-xs text-on-surface-variant">
       Carregando tabuleiro 3D…
     </div>
   ),
@@ -116,7 +120,7 @@ export default function JogoPage() {
   return (
     <div className="relative h-full w-full overflow-hidden">
       {/* Left floating sidebar */}
-      <aside className="glass fixed left-6 top-24 bottom-24 z-40 flex w-[290px] flex-col gap-5 overflow-y-auto rounded-3xl p-5 shadow-2xl">
+      <Sidebar>
         <div>
           <h1 className="text-sm font-semibold tracking-tight">Jogo da Velha N×N</h1>
           <p className="mt-1 text-[11px] leading-relaxed text-on-surface-variant">
@@ -166,68 +170,49 @@ export default function JogoPage() {
             ⇄ Comparar Minimax vs. Alfa-Beta
           </button>
         </div>
-      </aside>
+      </Sidebar>
 
       {/* Center board */}
-      <div className="flex h-full w-full items-center justify-center overflow-auto py-24 pl-[338px] pr-8">
-        <div className="glass flex flex-col items-center gap-4 rounded-3xl p-6 shadow-2xl">
-          <div className="h-[520px] w-[520px] overflow-hidden rounded-2xl">
-            <BoardCanvas board={board} size={size} winLine={winLine} interactive={canInteract} onCellClick={handleCellClick} />
-          </div>
+      <CanvasStage>
+        <CanvasBox width={520} height={520}>
+          <BoardCanvas board={board} size={size} winLine={winLine} interactive={canInteract} onCellClick={handleCellClick} />
+        </CanvasBox>
 
-          <div className="text-sm">
-            {winner !== 0 && (
-              <span className="font-medium text-primary">{winner === HUMAN ? "X venceu!" : "O venceu!"}</span>
-            )}
-            {draw && <span className="font-medium text-on-surface-variant">Empate.</span>}
-            {!over && (
-              <span className="text-on-surface-variant">
-                {thinking ? "Agente pensando…" : `Vez de: ${current === 1 ? "X" : "O"}`}
-              </span>
-            )}
-          </div>
+        <div className="text-sm">
+          {winner !== 0 && (
+            <span className="font-medium text-primary">{winner === HUMAN ? "X venceu!" : "O venceu!"}</span>
+          )}
+          {draw && <span className="font-medium text-on-surface-variant">Empate.</span>}
+          {!over && (
+            <span className="text-on-surface-variant">
+              {thinking ? "Agente pensando…" : `Vez de: ${current === 1 ? "X" : "O"}`}
+            </span>
+          )}
         </div>
-      </div>
+      </CanvasStage>
 
       {/* Small floating stats panel (bottom-right) */}
       {lastStats && (
-        <aside className="glass fixed bottom-24 right-6 z-40 flex flex-col gap-3 rounded-2xl p-4 shadow-2xl">
-          <div className="grid grid-cols-2 gap-3">
-            {[
-              ["Nós explorados", lastStats.nodesExplored.toLocaleString("pt-BR")],
-              ["Ramos podados", lastStats.prunedBranches.toLocaleString("pt-BR")],
-              ["Tempo", `${lastStats.timeMs.toFixed(2)}ms`],
-              ["Avaliação", String(lastStats.score)],
-            ].map(([label, value]) => (
-              <div key={label} className="flex min-w-[80px] flex-col items-center justify-center rounded-xl bg-white/5 px-4 py-2">
-                <div className="text-[10px] uppercase tracking-wider text-on-surface-variant/70">{label}</div>
-                <div className="truncate font-mono text-[14px] font-medium text-on-surface">{value}</div>
-              </div>
-            ))}
-          </div>
-        </aside>
+        <StatsPanel
+          cols={2}
+          items={[
+            ["Nós explorados", lastStats.nodesExplored.toLocaleString("pt-BR")],
+            ["Ramos podados", lastStats.prunedBranches.toLocaleString("pt-BR")],
+            ["Tempo", `${lastStats.timeMs.toFixed(2)}ms`],
+            ["Avaliação", String(lastStats.score)],
+          ]}
+        />
       )}
 
       {/* Floating status pill */}
-      <footer className="glass-strong fixed bottom-6 left-1/2 z-50 flex -translate-x-1/2 items-center gap-6 rounded-full px-6 py-2 text-[11px] font-medium shadow-xl">
-        <div className="flex items-center gap-2">
-          <span
-            className={`h-2 w-2 rounded-full ${thinking ? "animate-pulse" : ""}`}
-            style={{ background: "var(--tertiary)", boxShadow: "0 0 8px rgba(255,183,123,0.6)" }}
-          />
-          <span className="tracking-wide text-on-surface-variant/80">{status}</span>
-        </div>
-        <div className="flex items-center gap-2 border-l border-white/10 pl-4">
-          <span className="uppercase text-on-surface-variant/60">Agente:</span>
-          <span className="font-mono text-primary/90">{aiAlgo === "alphabeta" ? "Alfa-Beta" : "Minimax"}</span>
-        </div>
-        <div className="flex items-center gap-2 border-l border-white/10 pl-4">
-          <span className="uppercase text-on-surface-variant/60">Tabuleiro:</span>
-          <span className="font-mono text-on-surface/90">
-            {size}×{size} · K={winLength}
-          </span>
-        </div>
-      </footer>
+      <StatusFooter
+        status={status}
+        pulsing={thinking}
+        segments={[
+          { label: "Agente", value: aiAlgo === "alphabeta" ? "Alfa-Beta" : "Minimax", accent: true },
+          { label: "Tabuleiro", value: `${size}×${size} · K=${winLength}` },
+        ]}
+      />
 
       <Modal
         open={advancedOpen}
