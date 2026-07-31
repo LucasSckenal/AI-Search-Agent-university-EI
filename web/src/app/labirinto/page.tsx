@@ -11,6 +11,7 @@ import { Sidebar } from "@/components/shared/Sidebar";
 import { CanvasStage, CanvasBox } from "@/components/shared/CanvasStage";
 import { StatsPanel } from "@/components/shared/StatsPanel";
 import { StatusFooter } from "@/components/shared/StatusFooter";
+import { WebGLGate } from "@/components/shared/WebGLGate";
 import {
   MazeState,
   CellKind,
@@ -332,7 +333,9 @@ export default function LabirintoPage() {
       {/* Center visualization */}
       <CanvasStage>
         <CanvasBox width={720} height={560}>
-          <MazeCanvas maze={maze} visited={visited} path={path} interactive onCellClick={handleCellClick} />
+          <WebGLGate>
+            <MazeCanvas maze={maze} visited={visited} path={path} interactive onCellClick={handleCellClick} />
+          </WebGLGate>
         </CanvasBox>
       </CanvasStage>
 
@@ -499,13 +502,15 @@ export default function LabirintoPage() {
                       )}
                     </div>
                     <div className="h-[190px] w-full">
-                      <MazeCanvas
-                        maze={maze}
-                        visited={raceVisited}
-                        path={done && r.found ? r.path : []}
-                        controls={false}
-                        view="top"
-                      />
+                      <WebGLGate>
+                        <MazeCanvas
+                          maze={maze}
+                          visited={raceVisited}
+                          path={done && r.found ? r.path : []}
+                          controls={false}
+                          view="top"
+                        />
+                      </WebGLGate>
                     </div>
                   </div>
                 );

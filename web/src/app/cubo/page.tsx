@@ -11,6 +11,7 @@ import { Sidebar } from "@/components/shared/Sidebar";
 import { CanvasStage, CanvasBox } from "@/components/shared/CanvasStage";
 import { StatsPanel } from "@/components/shared/StatsPanel";
 import { StatusFooter } from "@/components/shared/StatusFooter";
+import { WebGLGate } from "@/components/shared/WebGLGate";
 import {
   CubeSize,
   CubeState,
@@ -260,28 +261,30 @@ export default function CuboPage() {
           height={440}
           className="bg-[radial-gradient(circle_at_50%_38%,rgba(175,198,255,0.1),transparent_70%)]"
         >
-          <CubeCanvas
-            cube={displayCube}
-            size={size}
-            animatingMove={animatingMove}
-            onMoveSettled={handleMoveSettled}
-            idle={!busy && !exploring && !playing}
-          />
-          {exploring && (
-            <>
-              <div
-                className="pointer-events-none absolute inset-0 animate-pulse rounded-2xl"
-                style={{ boxShadow: `inset 0 0 42px ${ALGO_COLOR[algorithm]}66` }}
-              />
-              <div
-                className="pointer-events-none absolute left-1/2 top-3 -translate-x-1/2 rounded-full bg-black/70 px-3 py-1 text-[11px] font-mono backdrop-blur-sm"
-                style={{ color: ALGO_COLOR[algorithm] }}
-              >
-                🔍 Explorando nó {((exploreRealIndices[exploreStep] ?? 0) + 1).toLocaleString("pt-BR")} /{" "}
-                {(result?.nodesExpanded ?? 0).toLocaleString("pt-BR")}
-              </div>
-            </>
-          )}
+          <WebGLGate>
+            <CubeCanvas
+              cube={displayCube}
+              size={size}
+              animatingMove={animatingMove}
+              onMoveSettled={handleMoveSettled}
+              idle={!busy && !exploring && !playing}
+            />
+            {exploring && (
+              <>
+                <div
+                  className="pointer-events-none absolute inset-0 animate-pulse rounded-2xl"
+                  style={{ boxShadow: `inset 0 0 42px ${ALGO_COLOR[algorithm]}66` }}
+                />
+                <div
+                  className="pointer-events-none absolute left-1/2 top-3 -translate-x-1/2 rounded-full bg-black/70 px-3 py-1 text-[11px] font-mono backdrop-blur-sm"
+                  style={{ color: ALGO_COLOR[algorithm] }}
+                >
+                  🔍 Explorando nó {((exploreRealIndices[exploreStep] ?? 0) + 1).toLocaleString("pt-BR")} /{" "}
+                  {(result?.nodesExpanded ?? 0).toLocaleString("pt-BR")}
+                </div>
+              </>
+            )}
+          </WebGLGate>
         </CanvasBox>
         <p
           className={`rounded-full px-3 py-1 text-[11px] font-medium ${

@@ -9,6 +9,7 @@ import { Sidebar } from "@/components/shared/Sidebar";
 import { CanvasStage, CanvasBox } from "@/components/shared/CanvasStage";
 import { StatsPanel } from "@/components/shared/StatsPanel";
 import { StatusFooter } from "@/components/shared/StatusFooter";
+import { WebGLGate } from "@/components/shared/WebGLGate";
 import {
   Board,
   Player,
@@ -175,7 +176,9 @@ export default function JogoPage() {
       {/* Center board */}
       <CanvasStage>
         <CanvasBox width={520} height={520}>
-          <BoardCanvas board={board} size={size} winLine={winLine} interactive={canInteract} onCellClick={handleCellClick} />
+          <WebGLGate>
+            <BoardCanvas board={board} size={size} winLine={winLine} interactive={canInteract} onCellClick={handleCellClick} />
+          </WebGLGate>
         </CanvasBox>
 
         <div className="text-sm">
