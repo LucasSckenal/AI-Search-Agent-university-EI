@@ -1,6 +1,7 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
+import dynamic from "next/dynamic";
 import { Field, Icon } from "@/components/shared/Panel";
 import { Select } from "@/components/shared/Select";
 import { Modal } from "@/components/shared/Modal";
@@ -14,7 +15,19 @@ import {
   isDraw,
   minimax,
   MinimaxResult,
+  getWinningLine,
 } from "@/lib/game/model";
+
+// WebGL only exists in the browser; loading it as a dynamic, SSR-disabled component keeps the
+// three.js/react-three-fiber bundle out of the server render entirely.
+const BoardCanvas = dynamic(() => import("@/components/game/Game3D").then((m) => m.BoardCanvas), {
+  ssr: false,
+  loading: () => (
+    <div className="flex h-[520px] w-[520px] items-center justify-center text-xs text-on-surface-variant">
+      Carregando tabuleiro 3D…
+    </div>
+  ),
+});
 
 type Mode = "human" | "auto";
 type AiAlgo = "minimax" | "alphabeta";
@@ -41,6 +54,7 @@ export default function JogoPage() {
   const winner = checkWinner(board, size, winLength);
   const draw = !winner && isDraw(board);
   const over = winner !== 0 || draw;
+  const winLine = useMemo(() => getWinningLine(board, size, winLength), [board, size, winLength]);
 
   const resetBoard = () => {
     setBoard(createBoard(size));
@@ -97,7 +111,7 @@ export default function JogoPage() {
 
   const maxDepthCap = Math.min(size * size, 9);
   const status = thinking ? "PENSANDO" : over ? (winner !== 0 ? "FIM DE JOGO" : "EMPATE") : "SUA VEZ";
-  const cellPx = size >= 6 ? 68 : size >= 5 ? 78 : size >= 4 ? 88 : 100;
+  const canInteract = !over && !thinking && mode === "human" && current === HUMAN;
 
   return (
     <div className="relative h-full w-full overflow-hidden">
@@ -156,22 +170,9 @@ export default function JogoPage() {
 
       {/* Center board */}
       <div className="flex h-full w-full items-center justify-center overflow-auto py-24 pl-[338px] pr-8">
-        <div className="glass flex flex-col items-center gap-6 rounded-3xl p-12 shadow-2xl">
-          <div
-            className="inline-grid gap-2"
-            style={{ gridTemplateColumns: `repeat(${size}, ${cellPx}px)`, gridTemplateRows: `repeat(${size}, ${cellPx}px)` }}
-          >
-            {board.map((cell, i) => (
-              <button
-                key={i}
-                onClick={() => handleCellClick(i)}
-                className="flex items-center justify-center rounded-xl bg-white/5 text-4xl font-semibold transition-colors hover:bg-white/10 disabled:cursor-default"
-                disabled={over || cell !== 0}
-              >
-                {cell === 1 && <span className="text-primary">X</span>}
-                {cell === -1 && <span className="text-tertiary">O</span>}
-              </button>
-            ))}
+        <div className="glass flex flex-col items-center gap-4 rounded-3xl p-6 shadow-2xl">
+          <div className="h-[520px] w-[520px] overflow-hidden rounded-2xl">
+            <BoardCanvas board={board} size={size} winLine={winLine} interactive={canInteract} onCellClick={handleCellClick} />
           </div>
 
           <div className="text-sm">

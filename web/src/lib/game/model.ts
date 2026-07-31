@@ -63,6 +63,28 @@ export function isDraw(board: Board): boolean {
   return board.every((c) => c !== 0);
 }
 
+/** Same scan as checkWinner, but returns the actual winning cells (for highlighting) or null. */
+export function getWinningLine(board: Board, size: number, winLength: number): number[] | null {
+  for (let r = 0; r < size; r++) {
+    for (let c = 0; c < size; c++) {
+      const player = board[r * size + c];
+      if (player === 0) continue;
+      for (const [dr, dc] of LINE_DIRS) {
+        const cells = [r * size + c];
+        let rr = r + dr;
+        let cc = c + dc;
+        while (rr >= 0 && rr < size && cc >= 0 && cc < size && board[rr * size + cc] === player) {
+          cells.push(rr * size + cc);
+          if (cells.length >= winLength) return cells;
+          rr += dr;
+          cc += dc;
+        }
+      }
+    }
+  }
+  return null;
+}
+
 /** All winLength-cell windows still open for `player` (no opposing mark inside), weighted by fill count. */
 function heuristicScore(board: Board, size: number, winLength: number): number {
   let score = 0;

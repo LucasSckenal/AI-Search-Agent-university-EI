@@ -1,12 +1,12 @@
 "use client";
 
 import { useEffect, useMemo, useState } from "react";
+import dynamic from "next/dynamic";
 import { Field, Icon } from "@/components/shared/Panel";
 import { Toggle } from "@/components/shared/Toggle";
 import { Select } from "@/components/shared/Select";
 import { Modal } from "@/components/shared/Modal";
 import { SearchStatsTable } from "@/components/shared/SearchStatsTable";
-import { MazeBoard } from "@/components/maze/MazeBoard";
 import {
   MazeState,
   CellKind,
@@ -15,8 +15,20 @@ import {
   createEmptyMaze,
   generatePerfectMaze,
   generateRandomMaze,
+  isConnected,
 } from "@/lib/maze/model";
 import { search, AlgorithmId, ALGORITHM_LABELS, SearchResult } from "@/lib/core/search";
+
+// WebGL only exists in the browser; loading it as a dynamic, SSR-disabled component keeps the
+// three.js/react-three-fiber bundle out of the server render entirely.
+const MazeCanvas = dynamic(() => import("@/components/maze/Maze3D").then((m) => m.MazeCanvas), {
+  ssr: false,
+  loading: () => (
+    <div className="flex h-[560px] w-[720px] items-center justify-center text-xs text-on-surface-variant">
+      Carregando labirinto 3D…
+    </div>
+  ),
+});
 
 type GenMode = "perfect" | "random" | "empty";
 type Brush = CellKind | "start" | "goal";
@@ -105,8 +117,8 @@ export default function LabirintoPage() {
   }, [result, revealCount]);
 
   const path = useMemo(() => {
-    if (!result || !showPath) return new Set<number>();
-    return new Set(result.path);
+    if (!result || !showPath) return [] as number[];
+    return result.path;
   }, [result, showPath]);
 
   const handleCellClick = (i: number) => {
@@ -122,6 +134,9 @@ export default function LabirintoPage() {
         if (i === next.start || i === next.goal) return m;
         next.cells[i] = brush as CellKind;
       }
+      // Refuse any edit that would seal off the only path between start and goal - the maze
+      // must always stay solvable.
+      if (!isConnected(next)) return m;
       return next;
     });
     setResult(null);
@@ -130,7 +145,6 @@ export default function LabirintoPage() {
     setShowPath(false);
   };
 
-  const cellPx = cols > 35 ? 18 : cols > 25 ? 26 : cols > 15 ? 34 : 42;
   const status = playing ? "ANIMANDO" : result ? (result.found ? "CONCLUÍDO" : "SEM SOLUÇÃO") : "PRONTO";
 
   return (
@@ -138,7 +152,8 @@ export default function LabirintoPage() {
       {/* Left floating sidebar: problem + brush + run controls */}
       <aside className="glass fixed left-6 top-20 bottom-20 z-40 flex w-[290px] flex-col gap-3 overflow-y-auto rounded-3xl p-4 shadow-2xl">
         <p className="text-[11px] leading-relaxed text-on-surface-variant">
-          Início (lavanda) até o objetivo (laranja) num grid com paredes e lama (custo 5).
+          Início (lavanda) até o objetivo (laranja) num grid com paredes e lama (custo 5). Arraste
+          com o botão esquerdo para pintar, botão direito para girar a câmera.
         </p>
 
         <div className="flex flex-col gap-2.5">
@@ -187,10 +202,10 @@ export default function LabirintoPage() {
           </div>
           <div className="mt-2.5 flex flex-wrap gap-x-3 gap-y-1 text-[11px]">
             {[
-              ["#e1e2ec", "Parede"],
-              ["#afc6ff", "Explorado"],
-              ["#ffb77b", "Lama"],
-              ["#cebdff", "Caminho"],
+              ["#4a4f5c", "Parede"],
+              ["#5b6070", "Explorado"],
+              ["#8a5a2e", "Lama"],
+              ["#f5f6fa", "Caminho"],
             ].map(([color, label]) => (
               <div key={label} className="flex items-center gap-1.5">
                 <span className="h-2 w-2 rounded-full" style={{ background: color, boxShadow: `0 0 6px ${color}66` }} />
@@ -239,8 +254,10 @@ export default function LabirintoPage() {
 
       {/* Center visualization */}
       <div className="flex h-full w-full items-center justify-center overflow-auto py-24 pl-[338px] pr-8">
-        <div className="glass rounded-2xl p-4 shadow-2xl">
-          <MazeBoard maze={maze} visited={visited} path={path} cellPx={cellPx} interactive onCellClick={handleCellClick} />
+        <div className="glass overflow-hidden rounded-2xl p-2 shadow-2xl">
+          <div className="h-[560px] w-[720px] overflow-hidden rounded-xl">
+            <MazeCanvas maze={maze} visited={visited} path={path} interactive onCellClick={handleCellClick} />
+          </div>
         </div>
       </div>
 

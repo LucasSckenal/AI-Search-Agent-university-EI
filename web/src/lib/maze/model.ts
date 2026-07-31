@@ -107,7 +107,9 @@ export function generateRandomMaze(
   return generatePerfectMaze(rows, cols, rng);
 }
 
-function isConnected(maze: MazeState): boolean {
+/** True if `goal` is reachable from `start` moving orthogonally through non-wall cells. Exported
+ *  so callers (e.g. manual grid editing) can refuse an edit that would seal off the only path. */
+export function isConnected(maze: MazeState): boolean {
   const seen = new Array(maze.cells.length).fill(false);
   const q = [maze.start];
   seen[maze.start] = true;
