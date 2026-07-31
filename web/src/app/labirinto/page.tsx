@@ -437,11 +437,12 @@ export default function LabirintoPage() {
 
       {raceOpen && raceResults && (
         <div
-          className="fixed inset-0 z-[100] flex items-center justify-center bg-black/80 p-6"
+          className="fixed inset-0 z-[100] overflow-y-auto bg-black/80 p-6"
           onClick={() => setRaceOpen(false)}
         >
+          <div className="flex min-h-full items-center justify-center">
           <div
-            className="panel-flat flex max-h-[92vh] w-[min(1400px,96vw)] flex-col overflow-hidden rounded-3xl shadow-2xl"
+            className="panel-flat flex max-h-[90vh] w-[min(1400px,96vw)] flex-col overflow-hidden rounded-3xl shadow-2xl"
             onClick={(e) => e.stopPropagation()}
           >
             <div className="flex items-center justify-between border-b border-outline-variant px-6 py-4">
@@ -513,7 +514,7 @@ export default function LabirintoPage() {
                         </span>
                       )}
                     </div>
-                    <div className="h-[220px] w-full">
+                    <div className="h-[190px] w-full">
                       <MazeCanvas
                         maze={maze}
                         visited={raceVisited}
@@ -525,6 +526,7 @@ export default function LabirintoPage() {
                 );
               })}
             </div>
+          </div>
           </div>
         </div>
       )}
