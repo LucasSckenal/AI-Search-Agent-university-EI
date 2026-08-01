@@ -33,6 +33,29 @@ O workflow em [`.github/workflows/ci.yml`](.github/workflows/ci.yml) roda typech
 testes rápidos, a suíte completa do cubo (incluindo a BFS exaustiva) e o build a cada push/PR,
 então nada disso fica só "de memória" antes de entregar.
 
+## Deploy (Vercel)
+
+O app não tem variáveis de ambiente, banco de dados ou API routes — é só o build estático do
+Next.js — então o deploy na Vercel é essencialmente zero-config, com um único ajuste: o projeto
+Next.js vive em `web/`, não na raiz do repositório.
+
+1. [Importe o repositório](https://vercel.com/new) na Vercel.
+2. Em **Build & Development Settings**, defina **Root Directory** = `web`. A partir daí a Vercel
+   detecta o framework Next.js automaticamente (build/output/install command não precisam de
+   override).
+3. Deploy — nenhuma variável de ambiente a configurar.
+
+Via CLI, o equivalente é rodar a partir de `web/`:
+
+```bash
+cd web
+npx vercel        # preview
+npx vercel --prod # produção
+```
+
+Cada push em `main`/`master` também roda o [workflow de CI](.github/workflows/ci.yml) (typecheck,
+lint, testes e build); vale manter esse pipeline verde antes de promover um deploy para produção.
+
 ## Design
 
 A interface segue o design system **"Obsidian Flux"** criado no [Stitch](https://stitch.withgoogle.com)
