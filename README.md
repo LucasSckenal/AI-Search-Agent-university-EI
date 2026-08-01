@@ -1,7 +1,15 @@
-# Agentes Inteligentes de Busca — Labirinto, Cubo Mágico e Jogo da Velha
+# Agentes Inteligentes de Busca
 
-Aplicação web interativa (Next.js + TypeScript) com três agentes inteligentes, cada um resolvendo
-um problema computacional clássico por meio de algoritmos de busca. Cada módulo permite
+**Labirinto · Cubo Mágico · Jogo da Velha**
+
+![Next.js](https://img.shields.io/badge/Next.js-16-000000?style=flat&logo=nextdotjs&logoColor=white)
+![React](https://img.shields.io/badge/React-19-149ECA?style=flat&logo=react&logoColor=white)
+![TypeScript](https://img.shields.io/badge/TypeScript-5-3178C6?style=flat&logo=typescript&logoColor=white)
+![Three.js](https://img.shields.io/badge/Three.js-r185-000000?style=flat&logo=threedotjs&logoColor=white)
+![Tailwind CSS](https://img.shields.io/badge/Tailwind_CSS-4-06B6D4?style=flat&logo=tailwindcss&logoColor=white)
+
+Aplicação web interativa (Next.js + TypeScript + Three.js) com três agentes inteligentes, cada um
+resolvendo um problema computacional clássico por meio de algoritmos de busca. Cada módulo permite
 configurar o problema e o algoritmo, executar e visualizar a busca passo a passo, e comparar o
 desempenho entre algoritmos diferentes na mesma instância do problema.
 
@@ -10,6 +18,21 @@ desempenho entre algoritmos diferentes na mesma instância do problema.
 | [`/labirinto`](web/src/app/labirinto/page.tsx) | Labirinto (grid com paredes e terreno) | Não-informada e informada | BFS, DFS, UCS, Gulosa, A* |
 | [`/cubo`](web/src/app/cubo/page.tsx) | Cubo Mágico 2x2 (Pocket Cube) | Espaço de estados | BFS, UCS, Gulosa, A* |
 | [`/jogo`](web/src/app/jogo/page.tsx) | Jogo da Velha N×N | Adversária (jogos) | Minimax, Minimax + poda Alfa-Beta |
+
+## Sumário
+
+- [Como executar](#como-executar)
+- [Deploy (Vercel)](#deploy-vercel)
+- [Stack técnica](#stack-técnica)
+- [Design](#design)
+- [Estrutura do projeto](#estrutura-do-projeto)
+- [a) Descrição e contextualização dos problemas](#a-descrição-e-contextualização-dos-problemas)
+- [b) Algoritmos implementados](#b-algoritmos-implementados)
+- [c) Parâmetros configuráveis](#c-parâmetros-configuráveis)
+- [d) Demonstração do funcionamento](#d-demonstração-do-funcionamento-roteiro-sugerido-para-o-vídeo)
+- [e) Apresentação e análise da solução encontrada](#e-apresentação-e-análise-da-solução-encontrada)
+- [f) Comparação de resultados entre algoritmos](#f-comparação-de-resultados-entre-algoritmos)
+- [g) Dificuldades encontradas e possíveis melhorias](#g-dificuldades-encontradas-e-possíveis-melhorias)
 
 ## Como executar
 
@@ -55,6 +78,18 @@ npx vercel --prod # produção
 
 Cada push em `main`/`master` também roda o [workflow de CI](.github/workflows/ci.yml) (typecheck,
 lint, testes e build); vale manter esse pipeline verde antes de promover um deploy para produção.
+
+## Stack técnica
+
+| Camada | Tecnologia |
+| --- | --- |
+| Framework | [Next.js 16](https://nextjs.org) (App Router, Turbopack) |
+| Linguagem | TypeScript em modo estrito |
+| UI | React 19, [Tailwind CSS v4](https://tailwindcss.com) |
+| Visualização 3D | [Three.js](https://threejs.org) via [react-three-fiber](https://r3f.docs.pmnd.rs) + [drei](https://github.com/pmndrs/drei) |
+| Testes | [`tsx`](https://github.com/privatenumber/tsx) executando scripts de asserção simples, sem framework de teste — ver [`web/test/`](web/test) |
+| CI | GitHub Actions ([`.github/workflows/ci.yml`](.github/workflows/ci.yml)) |
+| Design | Sistema "Obsidian Flux", gerado no [Stitch](https://stitch.withgoogle.com) — ver seção seguinte |
 
 ## Design
 
