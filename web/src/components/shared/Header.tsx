@@ -1,5 +1,6 @@
 "use client";
 
+import Image from "next/image";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 
@@ -17,8 +18,9 @@ export function Header() {
   return (
     <header className="glass-strong fixed left-6 right-6 top-4 z-50 flex h-14 items-center justify-between rounded-2xl px-4 shadow-lg">
       <Link href="/" className="flex min-w-0 items-center gap-2.5">
-        <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-xl bg-primary text-[11px] font-bold text-on-primary">
-          IA
+        {/* alt="" - decorative: the page title text right next to it already conveys the same info */}
+        <span className="flex h-8 w-8 shrink-0 items-center justify-center overflow-hidden rounded-xl">
+          <Image src="/logo-mark.png" alt="" width={32} height={32} className="h-full w-full object-cover" priority />
         </span>
         <span className="truncate text-sm font-medium tracking-tight text-on-surface">{activeTitle}</span>
       </Link>
