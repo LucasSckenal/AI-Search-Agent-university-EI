@@ -168,46 +168,16 @@ export default function JogoPage() {
           </p>
         </div>
 
-        <div className="flex flex-col gap-3">
-          <h3 className="text-[11px] font-semibold uppercase tracking-wider text-on-surface-variant/70">
-            Configuração
-          </h3>
-          <div className="rounded-xl bg-white/5 px-3 py-2 text-[12px] text-on-surface-variant">
-            Tabuleiro <b className="font-mono text-on-surface">{size}×{size}</b>, K=
-            <b className="font-mono text-on-surface">{winLength}</b>, profundidade{" "}
-            <b className="font-mono text-on-surface">{maxDepth === maxDepthCap ? "completa" : maxDepth}</b>
-          </div>
-          <button className="btn btn-secondary" onClick={() => setAdvancedOpen(true)}>
-            <Icon name="tune" className="text-[16px]" /> Parâmetros avançados
-          </button>
-        </div>
+        <button className="btn btn-secondary" onClick={() => setAdvancedOpen(true)}>
+          <Icon name="tune" className="text-[16px]" /> Parâmetros ({size}x{size}, K={winLength}, {aiAlgo === "alphabeta" ? "Alfa-Beta" : "Minimax"})
+        </button>
 
         <div className="mt-auto flex flex-col gap-3 border-t border-white/5 pt-4">
-          <Field label="Modo">
-            <Select
-              value={mode}
-              onChange={(v) => setMode(v as Mode)}
-              options={[
-                { value: "human", label: "Jogar contra o agente (você é X)" },
-                { value: "auto", label: "Agente vs. Agente (automático)" },
-              ]}
-            />
-          </Field>
-          <Field label="Algoritmo do agente">
-            <Select
-              value={aiAlgo}
-              onChange={(v) => setAiAlgo(v as AiAlgo)}
-              options={[
-                { value: "alphabeta", label: "Minimax com poda Alfa-Beta" },
-                { value: "minimax", label: "Minimax puro" },
-              ]}
-            />
-          </Field>
           <button className="btn btn-primary" onClick={resetBoard}>
-            ↻ Reiniciar partida
+            <Icon name="refresh" className="text-[16px]" /> Reiniciar partida
           </button>
           <button className="btn btn-secondary" onClick={runComparison} disabled={over || thinking}>
-            ⇄ Comparar Minimax vs. Alfa-Beta
+            <Icon name="compare_arrows" className="text-[16px]" /> Comparar Minimax vs. Alfa-Beta
           </button>
         </div>
       </Sidebar>
@@ -276,8 +246,28 @@ export default function JogoPage() {
         open={advancedOpen}
         onClose={() => setAdvancedOpen(false)}
         title="Parâmetros avançados"
-        subtitle="Forma do tabuleiro e profundidade de busca"
+        subtitle="Modo, algoritmo do agente, forma do tabuleiro e profundidade de busca"
       >
+        <Field label="Modo">
+          <Select
+            value={mode}
+            onChange={(v) => setMode(v as Mode)}
+            options={[
+              { value: "human", label: "Jogar contra o agente (você é X)" },
+              { value: "auto", label: "Agente vs. Agente (automático)" },
+            ]}
+          />
+        </Field>
+        <Field label="Algoritmo do agente">
+          <Select
+            value={aiAlgo}
+            onChange={(v) => setAiAlgo(v as AiAlgo)}
+            options={[
+              { value: "alphabeta", label: "Minimax com poda Alfa-Beta" },
+              { value: "minimax", label: "Minimax puro" },
+            ]}
+          />
+        </Field>
         <Field label={`Tamanho do tabuleiro: ${size}x${size}`}>
           <input
             type="range"

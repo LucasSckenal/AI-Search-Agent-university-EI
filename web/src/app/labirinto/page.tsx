@@ -320,44 +320,19 @@ export default function LabirintoPage() {
     <div className="relative h-full w-full overflow-hidden">
       {/* Left floating sidebar: problem + brush + run controls */}
       <Sidebar>
-        <p className="text-[11px] leading-relaxed text-on-surface-variant">
-          Início (lavanda) até o objetivo (laranja) num grid com paredes e lama (custo 5). Arraste
-          com o botão esquerdo para pintar, botão direito para girar a câmera.
-        </p>
-
-        <div className="flex flex-col gap-2.5">
-          <h3 className="text-[11px] font-semibold uppercase tracking-wider text-on-surface-variant/70">
-            Configuração
-          </h3>
-          <Field label="Heurística (Gulosa / A*)">
-            <Select
-              value={heuristic}
-              onChange={(v) => setHeuristic(v as HeuristicId)}
-              options={[
-                // Manhattan overestimates the real cost once diagonal shortcuts exist (a diagonal
-                // step covers 2 units of Manhattan distance for only √2× the cost of one orthogonal
-                // step) - not admissible there, so it's hidden instead of quietly returning
-                // suboptimal paths. See the README's heuristic-consistency section.
-                ...(allowDiagonal ? [] : [{ value: "manhattan", label: "Manhattan" }]),
-                { value: "euclidean", label: "Euclidiana" },
-                { value: "chebyshev", label: "Chebyshev" },
-                { value: "octile", label: "Octile" },
-              ]}
-            />
-          </Field>
-          {allowDiagonal && (
-            <p className="text-[11px] leading-relaxed text-on-surface-variant">
-              Manhattan fica indisponível com movimento diagonal ligado: ela superestima a
-              distância real quando existe atalho diagonal, o que quebra a garantia de otimalidade
-              do A*.
-            </p>
-          )}
-          <button className="btn btn-secondary" onClick={() => setAdvancedOpen(true)}>
-            <Icon name="tune" className="text-[16px]" /> Parâmetros avançados
-          </button>
+        <div>
+          <h1 className="text-sm font-semibold tracking-tight">Labirinto</h1>
+          <p className="mt-1 text-[11px] leading-relaxed text-on-surface-variant">
+            Início (lavanda) até o objetivo (laranja) num grid com paredes e lama (custo 5).
+            Arraste com o botão esquerdo para pintar, botão direito para girar a câmera.
+          </p>
         </div>
 
-        <div className="border-t border-white/5 pt-3">
+        <button className="btn btn-secondary" onClick={() => setAdvancedOpen(true)}>
+          <Icon name="tune" className="text-[16px]" /> Parâmetros ({rows}×{cols}, {ALGORITHM_LABELS[algorithm].split(" ")[0]})
+        </button>
+
+        <div>
           <h3 className="mb-2 text-[11px] font-semibold uppercase tracking-wider text-on-surface-variant/70">
             Edição do grid
           </h3>
@@ -396,16 +371,6 @@ export default function LabirintoPage() {
         </div>
 
         <div className="mt-auto flex flex-col gap-2.5 border-t border-white/5 pt-3">
-          <Field label="Algoritmo">
-            <Select
-              value={algorithm}
-              onChange={(v) => setAlgorithm(v as AlgorithmId)}
-              options={ALGOS.map((a) => ({ value: a, label: ALGORITHM_LABELS[a] }))}
-            />
-          </Field>
-          <Field label={`Velocidade: ${speed} células/quadro`}>
-            <input type="range" min={1} max={200} value={speed} onChange={(e) => setSpeed(Number(e.target.value))} />
-          </Field>
           <button className="btn btn-primary" onClick={() => runAlgorithm()}>
             <Icon name="play_arrow" /> Executar e animar
           </button>
@@ -497,9 +462,43 @@ export default function LabirintoPage() {
         open={advancedOpen}
         onClose={() => setAdvancedOpen(false)}
         title="Parâmetros avançados"
-        subtitle="Forma e geração do labirinto"
+        subtitle="Algoritmo, heurística e forma do labirinto"
       >
-        <Toggle checked={allowDiagonal} onChange={setAllowDiagonal} label="Movimento diagonal" />
+        <Field label="Algoritmo">
+          <Select
+            value={algorithm}
+            onChange={(v) => setAlgorithm(v as AlgorithmId)}
+            options={ALGOS.map((a) => ({ value: a, label: ALGORITHM_LABELS[a] }))}
+          />
+        </Field>
+        <Field label={`Velocidade: ${speed} células/quadro`}>
+          <input type="range" min={1} max={200} value={speed} onChange={(e) => setSpeed(Number(e.target.value))} />
+        </Field>
+        <div className="border-t border-outline-variant pt-4">
+          <Toggle checked={allowDiagonal} onChange={setAllowDiagonal} label="Movimento diagonal" />
+        </div>
+        <Field label="Heurística (Gulosa / A*)">
+          <Select
+            value={heuristic}
+            onChange={(v) => setHeuristic(v as HeuristicId)}
+            options={[
+              // Manhattan overestimates the real cost once diagonal shortcuts exist (a diagonal
+              // step covers 2 units of Manhattan distance for only √2× the cost of one orthogonal
+              // step) - not admissible there, so it's hidden instead of quietly returning
+              // suboptimal paths. See the README's heuristic-consistency section.
+              ...(allowDiagonal ? [] : [{ value: "manhattan", label: "Manhattan" }]),
+              { value: "euclidean", label: "Euclidiana" },
+              { value: "chebyshev", label: "Chebyshev" },
+              { value: "octile", label: "Octile" },
+            ]}
+          />
+        </Field>
+        {allowDiagonal && (
+          <p className="text-[11px] leading-relaxed text-on-surface-variant">
+            Manhattan fica indisponível com movimento diagonal ligado: ela superestima a distância
+            real quando existe atalho diagonal, o que quebra a garantia de otimalidade do A*.
+          </p>
+        )}
         <Field label={`Linhas: ${rows}`}>
           <input type="range" min={7} max={35} value={rows} onChange={(e) => setRows(Number(e.target.value))} />
         </Field>
