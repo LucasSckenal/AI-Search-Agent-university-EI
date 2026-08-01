@@ -23,6 +23,7 @@ import {
   isConnected,
 } from "@/lib/maze/model";
 import { search, AlgorithmId, ALGORITHM_LABELS, SearchResult } from "@/lib/core/search";
+import { effectiveBranchingFactor } from "@/lib/core/metrics";
 
 // WebGL only exists in the browser; loading it as a dynamic, SSR-disabled component keeps the
 // three.js/react-three-fiber bundle out of the server render entirely.
@@ -402,6 +403,12 @@ export default function LabirintoPage() {
             ["Custo", result.found ? result.cost.toFixed(2) : "—"],
             ["Expandidos", result.nodesExpanded.toLocaleString("pt-BR")],
             ["Gerados", result.nodesGenerated.toLocaleString("pt-BR")],
+            [
+              "b*",
+              result.found
+                ? (effectiveBranchingFactor(result.nodesGenerated, result.actions.length)?.toFixed(2) ?? "—")
+                : "—",
+            ],
             ["Tempo", `${result.timeMs.toFixed(1)}ms`],
             ["Algoritmo", ALGORITHM_LABELS[result.algorithm].split(" ")[0]],
           ]}

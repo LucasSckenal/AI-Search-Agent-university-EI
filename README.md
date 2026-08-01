@@ -170,20 +170,33 @@ algoritmo do agente (Minimax puro ou com poda Alfa-Beta).
 Exemplo real capturado ao resolver o mesmo embaralhamento de 4 movimentos do cubo (`U R F' R2`)
 com os quatro algoritmos disponíveis:
 
-| Algoritmo | Ótimo? | Custo | Nós expandidos | Nós gerados | Tempo |
-| --- | --- | --- | --- | --- | --- |
-| BFS | sim | 4 | 266 | 1.557 | 12,2 ms |
-| UCS | sim | 4 | 1.324 | 7.402 | 34,9 ms |
-| Gulosa | **não** | **1074** | 12.688 | 73.001 | 311,1 ms |
-| A* | sim | 4 | **57** | 337 | **1,0 ms** |
+| Algoritmo | Ótimo? | Custo | Nós expandidos | Nós gerados | b* | Tempo |
+| --- | --- | --- | --- | --- | --- | --- |
+| BFS | sim | 4 | 266 | 1.557 | 6,00 | 12,2 ms |
+| UCS | sim | 4 | 1.324 | 7.402 | 9,01 | 34,9 ms |
+| Gulosa | **não** | **1074** | 12.688 | 73.001 | 1,01 | 311,1 ms |
+| A* | sim | 4 | **57** | 337 | **3,99** | **1,0 ms** |
+
+A coluna **b\*** é o *fator de ramificação efetivo* (Russell & Norvig, eq. 3.14): o fator de
+ramificação que uma árvore uniforme da mesma profundidade precisaria ter para gerar esse número de
+nós — quanto mais perto de 1, mais a busca andou "em linha reta" até a solução. É a métrica padrão
+da literatura para colocar um número único na qualidade de uma heurística, em vez de só comparar
+contagens brutas de nós entre algoritmos com profundidades de solução diferentes. Calculado em
+[`src/lib/core/metrics.ts`](web/src/lib/core/metrics.ts) e validado em
+[`test/metrics.test.ts`](web/test/metrics.test.ts) contra o exemplo do próprio livro-texto
+(N=52, d=5 → b\*≈1,92) e contra uma árvore uniforme construída à mão.
 
 Leituras interessantes para o relatório: (1) BFS, UCS e A* concordam no custo ótimo (4), como
 esperado — todos são ótimos com custo de aresta uniforme; (2) A* expande ~4,7× menos nós que BFS
-graças à heurística guiando a busca; (3) UCS, apesar de ótimo, expande *mais* nós que BFS neste
-caso — com custos de aresta todos iguais a 1, o desempate da fila de prioridade do UCS é menos
-eficiente que o FIFO puro do BFS; (4) a Gulosa, por ignorar o custo acumulado, encontra uma
-solução válida porém **270× mais longa que a ótima**, evidenciando por que otimalidade não pode
-ser assumida sem custo no critério de prioridade.
+graças à heurística guiando a busca, e seu b\*=3,99 confirma isso quantitativamente — quase metade
+do branching factor real do problema (9 movimentos possíveis por estado no 2x2); (3) UCS, apesar
+de ótimo, expande *mais* nós que BFS neste caso — com custos de aresta todos iguais a 1, o
+desempate da fila de prioridade do UCS é menos eficiente que o FIFO puro do BFS, e seu b\*≈9 (igual
+ao branching factor real) mostra que ele não está podando *nada* além do que a busca cega já faria;
+(4) a Gulosa, por ignorar o custo acumulado, encontra uma solução válida porém **270× mais longa
+que a ótima** — e seu b\* baixíssimo (1,01) é justamente o porquê: a heurística a guiou "eficientemente"
+por um caminho muito mais longo, ilustrando que b\* mede eficiência de busca, não qualidade da
+solução — as duas métricas precisam ser lidas juntas.
 
 No **Jogo da Velha** 3×3, comparando Minimax puro vs. Alfa-Beta a partir do tabuleiro vazio:
 

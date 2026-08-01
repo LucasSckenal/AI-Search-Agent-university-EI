@@ -36,6 +36,7 @@ const CubeCanvas = dynamic(() => import("@/components/cube/Cube3D").then((m) => 
   ),
 });
 import { search, AlgorithmId, ALGORITHM_LABELS, SearchResult } from "@/lib/core/search";
+import { effectiveBranchingFactor } from "@/lib/core/metrics";
 
 const ALGOS: AlgorithmId[] = ["bfs", "ucs", "greedy", "astar"];
 
@@ -302,6 +303,12 @@ export default function CuboPage() {
             ["Status", result.found ? "OK" : result.truncated ? "limite" : "falhou"],
             ["Movimentos", result.found ? String(result.actions.length) : "—"],
             ["Expandidos", result.nodesExpanded.toLocaleString("pt-BR")],
+            [
+              "b*",
+              result.found
+                ? (effectiveBranchingFactor(result.nodesGenerated, result.actions.length)?.toFixed(2) ?? "—")
+                : "—",
+            ],
             ["Tempo", `${result.timeMs.toFixed(1)}ms`],
             ["Algoritmo", ALGORITHM_LABELS[result.algorithm].split(" ")[0]],
           ]}

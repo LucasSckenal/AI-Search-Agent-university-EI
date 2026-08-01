@@ -1,4 +1,5 @@
 import { AlgorithmId, ALGORITHM_LABELS, SearchResult } from "@/lib/core/search";
+import { effectiveBranchingFactor } from "@/lib/core/metrics";
 
 export const ALGO_COLOR: Record<AlgorithmId, string> = {
   bfs: "#afc6ff",
@@ -17,7 +18,7 @@ export function SearchStatsTable<S, A>({ results }: { results: SearchResult<S, A
 
   return (
     <div className="overflow-x-auto">
-      <table className="w-full min-w-[560px] border-collapse text-xs">
+      <table className="w-full min-w-[640px] border-collapse text-xs">
         <thead>
           <tr className="border-b border-white/10 text-on-surface-variant">
             <th className="px-2 py-2 text-left font-medium">Algoritmo</th>
@@ -25,6 +26,9 @@ export function SearchStatsTable<S, A>({ results }: { results: SearchResult<S, A
             <th className="px-2 py-2 text-right font-medium">Custo</th>
             <th className="px-2 py-2 text-right font-medium">Nós expandidos</th>
             <th className="px-2 py-2 text-right font-medium">Nós gerados</th>
+            <th className="px-2 py-2 text-right font-medium" title="Fator de ramificação que uma árvore uniforme da mesma profundidade precisaria ter para gerar esse número de nós. Quanto mais perto de 1, mais a heurística podou a busca.">
+              b*
+            </th>
             <th className="px-2 py-2 text-right font-medium">Tempo (ms)</th>
           </tr>
         </thead>
@@ -53,6 +57,9 @@ export function SearchStatsTable<S, A>({ results }: { results: SearchResult<S, A
               </td>
               <td className="px-2 py-2 text-right font-mono">{r.nodesExpanded.toLocaleString("pt-BR")}</td>
               <td className="px-2 py-2 text-right font-mono">{r.nodesGenerated.toLocaleString("pt-BR")}</td>
+              <td className="px-2 py-2 text-right font-mono">
+                {r.found ? (effectiveBranchingFactor(r.nodesGenerated, r.actions.length)?.toFixed(2) ?? "—") : "—"}
+              </td>
               <td className="px-2 py-2 text-right font-mono">{r.timeMs.toFixed(2)}</td>
             </tr>
           ))}
