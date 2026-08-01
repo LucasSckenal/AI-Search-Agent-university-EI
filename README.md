@@ -103,6 +103,104 @@ busca em grafo (mantêm um conjunto de visitados, evitando reexpandir estados):
   já pago. Rápida, mas não garante otimalidade.
 - **A\*** — fronteira de prioridade por `f(n) = g(n) + h(n)`. Ótima quando `h` é admissível.
 
+### Complexidade teórica × fator de ramificação real de cada problema
+
+| Algoritmo | Tempo | Espaço | Ótimo? |
+| --- | --- | --- | --- |
+| BFS | O(b^d) | O(b^d) | Sim, se custo de aresta uniforme |
+| DFS | O(b^m) | O(b·m) | Não |
+| UCS | O(b^(1+⌊C\*/ε⌋)) | O(b^(1+⌊C\*/ε⌋)) | Sim |
+| Gulosa | O(b^m) no pior caso | O(b^m) no pior caso | Não |
+| A\* | O(b^d) no pior caso, muito menos com boa heurística | O(b^d) | Sim, se `h` admissível (e aqui, consistente — ver abaixo) |
+
+(`b` = fator de ramificação do problema, `d` = profundidade da solução ótima, `m` = profundidade
+máxima da árvore de busca, `C*` = custo da solução ótima, `ε` = menor custo de aresta positivo.)
+
+Essas fórmulas são abstratas até se conectar `b` a um número real de cada problema — é aí que a
+tabela vira previsão testável, não só teoria:
+
+- **Labirinto**: `b` ≤ 4 (movimento ortogonal) ou ≤ 8 (diagonal ligado), tipicamente bem menor na
+  prática por causa das paredes. Com um labirinto pequeno (`d` de dezenas de passos), mesmo BFS em
+  O(b^d) é tratável — por isso o app usa grids de até 35×45, não maiores.
+- **Cubo Mágico**: `b` = 9 (2x2, 9 movimentos possíveis: `U R F` e variantes) ou 18 (3x3, seis
+  faces × 3 variantes). Essa é exatamente a razão de existir a coluna b\* na seção f) — ela mede o
+  fator de ramificação que o algoritmo *realmente* enfrentou, então comparar b (teórico, fixo) com
+  b\* (medido, por algoritmo) mostra quantitativamente quanto cada heurística podou: no exemplo da
+  seção f), UCS mede b\*≈9,01 (praticamente igual ao `b`=9 teórico — ele quase não poda nada além do
+  que a busca cega já faria) enquanto A\* mede b\*≈3,99 (reduz o fator de ramificação *percebido*
+  para menos da metade, sem mudar o `b`=9 real do problema, que é fixo pela definição do cubo).
+- **Jogo da Velha**: `b` não é constante — começa em `N²` (tabuleiro vazio) e decresce 1 a cada
+  jogada até 1, o que é exatamente por que a árvore completa (`O(b^m)` com `m` até `N²`) só é
+  tratável para `N`=3 (9! = 362.880 folhas no pior caso) e precisa de poda Alfa-Beta ou avaliação
+  heurística de profundidade limitada para `N` maior — ver seção c).
+
+### Admissibilidade não basta: por que as heurísticas aqui também precisam ser consistentes
+
+O texto de otimalidade do A\* costuma citar só admissibilidade (`h(n)` nunca superestima o custo
+real até o objetivo), mas essa garantia formal — Russell & Norvig, seção 3.5.2 — só vale sem
+ressalvas para busca em *árvore*. A implementação em
+[`search.ts`](web/src/lib/core/search.ts) (bloco UCS/Gulosa/A\*, por volta das linhas 170-197) é
+busca em *grafo* com lista fechada
+(`visited`) que **nunca reabre um nó já expandido** (`if (visited.has(key)) continue`, sem
+comparar se o novo caminho é mais barato) — a forma clássica de implementar A\* eficientemente,
+mas que só preserva a otimalidade se `h` for **consistente** (monotônica): `h(n) ≤ custo(n, n') +
+h(n')` para toda aresta `(n, n')`. Consistência implica admissibilidade, mas a volta não vale — e é
+exatamente esse buraco que causou um bug real, encontrado escrevendo esta seção:
+
+**Bug encontrado e corrigido**: a heurística Manhattan (`|Δlinha| + |Δcoluna|`) é consistente para
+movimento só-ortogonal, mas deixa de ser *admissível* quando movimento diagonal está ligado — um
+passo diagonal cobre `Δlinha=Δcoluna=1` (2 unidades de distância Manhattan) por apenas `√2×` o
+custo de um passo ortogonal, então Manhattan **superestima** o custo real sempre que existe atalho
+diagonal. Isso não é só teórico: testando A\* com Manhattan+diagonal contra UCS (que é ótimo
+independente de heurística) em 500 labirintos aleatórios, A\* voltou com um caminho pior que o
+ótimo em **93 casos (18,6%)**. A correção, em
+[`labirinto/page.tsx`](web/src/app/labirinto/page.tsx): a opção "Manhattan" some do seletor de
+heurística sempre que o movimento diagonal está ligado (e troca automaticamente para Octile se
+já estivesse selecionada), com uma nota explicando o motivo na interface. Um teste de regressão em
+[`test/maze.test.ts`](web/test/maze.test.ts) verifica, em 8 labirintos aleatórios × 3 heurísticas,
+que as heurísticas ainda oferecidas com diagonal ligado (Euclidiana, Chebyshev, Octile) sempre
+batem o custo ótimo do UCS.
+
+Prova rápida de que as outras se mantêm consistentes (com ou sem diagonal, já que o custo por
+célula é sempre ≥ 1):
+
+- **Euclidiana** (`√(Δlinha² + Δcoluna²)`): é a distância geométrica em linha reta entre duas
+  células. Como o custo de qualquer passo (ortogonal ou diagonal) é sempre ≥ ao comprimento
+  euclidiano desse passo (custo mínimo 1 por unidade de terreno, e a diagonal já é ponderada por
+  `√2`), a desigualdade triangular garante `h(n) ≤ custo(n,n') + h(n')` diretamente — a heurística
+  geométrica clássica que nunca precisa de ajuste por direção de movimento permitida.
+- **Chebyshev** (`max(|Δlinha|, |Δcoluna|)`): decresce no máximo 1 por passo, em qualquer uma das 8
+  direções — e todo passo custa ≥ 1 (ortogonal) ou ≥ `√2` (diagonal), ambos ≥ 1. Fica consistente
+  mas *subestima* mais que o necessário com diagonal ligado (assume que diagonal custa o mesmo que
+  ortogonal) — por isso o app também oferece Octile, que corrige exatamente essa lacuna.
+- **Octile** (`max(Δlinha,Δcoluna) + (√2-1)·min(Δlinha,Δcoluna)`): a heurística "certa" para
+  movimento de 8 direções com diagonal custando `√2×` o ortogonal — o mesmo argumento de Chebyshev,
+  mas contabilizando o custo real de cada diagonal ao invés de assumir custo 1.
+
+No **Cubo Mágico**, a heurística `⌈peças fora do lugar / k⌉` (`k` = `piecesPerMove(size)`, 4 no
+2x2) é consistente pelo mesmo argumento usado para provar admissibilidade, só que aplicado
+*aresta a aresta* em vez de ao problema todo: cada movimento corrige no máximo `k` peças, então
+`misplaced(n) - misplaced(n') ≤ k` para qualquer aresta `(n,n')`. Usando a propriedade
+`⌈(a-k)/k⌉ = ⌈a/k⌉ - 1` para `a,k` inteiros positivos, isso dá `h(n) - h(n') ≤ 1`, e como todo
+movimento custa exatamente 1 (métrica *half-turn*), `h(n) ≤ 1 + h(n') = custo(n,n') + h(n')` —
+exatamente a definição de consistência. Diferente do labirinto, aqui não há uma "opção perigosa"
+paralela (o cubo só tem essa heurística), então não havia bug a encontrar — mas vale registrar a
+prova, já que "admissível" sozinho (o que a interface já dizia) não seria suficiente para justificar
+a otimalidade do A\* do jeito que ele está implementado.
+
+**Por que o Cubo Mágico não oferece DFS**: é uma decisão deliberada, não uma omissão. O espaço de
+estados do cubo é um grafo denso e cheio de ciclos (qualquer sequência de movimentos pode ser
+desfeita) — DFS puro em busca-em-grafo ainda termina (a lista de visitados evita laços infinitos),
+mas sem limite de profundidade ele mergulha em ramos arbitrariamente longos antes de sequer
+considerar voltar, o que na prática significa "encontra uma solução absurdamente comprida, se
+encontrar alguma antes do limite de segurança de nós". No labirinto DFS é interessante justamente
+por *mostrar* esse comportamento ruim de forma legível (um caminho zigue-zague visível no grid);
+no cubo o mesmo comportamento só produziria uma sequência de dezenas de milhares de movimentos sem
+nenhum valor pedagógico a mais que o labirinto já não desse. A alternativa real para tornar DFS
+útil aqui seria *iterative deepening* (IDDFS/IDA\*) — descartada pelo mesmo motivo do IDA\* completo
+citado na seção g): o ganho de espaço O(bd) não compensa a implementação extra para um cubo onde
+A\* já resolve embaralhamentos rasos em poucos milissegundos.
+
 Para o **Jogo da Velha**, o algoritmo é outro (busca adversária), implementado em
 [`src/lib/game/model.ts`](web/src/lib/game/model.ts):
 

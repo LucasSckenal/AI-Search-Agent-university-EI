@@ -126,6 +126,16 @@ export default function LabirintoPage() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [rows, cols, genMode]);
 
+  // Manhattan is inadmissible once diagonal shortcuts exist (see the Select's options above) - if
+  // the user turns diagonal movement on while it's selected, fall back to Octile (its diagonal-
+  // aware counterpart) instead of silently letting A* run with a broken optimality guarantee.
+  useEffect(() => {
+    if (allowDiagonal && heuristic === "manhattan") {
+      // eslint-disable-next-line react-hooks/set-state-in-effect -- keeps the heuristic valid whenever diagonal movement is toggled on
+      setHeuristic("octile");
+    }
+  }, [allowDiagonal, heuristic]);
+
   const runAlgorithm = (algo: AlgorithmId = algorithm) => {
     const problem = buildMazeProblem(maze, { allowDiagonal, heuristic });
     const res = search(problem, algo, { maxNodes: 300_000 });
@@ -324,13 +334,24 @@ export default function LabirintoPage() {
               value={heuristic}
               onChange={(v) => setHeuristic(v as HeuristicId)}
               options={[
-                { value: "manhattan", label: "Manhattan" },
+                // Manhattan overestimates the real cost once diagonal shortcuts exist (a diagonal
+                // step covers 2 units of Manhattan distance for only √2× the cost of one orthogonal
+                // step) - not admissible there, so it's hidden instead of quietly returning
+                // suboptimal paths. See the README's heuristic-consistency section.
+                ...(allowDiagonal ? [] : [{ value: "manhattan", label: "Manhattan" }]),
                 { value: "euclidean", label: "Euclidiana" },
                 { value: "chebyshev", label: "Chebyshev" },
                 { value: "octile", label: "Octile" },
               ]}
             />
           </Field>
+          {allowDiagonal && (
+            <p className="text-[11px] leading-relaxed text-on-surface-variant">
+              Manhattan fica indisponível com movimento diagonal ligado: ela superestima a
+              distância real quando existe atalho diagonal, o que quebra a garantia de otimalidade
+              do A*.
+            </p>
+          )}
           <button className="btn btn-secondary" onClick={() => setAdvancedOpen(true)}>
             <Icon name="tune" className="text-[16px]" /> Parâmetros avançados
           </button>
