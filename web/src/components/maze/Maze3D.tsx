@@ -120,18 +120,33 @@ function PathTube({ maze, path }: { maze: MazeState; path: number[] }) {
   );
 }
 
+/** Visual indicator for keyboard focus - the canvas has no native focus ring of its own, so
+ *  without this arrow-key navigation would be invisible and useless. */
+function FocusRing({ x, z }: { x: number; z: number }) {
+  // y must clear the tallest floor tile top surface (glow tiles: FLOOR_HEIGHT + 0.05 = 0.19) or
+  // it renders hidden inside the solid tile mesh instead of floating visibly above it.
+  return (
+    <mesh position={[x, 0.22, z]} rotation={[-Math.PI / 2, 0, 0]}>
+      <ringGeometry args={[0.36, 0.46, 24]} />
+      <meshBasicMaterial color="#afc6ff" transparent opacity={0.95} depthTest={false} />
+    </mesh>
+  );
+}
+
 function Scene({
   maze,
   visited,
   path,
   interactive,
   onCellClick,
+  focusIndex,
 }: {
   maze: MazeState;
   visited: Set<number>;
   path: number[];
   interactive: boolean;
   onCellClick?: (index: number) => void;
+  focusIndex?: number | null;
 }) {
   const cells = useMemo(() => {
     const out: { x: number; z: number; index: number; isWall: boolean; isMud: boolean }[] = [];
@@ -147,6 +162,8 @@ function Scene({
     }
     return out;
   }, [maze]);
+
+  const focused = focusIndex != null ? cells[focusIndex] : undefined;
 
   return (
     <>
@@ -169,6 +186,7 @@ function Scene({
         />
       ))}
       <PathTube maze={maze} path={path} />
+      {focused && <FocusRing x={focused.x} z={focused.z} />}
     </>
   );
 }
@@ -181,6 +199,7 @@ export function MazeCanvas({
   onCellClick,
   controls = true,
   view = "iso",
+  focusIndex,
 }: {
   maze: MazeState;
   visited?: Set<number>;
@@ -192,6 +211,8 @@ export function MazeCanvas({
   /** "top" gives a near-overhead, flat map-like read (used by the race grid for legibility at
    *  small size); "iso" is the default corner view used by the main interactive maze. */
   view?: "iso" | "top";
+  /** Cell index to highlight as the keyboard-navigation cursor (see labirinto/page.tsx). */
+  focusIndex?: number | null;
 }) {
   const maxDim = Math.max(maze.rows, maze.cols);
   const dist = maxDim * 0.85 + 4;
@@ -204,7 +225,14 @@ export function MazeCanvas({
       gl={{ antialias: true, alpha: true }}
       onContextMenu={(e) => e.preventDefault()}
     >
-      <Scene maze={maze} visited={visited ?? new Set()} path={path ?? []} interactive={interactive} onCellClick={onCellClick} />
+      <Scene
+        maze={maze}
+        visited={visited ?? new Set()}
+        path={path ?? []}
+        interactive={interactive}
+        onCellClick={onCellClick}
+        focusIndex={focusIndex}
+      />
       {controls && (
         <OrbitControls
           enablePan={false}

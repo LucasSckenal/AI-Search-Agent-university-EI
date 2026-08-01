@@ -62,6 +62,12 @@ export default function LabirintoPage() {
   const [playing, setPlaying] = useState(false);
   const [showPath, setShowPath] = useState(false);
 
+  // Keyboard operability for the grid: the maze paint interaction was previously mouse/touch-only
+  // (drag-to-paint over a WebGL canvas has no native keyboard equivalent). Arrow keys move a
+  // highlighted "cursor" cell (rendered by Maze3D as a ring - see focusIndex), Enter/Space applies
+  // the current brush to it, same as a click.
+  const [focusIndex, setFocusIndex] = useState<number | null>(null);
+
   // Algorithm race: all 5 algorithms run on the same maze and animate simultaneously in real
   // time, so the difference in nodes explored shows up directly as a difference in finish time.
   const [raceOpen, setRaceOpen] = useState(false);
@@ -90,6 +96,7 @@ export default function LabirintoPage() {
     setRevealCount(0);
     setShowPath(false);
     setPlaying(false);
+    setFocusIndex(null);
     resetRace();
   };
 
@@ -220,6 +227,38 @@ export default function LabirintoPage() {
     resetRace();
   };
 
+  const handleGridKeyDown = (e: React.KeyboardEvent) => {
+    const i = focusIndex ?? maze.start;
+    const [row, col] = [Math.floor(i / maze.cols), i % maze.cols];
+    let next = i;
+    switch (e.key) {
+      case "ArrowUp":
+        e.preventDefault();
+        if (row > 0) next = i - maze.cols;
+        break;
+      case "ArrowDown":
+        e.preventDefault();
+        if (row < maze.rows - 1) next = i + maze.cols;
+        break;
+      case "ArrowLeft":
+        e.preventDefault();
+        if (col > 0) next = i - 1;
+        break;
+      case "ArrowRight":
+        e.preventDefault();
+        if (col < maze.cols - 1) next = i + 1;
+        break;
+      case "Enter":
+      case " ":
+        e.preventDefault();
+        handleCellClick(i);
+        return;
+      default:
+        return;
+    }
+    setFocusIndex(next);
+  };
+
   const status = playing ? "ANIMANDO" : result ? (result.found ? "CONCLUÍDO" : "SEM SOLUÇÃO") : "PRONTO";
 
   return (
@@ -333,9 +372,25 @@ export default function LabirintoPage() {
       {/* Center visualization */}
       <CanvasStage>
         <CanvasBox width={720} height={560}>
-          <WebGLGate>
-            <MazeCanvas maze={maze} visited={visited} path={path} interactive onCellClick={handleCellClick} />
-          </WebGLGate>
+          <div
+            className="h-full w-full rounded-2xl outline-none focus-visible:ring-2 focus-visible:ring-primary/70"
+            tabIndex={0}
+            role="application"
+            aria-label="Grade do labirinto. Use as setas para mover o cursor e Enter ou espaço para pintar a célula selecionada com o pincel atual."
+            onKeyDown={handleGridKeyDown}
+            onFocus={() => setFocusIndex((f) => f ?? maze.start)}
+          >
+            <WebGLGate>
+              <MazeCanvas
+                maze={maze}
+                visited={visited}
+                path={path}
+                interactive
+                onCellClick={handleCellClick}
+                focusIndex={focusIndex}
+              />
+            </WebGLGate>
+          </div>
         </CanvasBox>
       </CanvasStage>
 

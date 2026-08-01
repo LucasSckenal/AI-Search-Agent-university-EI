@@ -55,6 +55,11 @@ export default function JogoPage() {
   const [lastStats, setLastStats] = useState<MinimaxResult | null>(null);
   const [compare, setCompare] = useState<{ plain: MinimaxResult; pruned: MinimaxResult } | null>(null);
 
+  // Keyboard operability: placing a mark was previously mouse/touch-only (a click on a WebGL
+  // canvas has no native keyboard equivalent). Arrow keys move a highlighted "cursor" cell
+  // (rendered by Game3D as a ring - see focusIndex), Enter/Space places the mark there.
+  const [focusIndex, setFocusIndex] = useState<number | null>(null);
+
   const config: GameConfig = { size, winLength, maxDepth };
   const winner = checkWinner(board, size, winLength);
   const draw = !winner && isDraw(board);
@@ -67,6 +72,7 @@ export default function JogoPage() {
     setLastStats(null);
     setCompare(null);
     setThinking(false);
+    setFocusIndex(null);
   };
 
   useEffect(() => {
@@ -100,6 +106,39 @@ export default function JogoPage() {
     if (board[i] !== 0) return;
     setBoard((b) => applyMove(b, i, HUMAN));
     setCurrent(AI);
+  };
+
+  const handleGridKeyDown = (e: React.KeyboardEvent) => {
+    const i = focusIndex ?? 0;
+    const row = Math.floor(i / size);
+    const col = i % size;
+    let next = i;
+    switch (e.key) {
+      case "ArrowUp":
+        e.preventDefault();
+        if (row > 0) next = i - size;
+        break;
+      case "ArrowDown":
+        e.preventDefault();
+        if (row < size - 1) next = i + size;
+        break;
+      case "ArrowLeft":
+        e.preventDefault();
+        if (col > 0) next = i - 1;
+        break;
+      case "ArrowRight":
+        e.preventDefault();
+        if (col < size - 1) next = i + 1;
+        break;
+      case "Enter":
+      case " ":
+        e.preventDefault();
+        handleCellClick(i);
+        return;
+      default:
+        return;
+    }
+    setFocusIndex(next);
   };
 
   const runComparison = () => {
@@ -176,9 +215,25 @@ export default function JogoPage() {
       {/* Center board */}
       <CanvasStage>
         <CanvasBox width={520} height={520}>
-          <WebGLGate>
-            <BoardCanvas board={board} size={size} winLine={winLine} interactive={canInteract} onCellClick={handleCellClick} />
-          </WebGLGate>
+          <div
+            className="h-full w-full rounded-2xl outline-none focus-visible:ring-2 focus-visible:ring-primary/70"
+            tabIndex={0}
+            role="application"
+            aria-label="Tabuleiro da velha. Use as setas para mover o cursor e Enter ou espaço para jogar na célula selecionada."
+            onKeyDown={handleGridKeyDown}
+            onFocus={() => setFocusIndex((f) => f ?? 0)}
+          >
+            <WebGLGate>
+              <BoardCanvas
+                board={board}
+                size={size}
+                winLine={winLine}
+                interactive={canInteract}
+                onCellClick={handleCellClick}
+                focusIndex={focusIndex}
+              />
+            </WebGLGate>
+          </div>
         </CanvasBox>
 
         <div className="text-sm">

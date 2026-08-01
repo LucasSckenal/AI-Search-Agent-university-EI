@@ -71,6 +71,17 @@ function OMark({ x, y }: { x: number; y: number }) {
   );
 }
 
+/** Visual indicator for keyboard focus - the canvas has no native focus ring of its own, so
+ *  without this arrow-key navigation would be invisible and useless. */
+function FocusRing({ x, y }: { x: number; y: number }) {
+  return (
+    <mesh position={[x, y, 0.02]}>
+      <ringGeometry args={[0.34, 0.42, 24]} />
+      <meshBasicMaterial color="#afc6ff" transparent opacity={0.95} depthTest={false} />
+    </mesh>
+  );
+}
+
 /** The winning line is a real 3D object (a glowing tube through the winning cells), matching the
  *  same "the answer is an object, not just a color" language used for the maze's solved path. */
 function WinLine({ points }: { points: [number, number][] }) {
@@ -110,12 +121,14 @@ function Scene({
   winLine,
   interactive,
   onCellClick,
+  focusIndex,
 }: {
   board: Board;
   size: number;
   winLine: number[] | null;
   interactive: boolean;
   onCellClick?: (index: number) => void;
+  focusIndex?: number | null;
 }) {
   const cells = useMemo(() => {
     const out: { x: number; y: number; index: number; cell: number }[] = [];
@@ -136,6 +149,8 @@ function Scene({
     });
   }, [winLine, size]);
 
+  const focused = focusIndex != null ? cells[focusIndex] : undefined;
+
   return (
     <>
       <ambientLight intensity={1.7} />
@@ -149,6 +164,7 @@ function Scene({
         </group>
       ))}
       <WinLine points={winPoints} />
+      {focused && <FocusRing x={focused.x} y={focused.y} />}
     </>
   );
 }
@@ -159,18 +175,28 @@ export function BoardCanvas({
   winLine,
   interactive = false,
   onCellClick,
+  focusIndex,
 }: {
   board: Board;
   size: number;
   winLine: number[] | null;
   interactive?: boolean;
   onCellClick?: (index: number) => void;
+  /** Cell index to highlight as the keyboard-navigation cursor (see jogo/page.tsx). */
+  focusIndex?: number | null;
 }) {
   const dist = size * 1.3 + 3.4;
 
   return (
     <Canvas camera={{ position: [0, 0, dist], fov: 36 }} gl={{ antialias: true, alpha: true }}>
-      <Scene board={board} size={size} winLine={winLine} interactive={interactive} onCellClick={onCellClick} />
+      <Scene
+        board={board}
+        size={size}
+        winLine={winLine}
+        interactive={interactive}
+        onCellClick={onCellClick}
+        focusIndex={focusIndex}
+      />
     </Canvas>
   );
 }

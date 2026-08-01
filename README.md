@@ -243,3 +243,13 @@ No **Labirinto**, A* consistentemente expande igual ou menos nós que UCS/BFS pa
   padrão, ativável nos Parâmetros avançados do cubo): a lição foi que "mostrar o algoritmo
   pensando" tem que ser avaliado também pelo risco de acessibilidade da técnica de animação
   escolhida, não só pelo efeito visual.
+- **Acessibilidade das grades 3D (auditoria pós-entrega)**: uma auditoria geral do projeto expôs
+  que pintar o labirinto e jogar a velha eram interações só de mouse/touch — clicar numa malha
+  WebGL não tem equivalente nativo de teclado. Adicionamos navegação por setas + Enter/espaço nas
+  duas grades, com um anel 3D (`FocusRing`, em `Maze3D.tsx`/`Game3D.tsx`) marcando a célula
+  focada, já que o canvas não tem indicador de foco nativo. O `Select` customizado também ganhou o
+  padrão ARIA de listbox (`role`, `aria-expanded`, `aria-activedescendant`, navegação por setas).
+  Limitação que permanece: sem uma estrutura DOM paralela por célula, não dá para expor uma grade
+  ARIA completa (`role="grid"`/`gridcell`) sobre um canvas WebGL — o que existe é operável por
+  teclado e anunciado via `aria-label`, mas um leitor de tela não consegue "varrer" cada célula
+  individualmente como faria numa tabela HTML real.
