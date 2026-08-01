@@ -131,6 +131,12 @@ function BatchBarChart({ summaries, winnerAlgo }: { summaries: AlgorithmBatchSum
             >
               {ALGORITHM_LABELS[r.algorithm].split(" (")[0]}
             </text>
+            {/* Error whisker drawn *behind* the bar: the mean±std range is uncertainty around
+                an already-solid value, so only the tail past the bar's tip needs to show - the
+                half that falls inside the filled bar is redundant ink once the bar covers it. */}
+            <line x1={errX0} y1={y + 8} x2={errX1} y2={y + 8} stroke="var(--on-surface-variant)" strokeWidth={1} opacity={0.6} />
+            <line x1={errX0} y1={y + 4} x2={errX0} y2={y + 12} stroke="var(--on-surface-variant)" strokeWidth={1} opacity={0.6} />
+            <line x1={errX1} y1={y + 4} x2={errX1} y2={y + 12} stroke="var(--on-surface-variant)" strokeWidth={1} opacity={0.6} />
             <rect
               x={labelWidth}
               y={y}
@@ -138,13 +144,10 @@ function BatchBarChart({ summaries, winnerAlgo }: { summaries: AlgorithmBatchSum
               height={16}
               rx={4}
               fill={color}
-              opacity={isWinner ? 1 : 0.7}
+              opacity={isWinner ? 1 : 0.85}
               stroke={isWinner ? "var(--on-surface)" : "none"}
               strokeWidth={isWinner ? 1.5 : 0}
             />
-            <line x1={errX0} y1={y + 8} x2={errX1} y2={y + 8} stroke="var(--on-surface)" strokeWidth={1.5} opacity={0.7} />
-            <line x1={errX0} y1={y + 4} x2={errX0} y2={y + 12} stroke="var(--on-surface)" strokeWidth={1.5} opacity={0.7} />
-            <line x1={errX1} y1={y + 4} x2={errX1} y2={y + 12} stroke="var(--on-surface)" strokeWidth={1.5} opacity={0.7} />
             <text
               x={Math.max(labelWidth + barLen, errX1) + 8}
               y={y + 12}
