@@ -37,6 +37,9 @@ const CubeCanvas = dynamic(() => import("@/components/cube/Cube3D").then((m) => 
 });
 import { search, AlgorithmId, ALGORITHM_LABELS, SearchResult } from "@/lib/core/search";
 import { effectiveBranchingFactor } from "@/lib/core/metrics";
+import { seededRng, randomSeed } from "@/lib/core/rng";
+import { summarizeBatch, AlgorithmBatchSummary } from "@/lib/core/batch";
+import { BatchStatsTable } from "@/components/shared/BatchStatsTable";
 
 const ALGOS: AlgorithmId[] = ["bfs", "ucs", "greedy", "astar"];
 
@@ -75,8 +78,21 @@ export default function CuboPage() {
   const [exploreStep, setExploreStep] = useState(0);
   const [exploring, setExploring] = useState(false);
 
+  // Reproducibility: off by default. When enabled, the scramble draws from a seeded PRNG instead
+  // of Math.random, so a specific seed number can be cited in a report and regenerate the exact
+  // same scramble later.
+  const [useSeed, setUseSeed] = useState(false);
+  const [seed, setSeed] = useState(() => randomSeed());
+
+  // Monte Carlo batch comparison: a single scramble is anecdotal; this runs every algorithm over N
+  // independent random scrambles at the current depth and aggregates mean/std per metric.
+  const [batchOpen, setBatchOpen] = useState(false);
+  const [batchRunning, setBatchRunning] = useState(false);
+  const [batchTrials, setBatchTrials] = useState(10);
+  const [batchSummaries, setBatchSummaries] = useState<AlgorithmBatchSummary[] | null>(null);
+
   const doScramble = (forSize: CubeSize = size) => {
-    const moves = generateScramble(scrambleLen, forSize);
+    const moves = generateScramble(scrambleLen, forSize, useSeed ? seededRng(seed) : Math.random);
     const cube = applyMoves(solvedCube(forSize), moves);
     setScramble(moves);
     setStartCube(cube);
@@ -139,6 +155,30 @@ export default function CuboPage() {
       setBusy(false);
       setPlaying(false);
       setCompareOpen(true);
+    }, 20);
+  };
+
+  const runBatch = () => {
+    setBatchOpen(true);
+    setBatchRunning(true);
+    setBatchSummaries(null);
+    setTimeout(() => {
+      const rng = useSeed ? seededRng(seed) : Math.random;
+      const perAlgo: Record<AlgorithmId, SearchResult<CubeState, MoveId>[]> = {
+        bfs: [],
+        dfs: [],
+        ucs: [],
+        greedy: [],
+        astar: [],
+      };
+      for (let t = 0; t < batchTrials; t++) {
+        const moves = generateScramble(scrambleLen, size, rng);
+        const cube = applyMoves(solvedCube(size), moves);
+        const problem = buildCubeProblem(cube, size);
+        for (const a of ALGOS) perAlgo[a].push(search(problem, a, { maxNodes }));
+      }
+      setBatchSummaries(ALGOS.map((a) => summarizeBatch(a, perAlgo[a])));
+      setBatchRunning(false);
     }, 20);
   };
 
@@ -251,6 +291,9 @@ export default function CuboPage() {
           </div>
           <button className="btn btn-secondary" onClick={runComparison} disabled={busy || exploring}>
             <Icon name="compare_arrows" className="text-[16px]" /> Comparar algoritmos
+          </button>
+          <button className="btn btn-secondary" onClick={runBatch} disabled={busy || exploring}>
+            <Icon name="query_stats" className="text-[16px]" /> Comparação em lote (N execuções)
           </button>
         </div>
       </Sidebar>
@@ -383,6 +426,27 @@ export default function CuboPage() {
           </p>
         </div>
         <div className="border-t border-outline-variant pt-4">
+          <Toggle checked={useSeed} onChange={setUseSeed} label="Reprodutibilidade (seed fixo)" />
+          <p className="mt-1.5 text-[11px] leading-relaxed text-on-surface-variant">
+            Desligado: cada embaralhamento é aleatório, como antes. Ligado: o mesmo número de seed
+            sempre gera o mesmo embaralhamento — cite o seed no relatório para que os resultados
+            sejam reproduzíveis por quem reler.
+          </p>
+          {useSeed && (
+            <div className="mt-2 flex items-center gap-2">
+              <input
+                type="number"
+                value={seed}
+                onChange={(e) => setSeed(Number(e.target.value) || 0)}
+                className="w-full"
+              />
+              <button className="btn btn-secondary !px-2.5" onClick={() => setSeed(randomSeed())} title="Novo seed aleatório">
+                <Icon name="casino" className="text-[16px]" />
+              </button>
+            </div>
+          )}
+        </div>
+        <div className="border-t border-outline-variant pt-4">
           <h4 className="mb-1.5 text-[11px] font-semibold uppercase tracking-wider text-on-surface-variant/70">
             Heurística (Gulosa / A*)
           </h4>
@@ -417,6 +481,34 @@ export default function CuboPage() {
         wide
       >
         <SearchStatsTable results={compareResults} />
+      </Modal>
+
+      <Modal
+        open={batchOpen}
+        onClose={() => setBatchOpen(false)}
+        title="Comparação em lote (Monte Carlo)"
+        subtitle="Cada algoritmo roda em N embaralhamentos aleatórios independentes"
+        wide
+      >
+        <div className="flex flex-wrap items-end gap-3">
+          <Field label={`Execuções por algoritmo: ${batchTrials}`}>
+            <input
+              type="range"
+              min={5}
+              max={20}
+              value={batchTrials}
+              onChange={(e) => setBatchTrials(Number(e.target.value))}
+            />
+          </Field>
+          <button className="btn btn-primary" onClick={runBatch} disabled={batchRunning}>
+            <Icon name="play_arrow" className="text-[16px]" /> {batchRunning ? "Rodando…" : "Rodar lote"}
+          </button>
+        </div>
+        {batchRunning ? (
+          <p className="text-xs text-on-surface-variant">Rodando {batchTrials} embaralhamentos por algoritmo…</p>
+        ) : (
+          <BatchStatsTable summaries={batchSummaries ?? []} />
+        )}
       </Modal>
     </div>
   );

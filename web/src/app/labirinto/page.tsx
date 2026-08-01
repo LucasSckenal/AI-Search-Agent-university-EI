@@ -24,6 +24,9 @@ import {
 } from "@/lib/maze/model";
 import { search, AlgorithmId, ALGORITHM_LABELS, SearchResult } from "@/lib/core/search";
 import { effectiveBranchingFactor } from "@/lib/core/metrics";
+import { seededRng, randomSeed } from "@/lib/core/rng";
+import { summarizeBatch, AlgorithmBatchSummary } from "@/lib/core/batch";
+import { BatchStatsTable } from "@/components/shared/BatchStatsTable";
 
 // WebGL only exists in the browser; loading it as a dynamic, SSR-disabled component keeps the
 // three.js/react-three-fiber bundle out of the server render entirely.
@@ -53,6 +56,20 @@ export default function LabirintoPage() {
   const [speed, setSpeed] = useState(40); // cells revealed per tick
   const [advancedOpen, setAdvancedOpen] = useState(false);
   const [compareOpen, setCompareOpen] = useState(false);
+
+  // Reproducibility: off by default (plain Math.random, like before). When enabled, maze
+  // generation draws from a seeded PRNG instead, so a specific seed number can be cited in a
+  // report and regenerate the exact same maze later - "this instance" becomes a citable thing.
+  const [useSeed, setUseSeed] = useState(false);
+  const [seed, setSeed] = useState(() => randomSeed());
+
+  // Monte Carlo batch comparison: a single instance is anecdotal (a different random maze could
+  // flip which algorithm "looks better"); this runs every algorithm over N independent random
+  // instances and aggregates mean/std per metric instead.
+  const [batchOpen, setBatchOpen] = useState(false);
+  const [batchRunning, setBatchRunning] = useState(false);
+  const [batchTrials, setBatchTrials] = useState(20);
+  const [batchSummaries, setBatchSummaries] = useState<AlgorithmBatchSummary[] | null>(null);
 
   // Deterministic placeholder for SSR (avoids a hydration mismatch); the mount effect below
   // immediately replaces it with a real randomly generated maze on the client.
@@ -87,9 +104,10 @@ export default function LabirintoPage() {
   };
 
   const regenerate = (mode: GenMode = genMode) => {
+    const rng = useSeed ? seededRng(seed) : Math.random;
     let next: MazeState;
-    if (mode === "perfect") next = generatePerfectMaze(rows, cols);
-    else if (mode === "random") next = generateRandomMaze(rows, cols, wallDensity);
+    if (mode === "perfect") next = generatePerfectMaze(rows, cols, rng);
+    else if (mode === "random") next = generateRandomMaze(rows, cols, wallDensity, rng);
     else next = createEmptyMaze(rows, cols);
     setMaze(next);
     setResult(null);
@@ -127,6 +145,32 @@ export default function LabirintoPage() {
     setShowPath(true);
     setPlaying(false);
     setCompareOpen(true);
+  };
+
+  const runBatch = () => {
+    setBatchOpen(true);
+    setBatchRunning(true);
+    setBatchSummaries(null);
+    setTimeout(() => {
+      const rng = useSeed ? seededRng(seed) : Math.random;
+      const perAlgo: Record<AlgorithmId, SearchResult<number, string>[]> = {
+        bfs: [],
+        dfs: [],
+        ucs: [],
+        greedy: [],
+        astar: [],
+      };
+      for (let t = 0; t < batchTrials; t++) {
+        let m: MazeState;
+        if (genMode === "perfect") m = generatePerfectMaze(rows, cols, rng);
+        else if (genMode === "random") m = generateRandomMaze(rows, cols, wallDensity, rng);
+        else m = createEmptyMaze(rows, cols);
+        const problem = buildMazeProblem(m, { allowDiagonal, heuristic });
+        for (const a of ALGOS) perAlgo[a].push(search(problem, a, { maxNodes: 300_000 }));
+      }
+      setBatchSummaries(ALGOS.map((a) => summarizeBatch(a, perAlgo[a])));
+      setBatchRunning(false);
+    }, 20);
   };
 
   const startRace = () => {
@@ -367,6 +411,9 @@ export default function LabirintoPage() {
           <button className="btn btn-secondary" onClick={startRace}>
             <Icon name="flag" className="text-[16px]" /> Corrida entre algoritmos
           </button>
+          <button className="btn btn-secondary" onClick={runBatch}>
+            <Icon name="query_stats" className="text-[16px]" /> Comparação em lote (N execuções)
+          </button>
         </div>
       </Sidebar>
 
@@ -463,6 +510,29 @@ export default function LabirintoPage() {
             />
           </Field>
         )}
+
+        <div className="border-t border-outline-variant pt-4">
+          <Toggle checked={useSeed} onChange={setUseSeed} label="Reprodutibilidade (seed fixo)" />
+          <p className="mt-1.5 text-[11px] leading-relaxed text-on-surface-variant">
+            Desligado: cada geração é aleatória, como antes. Ligado: o mesmo número de seed sempre
+            gera o mesmo labirinto — cite o seed no relatório para que os resultados sejam
+            reproduzíveis por quem reler.
+          </p>
+          {useSeed && (
+            <div className="mt-2 flex items-center gap-2">
+              <input
+                type="number"
+                value={seed}
+                onChange={(e) => setSeed(Number(e.target.value) || 0)}
+                className="w-full"
+              />
+              <button className="btn btn-secondary !px-2.5" onClick={() => setSeed(randomSeed())} title="Novo seed aleatório">
+                <Icon name="casino" className="text-[16px]" />
+              </button>
+            </div>
+          )}
+        </div>
+
         <button
           className="btn btn-primary"
           onClick={() => {
@@ -482,6 +552,34 @@ export default function LabirintoPage() {
         wide
       >
         <SearchStatsTable results={compareResults} />
+      </Modal>
+
+      <Modal
+        open={batchOpen}
+        onClose={() => setBatchOpen(false)}
+        title="Comparação em lote (Monte Carlo)"
+        subtitle="Cada algoritmo roda em N labirintos aleatórios independentes"
+        wide
+      >
+        <div className="flex flex-wrap items-end gap-3">
+          <Field label={`Execuções por algoritmo: ${batchTrials}`}>
+            <input
+              type="range"
+              min={5}
+              max={50}
+              value={batchTrials}
+              onChange={(e) => setBatchTrials(Number(e.target.value))}
+            />
+          </Field>
+          <button className="btn btn-primary" onClick={runBatch} disabled={batchRunning}>
+            <Icon name="play_arrow" className="text-[16px]" /> {batchRunning ? "Rodando…" : "Rodar lote"}
+          </button>
+        </div>
+        {batchRunning ? (
+          <p className="text-xs text-on-surface-variant">Rodando {batchTrials} instâncias por algoritmo…</p>
+        ) : (
+          <BatchStatsTable summaries={batchSummaries ?? []} />
+        )}
       </Modal>
 
       {raceOpen && raceResults && (
