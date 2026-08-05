@@ -8,6 +8,8 @@
 ![Three.js](https://img.shields.io/badge/Three.js-r185-000000?style=flat&logo=threedotjs&logoColor=white)
 ![Tailwind CSS](https://img.shields.io/badge/Tailwind_CSS-4-06B6D4?style=flat&logo=tailwindcss&logoColor=white)
 
+**[Ver demo ao vivo →](https://web-lovat-five-84.vercel.app)**
+
 Aplicação web interativa (Next.js + TypeScript + Three.js) com três agentes inteligentes, cada um
 resolvendo um problema computacional clássico por meio de algoritmos de busca. Cada módulo permite
 configurar o problema e o algoritmo, executar e visualizar a busca passo a passo, e comparar o
@@ -57,6 +59,8 @@ testes rápidos, a suíte completa do cubo (incluindo a BFS exaustiva) e o build
 então nada disso fica só "de memória" antes de entregar.
 
 ## Deploy (Vercel)
+
+**Ao vivo em: [web-lovat-five-84.vercel.app](https://web-lovat-five-84.vercel.app)**
 
 O app não tem variáveis de ambiente, banco de dados ou API routes — é só o build estático do
 Next.js — então o deploy na Vercel é essencialmente zero-config, com um único ajuste: o projeto
