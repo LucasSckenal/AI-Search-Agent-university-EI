@@ -59,8 +59,18 @@ export default function JogoPage() {
   // canvas has no native keyboard equivalent). Arrow keys move a highlighted "cursor" cell
   // (rendered by Game3D as a ring - see focusIndex), Enter/Space places the mark there.
   const [focusIndex, setFocusIndex] = useState<number | null>(null);
+  // The ring should only show up for actual keyboard navigation, not every mouse click - a click
+  // also moves DOM focus onto the board (tabIndex=0), which would otherwise light up the ring for
+  // mouse users too. Mirrors the browser's own :focus-visible heuristic.
+  const [keyboardNav, setKeyboardNav] = useState(false);
 
-  const config: GameConfig = { size, winLength, maxDepth };
+  // Full-depth minimax is only tractable up to 3x3 (9 cells, ~550k nodes worst case - see README).
+  // Past that the branching factor at the root climbs with size^2, so the cap has to shrink hard or
+  // a 6x6 board at "depth 9" explores a tree with a branching factor up to 36 and hangs the tab.
+  const maxDepthCap = size <= 3 ? 9 : size === 4 ? 6 : size === 5 ? 5 : 4;
+  const effectiveMaxDepth = Math.min(maxDepth, maxDepthCap);
+
+  const config: GameConfig = { size, winLength, maxDepth: effectiveMaxDepth };
   const winner = checkWinner(board, size, winLength);
   const draw = !winner && isDraw(board);
   const over = winner !== 0 || draw;
@@ -109,6 +119,7 @@ export default function JogoPage() {
   };
 
   const handleGridKeyDown = (e: React.KeyboardEvent) => {
+    setKeyboardNav(true);
     const i = focusIndex ?? 0;
     const row = Math.floor(i / size);
     const col = i % size;
@@ -153,7 +164,6 @@ export default function JogoPage() {
     }, 20);
   };
 
-  const maxDepthCap = Math.min(size * size, 9);
   const status = thinking ? "PENSANDO" : over ? (winner !== 0 ? "FIM DE JOGO" : "EMPATE") : "SUA VEZ";
   const canInteract = !over && !thinking && mode === "human" && current === HUMAN;
 
@@ -192,6 +202,7 @@ export default function JogoPage() {
             aria-label="Tabuleiro da velha. Use as setas para mover o cursor e Enter ou espaço para jogar na célula selecionada."
             onKeyDown={handleGridKeyDown}
             onFocus={() => setFocusIndex((f) => f ?? 0)}
+            onMouseDown={() => setKeyboardNav(false)}
           >
             <WebGLGate>
               <BoardCanvas
@@ -200,7 +211,7 @@ export default function JogoPage() {
                 winLine={winLine}
                 interactive={canInteract}
                 onCellClick={handleCellClick}
-                focusIndex={focusIndex}
+                focusIndex={keyboardNav ? focusIndex : null}
               />
             </WebGLGate>
           </div>
@@ -224,6 +235,14 @@ export default function JogoPage() {
         <StatsPanel
           cols={2}
           items={[
+            [
+              "Status",
+              lastStats.truncated ? (
+                <span className="text-error">parcial (limite)</span>
+              ) : (
+                "completo"
+              ),
+            ],
             ["Nós explorados", lastStats.nodesExplored.toLocaleString("pt-BR")],
             ["Ramos podados", lastStats.prunedBranches.toLocaleString("pt-BR")],
             ["Tempo", `${lastStats.timeMs.toFixed(2)}ms`],
@@ -290,19 +309,21 @@ export default function JogoPage() {
             onChange={(e) => setWinLength(Number(e.target.value))}
           />
         </Field>
-        <Field label={`Profundidade máxima: ${maxDepth === maxDepthCap ? "completa" : maxDepth}`}>
+        <Field label={`Profundidade máxima: ${effectiveMaxDepth === maxDepthCap ? "completa" : effectiveMaxDepth}`}>
           <input
             type="range"
             min={2}
             max={maxDepthCap}
-            value={Math.min(maxDepth, maxDepthCap)}
+            value={effectiveMaxDepth}
             onChange={(e) => setMaxDepth(Number(e.target.value))}
           />
         </Field>
         <p className="text-[11px] text-on-surface-variant">
           Tabuleiros maiores que 3x3 usam avaliação heurística (linhas abertas) quando o limite de
-          profundidade é atingido, pois a árvore completa é grande demais. Alterar qualquer campo
-          reinicia a partida.
+          profundidade é atingido, pois a árvore completa é grande demais — por isso o limite
+          máximo do slider cai conforme o tabuleiro cresce ({size}x{size} → até {maxDepthCap}{" "}
+          jogadas), evitando que a busca trave a interface. Alterar qualquer campo reinicia a
+          partida.
         </p>
       </Modal>
 

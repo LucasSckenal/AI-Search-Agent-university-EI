@@ -85,6 +85,11 @@ export default function LabirintoPage() {
   // highlighted "cursor" cell (rendered by Maze3D as a ring - see focusIndex), Enter/Space applies
   // the current brush to it, same as a click.
   const [focusIndex, setFocusIndex] = useState<number | null>(null);
+  // The ring should only show up for actual keyboard navigation, not every mouse click - a click
+  // also moves DOM focus onto the grid (tabIndex=0), which would otherwise light up the ring for
+  // mouse users too. Mirrors the browser's own :focus-visible heuristic: keydown while focused
+  // means "keyboard mode", mousedown means "pointer mode", and only the former shows the ring.
+  const [keyboardNav, setKeyboardNav] = useState(false);
 
   // Algorithm race: all 5 algorithms run on the same maze and animate simultaneously in real
   // time, so the difference in nodes explored shows up directly as a difference in finish time.
@@ -283,6 +288,7 @@ export default function LabirintoPage() {
   };
 
   const handleGridKeyDown = (e: React.KeyboardEvent) => {
+    setKeyboardNav(true);
     const i = focusIndex ?? maze.start;
     const [row, col] = [Math.floor(i / maze.cols), i % maze.cols];
     let next = i;
@@ -413,6 +419,7 @@ export default function LabirintoPage() {
             aria-label="Grade do labirinto. Use as setas para mover o cursor e Enter ou espaço para pintar a célula selecionada com o pincel atual."
             onKeyDown={handleGridKeyDown}
             onFocus={() => setFocusIndex((f) => f ?? maze.start)}
+            onMouseDown={() => setKeyboardNav(false)}
           >
             <WebGLGate>
               <MazeCanvas
@@ -421,7 +428,7 @@ export default function LabirintoPage() {
                 path={path}
                 interactive
                 onCellClick={handleCellClick}
-                focusIndex={focusIndex}
+                focusIndex={keyboardNav ? focusIndex : null}
               />
             </WebGLGate>
           </div>

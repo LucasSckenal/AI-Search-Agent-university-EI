@@ -117,6 +117,9 @@ export interface MinimaxResult {
   prunedBranches: number;
   timeMs: number;
   maxDepthReached: number;
+  /** True if the node budget was hit before the tree finished - the move is a best-effort choice
+   *  from partial heuristic evaluation, not a proven-optimal minimax value. */
+  truncated: boolean;
 }
 
 function orderedMoves(board: Board, size: number): number[] {
@@ -136,11 +139,18 @@ function orderedMoves(board: Board, size: number): number[] {
  * Both explore the identical game tree in principle and must return the same optimal move/score -
  * alpha-beta simply visits fewer nodes by cutting branches that can't affect the result.
  */
-export function minimax(board: Board, player: Player, config: GameConfig, useAlphaBeta: boolean): MinimaxResult {
+export function minimax(
+  board: Board,
+  player: Player,
+  config: GameConfig,
+  useAlphaBeta: boolean,
+  maxNodes = 2_000_000
+): MinimaxResult {
   const t0 = performance.now();
   let nodesExplored = 0;
   let prunedBranches = 0;
   let maxDepthReached = 0;
+  let truncated = false;
 
   function recurse(b: Board, p: Player, depth: number, alpha: number, beta: number): number {
     nodesExplored++;
@@ -149,6 +159,13 @@ export function minimax(board: Board, player: Player, config: GameConfig, useAlp
     if (winner === 1) return 10_000 - depth;
     if (winner === -1) return -10_000 + depth;
     if (isDraw(b)) return 0;
+    // Safety valve: a board large enough (or a maxDepth set high enough) that the tree simply
+    // doesn't fit in a browser tab's budget degrades gracefully to a heuristic-only evaluation of
+    // whatever's left, instead of hanging the UI thread - same pattern as search()'s maxNodes.
+    if (nodesExplored > maxNodes) {
+      truncated = true;
+      return heuristicScore(b, config.size, config.winLength);
+    }
     if (depth >= config.maxDepth) return heuristicScore(b, config.size, config.winLength);
 
     const moves = orderedMoves(b, config.size);
@@ -207,5 +224,6 @@ export function minimax(board: Board, player: Player, config: GameConfig, useAlp
     prunedBranches,
     timeMs: performance.now() - t0,
     maxDepthReached,
+    truncated,
   };
 }
