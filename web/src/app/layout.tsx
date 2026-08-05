@@ -14,6 +14,7 @@ const jbmono = JetBrains_Mono({
 });
 
 export const metadata: Metadata = {
+  metadataBase: new URL("https://agentes-busca-ia.vercel.app"),
   title: "Agentes de Busca — Labirinto, Cubo Mágico e Jogo da Velha",
   description:
     "Aplicação interativa para configurar, executar, visualizar e comparar algoritmos clássicos de busca (BFS, DFS, UCS, Gulosa, A*, Minimax e Poda Alfa-Beta).",
