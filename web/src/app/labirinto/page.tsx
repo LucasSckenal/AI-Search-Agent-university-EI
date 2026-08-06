@@ -719,6 +719,7 @@ export default function LabirintoPage() {
                           visited={raceVisited}
                           path={done && r.found ? r.path : []}
                           pathRevealed={done}
+                          detailed={false}
                           controls={false}
                           view="top"
                         />
