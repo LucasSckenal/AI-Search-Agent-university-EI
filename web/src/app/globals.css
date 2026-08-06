@@ -269,3 +269,509 @@ input[type="number"]:hover {
   background: var(--surface-container-highest);
   border-radius: 8px;
 }
+
+/* ================================================================================
+   Home page: hero (WebGL frontier backdrop) + stats strip + module cards + about.
+   ================================================================================ */
+
+/* ---------- hero ---------- */
+.hero-backdrop {
+  opacity: 1;
+}
+.hero-vignette {
+  background: radial-gradient(ellipse 55% 48% at 50% 42%, rgba(9, 11, 17, 0.6), transparent 72%);
+}
+.hero-fade {
+  background: linear-gradient(to bottom, transparent 62%, var(--background) 97%);
+}
+@media (prefers-reduced-motion: reduce) {
+  .hero-backdrop {
+    display: none;
+  }
+}
+
+.hero-kicker {
+  box-shadow: 0 0 24px -6px color-mix(in srgb, var(--primary) 55%, transparent);
+}
+.hero-kicker .dot {
+  box-shadow: 0 0 8px var(--primary);
+}
+
+.hero-headline {
+  filter: drop-shadow(0 0 46px color-mix(in srgb, var(--primary) 45%, transparent));
+}
+
+/* Layers on top of the existing .btn.btn-primary rather than redefining it, so every other
+   primary button in the app is unaffected. */
+.btn-hero-glow {
+  background: linear-gradient(180deg, #c3d5ff, var(--primary));
+  box-shadow: 0 0 0 1px rgba(255, 255, 255, 0.18) inset, 0 12px 36px -8px color-mix(in srgb, var(--primary) 75%, transparent);
+  animation: heroGlowPulse 3.2s ease-in-out infinite;
+}
+@keyframes heroGlowPulse {
+  0%, 100% {
+    box-shadow: 0 0 0 1px rgba(255, 255, 255, 0.18) inset, 0 12px 36px -8px color-mix(in srgb, var(--primary) 75%, transparent);
+  }
+  50% {
+    box-shadow: 0 0 0 1px rgba(255, 255, 255, 0.18) inset, 0 12px 48px -4px color-mix(in srgb, var(--primary) 90%, transparent);
+  }
+}
+
+.hero-readout .blip {
+  animation: blipPulse 1.8s ease-in-out infinite;
+}
+@keyframes blipPulse {
+  0%, 100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.25;
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .btn-hero-glow,
+  .hero-readout .blip,
+  .mini-stat .blip {
+    animation: none;
+  }
+}
+
+/* ---------- stats strip ---------- */
+.stats-strip::before {
+  content: "";
+  display: block;
+  height: 1px;
+  background: linear-gradient(
+    90deg,
+    transparent,
+    color-mix(in srgb, var(--primary) 55%, transparent),
+    color-mix(in srgb, var(--secondary) 55%, transparent),
+    transparent
+  );
+}
+.stat-num {
+  font-variant-numeric: tabular-nums;
+  text-shadow: 0 0 30px color-mix(in srgb, var(--primary) 35%, transparent);
+}
+
+/* ---------- module cards ---------- */
+.cards-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 20px;
+}
+@media (max-width: 860px) {
+  .cards-grid {
+    grid-template-columns: 1fr;
+  }
+}
+
+.card {
+  position: relative;
+  overflow: hidden;
+  background: var(--surface-container);
+  border: 1px solid rgba(255, 255, 255, 0.07);
+  border-radius: 14px;
+  transition: border-color 180ms ease, transform 180ms ease, box-shadow 180ms ease;
+}
+.card::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  padding: 1px;
+  background: linear-gradient(140deg, var(--accent, var(--primary)), transparent 40%);
+  -webkit-mask: linear-gradient(#000 0 0) content-box, linear-gradient(#000 0 0);
+  -webkit-mask-composite: xor;
+  mask-composite: exclude;
+  opacity: 0;
+  transition: opacity 220ms ease;
+}
+.card:hover {
+  transform: translateY(-3px);
+  box-shadow: 0 20px 40px -24px color-mix(in srgb, var(--accent, var(--primary)) 50%, transparent);
+}
+.card:hover::before {
+  opacity: 1;
+}
+.card.maze {
+  --accent: var(--primary);
+}
+.card.cube {
+  --accent: var(--tertiary);
+}
+.card.game {
+  --accent: var(--secondary);
+}
+.card h3 .arrow {
+  transition: transform 180ms ease;
+}
+.card:hover h3 .arrow {
+  transform: translateX(3px);
+  color: var(--accent, var(--primary));
+}
+.card .stat-line .sq {
+  background: var(--accent, var(--primary));
+}
+
+/* ---------- card mini previews ---------- */
+.card-preview {
+  position: relative;
+  height: 104px;
+  border-radius: 10px;
+  background: color-mix(in srgb, var(--surface-container-lowest) 88%, var(--accent, var(--primary)) 4%);
+  border: 1px solid rgba(255, 255, 255, 0.07);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  overflow: hidden;
+}
+.card-preview .badge {
+  position: absolute;
+  left: 8px;
+  top: 8px;
+  z-index: 2;
+  width: 22px;
+  height: 22px;
+  border-radius: 6px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: color-mix(in srgb, var(--accent, var(--primary)) 22%, var(--surface-container-lowest));
+  color: var(--accent, var(--primary));
+}
+@media (prefers-reduced-motion: reduce) {
+  .card-preview * {
+    animation: none !important;
+  }
+}
+
+/* maze preview: mirrors the real labirinto page's own visual language - a couple of dead ends
+   get explored and discarded (red, the same DISCARDED_COLOR the real Maze3D component uses)
+   before the actual route draws itself in full, on a slow, deliberate 6s loop with a proper hold
+   before it resets. Start/goal waypoints pulse throughout, echoing the floating Beacon markers on
+   the real 3D maze. */
+.maze-preview svg {
+  width: 100%;
+  height: 100%;
+}
+.maze-preview .grid-dot {
+  fill: rgba(255, 255, 255, 0.05);
+}
+.maze-preview .wall {
+  fill: color-mix(in srgb, var(--on-surface) 8%, transparent);
+}
+.maze-preview .dead {
+  fill: none;
+  stroke: #c25a55;
+  stroke-width: 1.8;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+.maze-preview .dead1 {
+  stroke-dasharray: 48;
+  stroke-dashoffset: 48;
+  animation: mazeDead1 6s ease-in-out infinite;
+}
+.maze-preview .dead2 {
+  stroke-dasharray: 38;
+  stroke-dashoffset: 38;
+  animation: mazeDead2 6s ease-in-out infinite;
+}
+@keyframes mazeDead1 {
+  0%, 6% {
+    stroke-dashoffset: 48;
+    opacity: 0.85;
+  }
+  18% {
+    stroke-dashoffset: 0;
+    opacity: 0.85;
+  }
+  26%, 100% {
+    stroke-dashoffset: 0;
+    opacity: 0;
+  }
+}
+@keyframes mazeDead2 {
+  0%, 13% {
+    stroke-dashoffset: 38;
+    opacity: 0.85;
+  }
+  26% {
+    stroke-dashoffset: 0;
+    opacity: 0.85;
+  }
+  34%, 100% {
+    stroke-dashoffset: 0;
+    opacity: 0;
+  }
+}
+.maze-preview .route {
+  fill: none;
+  stroke: var(--accent, var(--primary));
+  stroke-width: 2.4;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+  stroke-dasharray: 210;
+  stroke-dashoffset: 210;
+  filter: drop-shadow(0 0 4px color-mix(in srgb, var(--accent, var(--primary)) 70%, transparent));
+  animation: mazeDraw 6s ease-in-out infinite;
+}
+@keyframes mazeDraw {
+  0%, 36% {
+    stroke-dashoffset: 210;
+  }
+  76%, 92% {
+    stroke-dashoffset: 0;
+  }
+  100% {
+    stroke-dashoffset: 210;
+  }
+}
+.maze-preview .spark {
+  fill: var(--accent, var(--primary));
+  offset-path: path("M10,58 L10,38 L38,38 L38,16 L70,16 L70,46 L100,46 L100,10");
+  offset-rotate: 0deg;
+  offset-distance: 0%;
+  animation: mazeSpark 6s ease-in-out infinite;
+}
+@keyframes mazeSpark {
+  0%, 38% {
+    offset-distance: 0%;
+    opacity: 0;
+  }
+  42% {
+    opacity: 1;
+  }
+  76%, 92% {
+    offset-distance: 100%;
+    opacity: 1;
+  }
+  97%, 100% {
+    offset-distance: 100%;
+    opacity: 0;
+  }
+}
+.maze-preview .waypoint {
+  filter: drop-shadow(0 0 3px currentColor);
+}
+.maze-preview .wp-start {
+  fill: var(--primary);
+  color: var(--primary);
+  animation: wpPulse 2.4s ease-in-out infinite;
+}
+.maze-preview .wp-goal {
+  fill: var(--tertiary);
+  color: var(--tertiary);
+  animation: wpPulse 2.4s ease-in-out infinite 0.5s;
+}
+@keyframes wpPulse {
+  0%, 100% {
+    opacity: 0.65;
+    r: 2.4;
+  }
+  50% {
+    opacity: 1;
+    r: 3.2;
+  }
+}
+
+/* cube preview: a small tumbling CSS 3D cube in the exact colors the real Cube3D component uses
+   (see lib/cube/model.ts COLOR_HEX, applied inline per sticker in ModulePreviews.tsx). Note: no
+   `filter` on `.cube` - filter on a transform-style:preserve-3d element breaks Chromium's 3D
+   compositing and collapses the cube to showing a single flat face. */
+.cube-preview .cube-scene {
+  width: 100%;
+  height: 100%;
+  perspective: 320px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+.cube-preview .cube {
+  position: relative;
+  width: 46px;
+  height: 46px;
+  transform-style: preserve-3d;
+  animation: cubeSpin 9s linear infinite;
+}
+.cube-preview .face {
+  position: absolute;
+  inset: 0;
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  grid-template-rows: 1fr 1fr;
+  gap: 2px;
+  padding: 2px;
+  background: var(--surface-container-lowest);
+  border-radius: 3px;
+  box-shadow: 0 0 0 1px rgba(255, 255, 255, 0.06);
+}
+.cube-preview .face span {
+  border-radius: 1.5px;
+}
+.cube-preview .f-front {
+  transform: translateZ(23px);
+}
+.cube-preview .f-back {
+  transform: rotateY(180deg) translateZ(23px);
+}
+.cube-preview .f-right {
+  transform: rotateY(90deg) translateZ(23px);
+}
+.cube-preview .f-left {
+  transform: rotateY(-90deg) translateZ(23px);
+}
+.cube-preview .f-top {
+  transform: rotateX(90deg) translateZ(23px);
+}
+.cube-preview .f-bottom {
+  transform: rotateX(-90deg) translateZ(23px);
+}
+@keyframes cubeSpin {
+  from {
+    transform: rotateX(-26deg) rotateY(0deg);
+  }
+  to {
+    transform: rotateX(-26deg) rotateY(360deg);
+  }
+}
+
+/* tic-tac-toe preview: a quick game playing itself out to a diagonal win, on loop */
+.ttt-preview .board {
+  position: relative;
+  width: 78px;
+  height: 78px;
+}
+.ttt-preview .gline {
+  position: absolute;
+  background: rgba(255, 255, 255, 0.12);
+}
+.ttt-preview .gline.v1 {
+  left: 26px;
+  top: 0;
+  width: 1px;
+  height: 78px;
+}
+.ttt-preview .gline.v2 {
+  left: 52px;
+  top: 0;
+  width: 1px;
+  height: 78px;
+}
+.ttt-preview .gline.h1 {
+  top: 26px;
+  left: 0;
+  height: 1px;
+  width: 78px;
+}
+.ttt-preview .gline.h2 {
+  top: 52px;
+  left: 0;
+  height: 1px;
+  width: 78px;
+}
+.ttt-preview .mark {
+  position: absolute;
+  width: 26px;
+  height: 26px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-family: var(--font-jbmono);
+  font-size: 15px;
+  font-weight: 600;
+  opacity: 0;
+  transform: scale(0.5);
+  animation-duration: 6s;
+  animation-iteration-count: infinite;
+  animation-timing-function: ease-out;
+}
+.ttt-preview .m0 {
+  left: 0;
+  top: 0;
+  color: var(--accent, var(--primary));
+  animation-name: tttX0;
+}
+.ttt-preview .m1 {
+  left: 26px;
+  top: 0;
+  color: var(--on-surface-variant);
+  animation-name: tttO1;
+}
+.ttt-preview .m4 {
+  left: 26px;
+  top: 26px;
+  color: var(--accent, var(--primary));
+  animation-name: tttX4;
+}
+.ttt-preview .m2 {
+  left: 52px;
+  top: 0;
+  color: var(--on-surface-variant);
+  animation-name: tttO2;
+}
+.ttt-preview .m8 {
+  left: 52px;
+  top: 52px;
+  color: var(--accent, var(--primary));
+  animation-name: tttX8;
+}
+.ttt-preview .winline {
+  position: absolute;
+  left: -16px;
+  top: 38px;
+  width: 110px;
+  height: 2px;
+  transform-origin: center;
+  background: var(--accent, var(--primary));
+  filter: drop-shadow(0 0 4px var(--accent, var(--primary)));
+  animation: tttWin 6s ease-out infinite;
+}
+@keyframes tttX0 {
+  0%, 8% { opacity: 0; transform: scale(0.5); }
+  14% { opacity: 1; transform: scale(1); }
+  84% { opacity: 1; transform: scale(1); }
+  92%, 100% { opacity: 0; transform: scale(0.5); }
+}
+@keyframes tttO1 {
+  0%, 18% { opacity: 0; transform: scale(0.5); }
+  24% { opacity: 1; transform: scale(1); }
+  84% { opacity: 1; transform: scale(1); }
+  92%, 100% { opacity: 0; transform: scale(0.5); }
+}
+@keyframes tttX4 {
+  0%, 30% { opacity: 0; transform: scale(0.5); }
+  36% { opacity: 1; transform: scale(1); }
+  84% { opacity: 1; transform: scale(1); }
+  92%, 100% { opacity: 0; transform: scale(0.5); }
+}
+@keyframes tttO2 {
+  0%, 42% { opacity: 0; transform: scale(0.5); }
+  48% { opacity: 1; transform: scale(1); }
+  84% { opacity: 1; transform: scale(1); }
+  92%, 100% { opacity: 0; transform: scale(0.5); }
+}
+@keyframes tttX8 {
+  0%, 54% { opacity: 0; transform: scale(0.5); }
+  60% { opacity: 1; transform: scale(1); }
+  84% { opacity: 1; transform: scale(1); }
+  92%, 100% { opacity: 0; transform: scale(0.5); }
+}
+@keyframes tttWin {
+  0%, 60% { opacity: 0; transform: rotate(45deg) scaleX(0); }
+  70%, 84% { opacity: 1; transform: rotate(45deg) scaleX(1); }
+  92%, 100% { opacity: 0; transform: rotate(45deg) scaleX(1); }
+}
+
+/* ---------- about section ---------- */
+.about-flow-step .flow-num {
+  background: color-mix(in srgb, var(--primary) 16%, transparent);
+  color: var(--primary);
+}
+.about-flow-step:not(:last-child) .flow-line {
+  background: linear-gradient(to bottom, var(--outline-variant), transparent);
+}
+.mini-stat .blip {
+  animation: blipPulse 1.8s ease-in-out infinite;
+}
