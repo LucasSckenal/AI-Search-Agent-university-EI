@@ -790,3 +790,442 @@ input[type="number"]:hover {
 .mini-stat .blip {
   animation: blipPulse 1.8s ease-in-out infinite;
 }
+
+/* ================================================================================
+   /tutorial - a scroll-snap, one-idea-per-screen walkthrough of how the search
+   algorithms actually differ. Deliberately more spacious/typographic than the rest
+   of the app (which stays dense/functional) - this page's whole job is to teach one
+   concept at a time, not host controls.
+   ================================================================================ */
+
+.tut-scroller {
+  height: 100%;
+  overflow-y: auto;
+  scroll-snap-type: y mandatory;
+  scroll-behavior: smooth;
+}
+@media (prefers-reduced-motion: reduce) {
+  .tut-scroller {
+    scroll-snap-type: none;
+  }
+}
+
+.tut-progress {
+  position: fixed;
+  right: 24px;
+  top: 50%;
+  transform: translateY(-50%);
+  z-index: 20;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+.tut-dot {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.18);
+  transition: background 300ms ease, transform 300ms ease;
+}
+.tut-dot.active {
+  background: var(--primary);
+  transform: scale(1.6);
+}
+@media (max-width: 700px) {
+  .tut-progress {
+    display: none;
+  }
+}
+
+.tut-screen {
+  scroll-snap-align: start;
+  min-height: 100%;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  padding: 56px 28px;
+  position: relative;
+  overflow: hidden;
+}
+
+.tut-reveal {
+  opacity: 0;
+  transform: translateY(26px);
+  transition: opacity 900ms cubic-bezier(0.2, 0.7, 0.2, 1), transform 900ms cubic-bezier(0.2, 0.7, 0.2, 1);
+}
+.tut-screen[data-revealed="true"] .tut-reveal {
+  opacity: 1;
+  transform: translateY(0);
+}
+.tut-d1 {
+  transition-delay: 80ms;
+}
+.tut-d2 {
+  transition-delay: 200ms;
+}
+.tut-d3 {
+  transition-delay: 340ms;
+}
+@media (prefers-reduced-motion: reduce) {
+  .tut-reveal {
+    opacity: 1;
+    transform: none;
+    transition: none;
+  }
+}
+
+.tut-kicker {
+  font-size: 12px;
+  font-weight: 600;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  color: var(--on-surface-variant);
+  margin-bottom: 20px;
+}
+.tut-h1 {
+  font-size: clamp(32px, 5.4vw, 72px);
+  font-weight: 700;
+  letter-spacing: -0.035em;
+  line-height: 1.05;
+  max-width: 17ch;
+  text-wrap: balance;
+}
+.tut-sub {
+  margin-top: 20px;
+  font-size: clamp(14.5px, 1.4vw, 18px);
+  color: var(--on-surface-variant);
+  max-width: 42ch;
+  line-height: 1.55;
+  text-wrap: balance;
+}
+
+.tut-scrolldown {
+  position: absolute;
+  bottom: 32px;
+  left: 50%;
+  transform: translateX(-50%);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+  color: var(--on-surface-variant);
+  font-size: 11px;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+.tut-scrolldown .chevron {
+  width: 12px;
+  height: 12px;
+  border-right: 1.5px solid currentColor;
+  border-bottom: 1.5px solid currentColor;
+  transform: rotate(45deg);
+  animation: tutBob 1.8s ease-in-out infinite;
+}
+@keyframes tutBob {
+  0%, 100% { transform: rotate(45deg) translateY(0); }
+  50% { transform: rotate(45deg) translateY(5px); }
+}
+
+/* hero shader backdrop (screen 1) */
+.tut-hero-backdrop {
+  position: absolute;
+  inset: 0;
+  z-index: 0;
+}
+.tut-hero-backdrop canvas {
+  display: block;
+  width: 100%;
+  height: 100%;
+}
+.tut-hero-fade {
+  position: absolute;
+  inset: 0;
+  z-index: 1;
+  background: radial-gradient(ellipse 60% 50% at 50% 45%, rgba(9, 11, 17, 0.55), transparent 70%);
+}
+.tut-hero-content {
+  position: relative;
+  z-index: 2;
+}
+@media (prefers-reduced-motion: reduce) {
+  .tut-hero-backdrop {
+    display: none;
+  }
+}
+
+/* three-module row (screen 2) - reuses the same card previews as the home page. Their
+   .card-preview only fills the available width when its content asks to (the maze's SVG has
+   width:100%; the cube/ttt boards don't) - without forcing width:100% here, align-items:center
+   lets flexbox shrink each one to its own content size instead of the shared column width, which
+   also visibly broke the cube's 3D-transform clipping in the narrower box it shrank to. */
+.tut-trio {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 28px;
+  margin-top: 44px;
+}
+.tut-trio-item {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 12px;
+  width: 176px;
+}
+.tut-trio-item .card-preview {
+  width: 100%;
+}
+.tut-trio-item .tut-trio-name {
+  font-size: 13px;
+  font-weight: 600;
+}
+
+/* blind/informed search: grid-of-dots demos */
+.tut-dual-grids {
+  display: flex;
+  gap: 52px;
+  margin-top: 44px;
+  flex-wrap: wrap;
+  justify-content: center;
+}
+.tut-grid-demo {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 12px;
+}
+.tut-glabel {
+  font-size: 12px;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+.tut-grid-demo.acc-primary .tut-glabel {
+  color: var(--primary);
+}
+.tut-grid-demo.acc-secondary .tut-glabel {
+  color: var(--secondary);
+}
+.tut-gwrap {
+  display: grid;
+  gap: 6px;
+}
+.tut-gdot {
+  width: 12px;
+  height: 12px;
+  border-radius: 3px;
+  background: rgba(255, 255, 255, 0.08);
+}
+.tut-gdot.lit.acc-primary {
+  animation: tutGdotWaveP 2.6s ease-in-out infinite;
+}
+.tut-gdot.lit.acc-secondary {
+  animation: tutGdotWaveS 2.6s ease-in-out infinite;
+}
+@keyframes tutGdotWaveP {
+  0% { background: rgba(255, 255, 255, 0.08); box-shadow: none; }
+  14% { background: var(--primary); box-shadow: 0 0 8px var(--primary); }
+  55% { background: var(--primary); box-shadow: 0 0 8px var(--primary); }
+  100% { background: rgba(255, 255, 255, 0.08); box-shadow: none; }
+}
+@keyframes tutGdotWaveS {
+  0% { background: rgba(255, 255, 255, 0.08); box-shadow: none; }
+  14% { background: var(--secondary); box-shadow: 0 0 8px var(--secondary); }
+  55% { background: var(--secondary); box-shadow: 0 0 8px var(--secondary); }
+  100% { background: rgba(255, 255, 255, 0.08); box-shadow: none; }
+}
+.tut-gcount {
+  margin-top: 2px;
+  font-family: var(--font-jbmono);
+  font-size: 12px;
+  color: var(--on-surface-variant);
+}
+@media (prefers-reduced-motion: reduce) {
+  .tut-gdot.lit {
+    animation: none;
+    background: var(--primary);
+  }
+}
+
+/* live maze (screen 5) - same visual language as ModulePreviews' MazePreview, blown up */
+.tut-maze-hero {
+  width: min(600px, 82vw);
+  margin-top: 40px;
+  filter: drop-shadow(0 20px 60px rgba(175, 198, 255, 0.08));
+}
+.tut-maze-hero svg {
+  width: 100%;
+  height: auto;
+  display: block;
+}
+.tut-maze-dot {
+  fill: rgba(255, 255, 255, 0.06);
+}
+.tut-maze-wall {
+  fill: color-mix(in srgb, var(--on-surface) 8%, transparent);
+}
+.tut-maze-dead {
+  fill: none;
+  stroke: #c25a55;
+  stroke-width: 1.6;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+.tut-maze-dead.d1 {
+  stroke-dasharray: 48;
+  stroke-dashoffset: 48;
+  animation: tutMazeDead1 6s ease-in-out infinite;
+}
+.tut-maze-dead.d2 {
+  stroke-dasharray: 38;
+  stroke-dashoffset: 38;
+  animation: tutMazeDead2 6s ease-in-out infinite;
+}
+@keyframes tutMazeDead1 {
+  0%, 6% { stroke-dashoffset: 48; opacity: 0.85; }
+  18% { stroke-dashoffset: 0; opacity: 0.85; }
+  26%, 100% { stroke-dashoffset: 0; opacity: 0; }
+}
+@keyframes tutMazeDead2 {
+  0%, 13% { stroke-dashoffset: 38; opacity: 0.85; }
+  26% { stroke-dashoffset: 0; opacity: 0.85; }
+  34%, 100% { stroke-dashoffset: 0; opacity: 0; }
+}
+.tut-maze-route {
+  fill: none;
+  stroke: var(--primary);
+  stroke-width: 2.2;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+  stroke-dasharray: 210;
+  stroke-dashoffset: 210;
+  filter: drop-shadow(0 0 5px color-mix(in srgb, var(--primary) 70%, transparent));
+  animation: tutMazeDraw 6s ease-in-out infinite;
+}
+@keyframes tutMazeDraw {
+  0%, 36% { stroke-dashoffset: 210; }
+  76%, 92% { stroke-dashoffset: 0; }
+  100% { stroke-dashoffset: 210; }
+}
+.tut-maze-spark {
+  fill: var(--primary);
+  offset-path: path("M10,58 L10,38 L38,38 L38,16 L70,16 L70,46 L100,46 L100,10");
+  offset-distance: 0%;
+  animation: tutMazeSpark 6s ease-in-out infinite;
+}
+@keyframes tutMazeSpark {
+  0%, 38% { offset-distance: 0%; opacity: 0; }
+  42% { opacity: 1; }
+  76%, 92% { offset-distance: 100%; opacity: 1; }
+  97%, 100% { offset-distance: 100%; opacity: 0; }
+}
+.tut-maze-wp {
+  filter: drop-shadow(0 0 4px currentColor);
+}
+.tut-maze-wp.start {
+  fill: var(--primary);
+  color: var(--primary);
+  animation: tutWpPulse 2.4s ease-in-out infinite;
+}
+.tut-maze-wp.goal {
+  fill: var(--tertiary);
+  color: var(--tertiary);
+  animation: tutWpPulse 2.4s ease-in-out infinite 0.5s;
+}
+@keyframes tutWpPulse {
+  0%, 100% { opacity: 0.65; r: 2.4; }
+  50% { opacity: 1; r: 3.2; }
+}
+
+/* adversarial search: minimax / alpha-beta pruning tree (screen 6) */
+.tut-tree-svg {
+  width: min(440px, 85vw);
+  height: auto;
+  display: block;
+  margin: 40px auto 0;
+}
+.tut-tnode, .tut-tedge, .tut-prune-label {
+  animation-duration: 7s;
+  animation-iteration-count: infinite;
+  animation-timing-function: ease-out;
+  opacity: 0;
+}
+.tut-tnode {
+  fill: var(--secondary);
+}
+.tut-tedge {
+  stroke: rgba(255, 255, 255, 0.28);
+  stroke-width: 1.4;
+  fill: none;
+}
+.tut-tnode.n-root { animation-name: tutNodeRoot; }
+.tut-tedge.e-root { animation-name: tutEdgeRoot; }
+.tut-tnode.n-child { animation-name: tutNodeChild; }
+.tut-tedge.e-child { animation-name: tutEdgeChild; }
+.tut-tnode.n-grand { animation-name: tutNodeGrand; }
+.tut-tnode.n-grand.pruned { animation-name: tutNodeGrandPruned; }
+.tut-tedge.e-child.pruned { animation-name: tutEdgeChildPruned; }
+.tut-prune-label {
+  font-family: var(--font-jbmono);
+  font-size: 8.5px;
+  fill: var(--on-surface-variant);
+  letter-spacing: 0.04em;
+  animation-name: tutPruneLabel;
+}
+@keyframes tutNodeRoot { 0%,10% {opacity:0;} 16%,88% {opacity:1;} 94%,100% {opacity:0;} }
+@keyframes tutEdgeRoot { 0%,14% {opacity:0;} 20%,88% {opacity:1;} 94%,100% {opacity:0;} }
+@keyframes tutNodeChild { 0%,22% {opacity:0;} 28%,88% {opacity:1;} 94%,100% {opacity:0;} }
+@keyframes tutEdgeChild { 0%,26% {opacity:0;} 32%,88% {opacity:1;} 94%,100% {opacity:0;} }
+@keyframes tutNodeGrand { 0%,34% {opacity:0;} 40%,88% {opacity:1;} 94%,100% {opacity:0;} }
+@keyframes tutNodeGrandPruned { 0%,34% {opacity:0;} 40%,56% {opacity:1;} 62%,88% {opacity:.16;} 94%,100% {opacity:0;} }
+@keyframes tutEdgeChildPruned { 0%,26% {opacity:0;} 32%,56% {opacity:1;} 62%,88% {opacity:.14;} 94%,100% {opacity:0;} }
+@keyframes tutPruneLabel { 0%,58% {opacity:0;} 64%,88% {opacity:1;} 94%,100% {opacity:0;} }
+@media (prefers-reduced-motion: reduce) {
+  .tut-tnode, .tut-tedge, .tut-prune-label {
+    animation: none;
+    opacity: 1;
+  }
+  .tut-tnode.n-grand.pruned {
+    opacity: 0.3;
+  }
+}
+
+/* metrics (screen 7) */
+.tut-metrics {
+  display: flex;
+  gap: 56px;
+  margin-top: 44px;
+  flex-wrap: wrap;
+  justify-content: center;
+}
+.tut-metric {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+.tut-metric .tut-metric-num {
+  font-family: var(--font-jbmono);
+  font-size: clamp(30px, 3.8vw, 48px);
+  font-weight: 600;
+  letter-spacing: -0.01em;
+}
+.tut-metric .tut-metric-lbl {
+  font-size: 12px;
+  color: var(--on-surface-variant);
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+}
+.tut-metric.acc-primary .tut-metric-num {
+  color: var(--primary);
+  text-shadow: 0 0 32px color-mix(in srgb, var(--primary) 50%, transparent);
+}
+.tut-metric.acc-secondary .tut-metric-num {
+  color: var(--secondary);
+  text-shadow: 0 0 32px color-mix(in srgb, var(--secondary) 50%, transparent);
+}
+.tut-metric.acc-tertiary .tut-metric-num {
+  color: var(--tertiary);
+  text-shadow: 0 0 32px color-mix(in srgb, var(--tertiary) 50%, transparent);
+}

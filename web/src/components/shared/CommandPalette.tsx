@@ -13,6 +13,7 @@ export function openCommandPalette() {
 
 const PAGES = [
   { href: "/", label: "Início", icon: "home" },
+  { href: "/tutorial", label: "Tutorial", icon: "school" },
   { href: "/labirinto", label: "Labirinto", icon: "grid_view" },
   { href: "/cubo", label: "Cubo Mágico", icon: "view_in_ar" },
   { href: "/jogo", label: "Jogo da Velha", icon: "sports_esports" },

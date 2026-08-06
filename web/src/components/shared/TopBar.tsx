@@ -8,6 +8,7 @@ import { openCommandPalette } from "@/components/shared/CommandPalette";
 
 const LINKS = [
   { href: "/", label: "Início" },
+  { href: "/tutorial", label: "Tutorial" },
   { href: "/labirinto", label: "Labirinto" },
   { href: "/cubo", label: "Cubo Mágico" },
   { href: "/jogo", label: "Jogo da Velha" },

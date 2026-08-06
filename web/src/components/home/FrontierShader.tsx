@@ -41,7 +41,10 @@ void main() {
   vec2 ipos = floor(guv), fpos = fract(guv);
   float n = hash(ipos);
   float edge = fract(u_time * 0.22);
-  float activity = smoothstep(edge - 0.26, edge, dist) * smoothstep(edge + 0.26, edge, dist);
+  // Width of the "ring" the grid-line effect is confined to - was 0.26 (a band ~0.5 wide, nearly
+  // half the visible dist range), which made the grid lines show almost everywhere at once
+  // instead of sweeping past as a thin traveling ring.
+  float activity = smoothstep(edge - 0.06, edge, dist) * smoothstep(edge + 0.06, edge, dist);
 
   float node = 0.0;
   if (n > 0.84) {
