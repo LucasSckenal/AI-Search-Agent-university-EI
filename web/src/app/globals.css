@@ -765,12 +765,9 @@ input[type="number"]:hover {
 }
 
 /* ---------- about section ---------- */
-.about-flow-step .flow-num {
+.flow-num {
   background: color-mix(in srgb, var(--primary) 16%, transparent);
   color: var(--primary);
-}
-.about-flow-step:not(:last-child) .flow-line {
-  background: linear-gradient(to bottom, var(--outline-variant), transparent);
 }
 .mini-stat .blip {
   animation: blipPulse 1.8s ease-in-out infinite;

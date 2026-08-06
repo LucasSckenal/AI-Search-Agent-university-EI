@@ -179,21 +179,14 @@ export default function Home() {
               módulo expõe os parâmetros do problema e do algoritmo, executa a busca com
               estatísticas reais e permite comparar algoritmos na mesma instância.
             </p>
-            <div className="flex flex-col gap-6 sm:flex-row sm:gap-0">
-              {FLOW.map((step, i) => (
-                <div key={step.title} className="about-flow-step relative flex flex-1 gap-3.5 sm:flex-col sm:gap-0">
-                  <div className="flex sm:mb-3 sm:items-center sm:gap-3">
-                    <span className="flow-num flex h-8 w-8 shrink-0 items-center justify-center rounded-lg text-sm">
-                      <Icon name={step.icon} className="text-[17px]" />
-                    </span>
-                    {i < FLOW.length - 1 && (
-                      <span className="flow-line hidden h-px flex-1 sm:ml-3 sm:mr-[-1.5rem] sm:block" />
-                    )}
-                  </div>
-                  <div>
-                    <h3 className="mb-1 text-sm font-semibold text-on-surface">{step.title}</h3>
-                    <p className="text-xs leading-relaxed text-on-surface-variant">{step.desc}</p>
-                  </div>
+            <div className="grid grid-cols-1 gap-7 sm:grid-cols-3 sm:gap-4">
+              {FLOW.map((step) => (
+                <div key={step.title} className="flex flex-col items-center text-center">
+                  <span className="flow-num mb-3 flex h-9 w-9 items-center justify-center rounded-lg">
+                    <Icon name={step.icon} className="text-[18px]" />
+                  </span>
+                  <h3 className="mb-1 text-sm font-semibold text-on-surface">{step.title}</h3>
+                  <p className="text-xs leading-relaxed text-on-surface-variant">{step.desc}</p>
                 </div>
               ))}
             </div>
