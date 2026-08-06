@@ -12,11 +12,29 @@ const WALL_COLOR = "#0d0f16";
 const PATH_COLOR = "#f5f6fa";
 const PATH_HEIGHT = 0.4;
 const PATH_RADIUS = 0.17;
+// Cells the search visited but that aren't part of the final path - a dead end the algorithm
+// backed out of. Distinct from VISITED_COLOR (still-live exploration) so "the AI thought about
+// this and rejected it" reads differently from "the AI is currently looking here".
+const DISCARDED_COLOR = "#c25a55";
+// The last few cells revealed during live playback - a brighter pulse riding just ahead of the
+// steady VISITED_COLOR trail, so the search wave itself reads as moving instead of the whole
+// visited set just popping into a flat gray all at once.
+const FRONTIER_COLOR = "#7e93c9";
+const VISITED_COLOR = "#5b6070";
 
-function floorColor(isStart: boolean, isGoal: boolean, isVisited: boolean, isMud: boolean): string {
+function floorColor(
+  isStart: boolean,
+  isGoal: boolean,
+  isDiscarded: boolean,
+  isFrontier: boolean,
+  isVisited: boolean,
+  isMud: boolean
+): string {
   if (isStart) return "#afc6ff";
   if (isGoal) return "#ffb77b";
-  if (isVisited) return "#5b6070";
+  if (isDiscarded) return DISCARDED_COLOR;
+  if (isFrontier) return FRONTIER_COLOR;
+  if (isVisited) return VISITED_COLOR;
   if (isMud) return "#8a5a2e";
   return "#20232c";
 }
@@ -30,6 +48,8 @@ function Cell({
   isGoal,
   isVisited,
   isMud,
+  isDiscarded,
+  isFrontier,
   interactive,
   onCellClick,
 }: {
@@ -41,6 +61,8 @@ function Cell({
   isGoal: boolean;
   isVisited: boolean;
   isMud: boolean;
+  isDiscarded: boolean;
+  isFrontier: boolean;
   interactive: boolean;
   onCellClick?: (index: number) => void;
 }) {
@@ -63,18 +85,18 @@ function Cell({
     );
   }
 
-  const glow = isStart || isGoal;
-  const color = floorColor(isStart, isGoal, isVisited, isMud);
-  const height = FLOOR_HEIGHT + (glow ? 0.05 : 0);
+  const bright = isStart || isGoal || isFrontier;
+  const color = floorColor(isStart, isGoal, isDiscarded, isFrontier, isVisited, isMud);
+  const height = FLOOR_HEIGHT + (bright ? 0.05 : isDiscarded ? 0.02 : 0);
   return (
     <mesh position={[x, height / 2, z]} onPointerDown={handleDown} onPointerOver={handleOver}>
       <boxGeometry args={[0.94, height, 0.94]} />
       <meshStandardMaterial
         color={color}
-        roughness={0.75}
+        roughness={0.7}
         metalness={0}
-        emissive={glow ? color : "#000000"}
-        emissiveIntensity={glow ? 0.5 : 0}
+        emissive={bright ? color : isDiscarded ? DISCARDED_COLOR : "#000000"}
+        emissiveIntensity={bright ? 0.5 : isDiscarded ? 0.22 : 0}
       />
     </mesh>
   );
@@ -137,6 +159,8 @@ function Scene({
   maze,
   visited,
   path,
+  pathRevealed,
+  frontier,
   interactive,
   onCellClick,
   focusIndex,
@@ -144,6 +168,8 @@ function Scene({
   maze: MazeState;
   visited: Set<number>;
   path: number[];
+  pathRevealed: boolean;
+  frontier: Set<number>;
   interactive: boolean;
   onCellClick?: (index: number) => void;
   focusIndex?: number | null;
@@ -163,6 +189,10 @@ function Scene({
     return out;
   }, [maze]);
 
+  // O(1) path membership for every cell below - path.includes() would be O(n) per cell, O(n²)
+  // over the whole grid on a maze with a long solution.
+  const pathSet = useMemo(() => new Set(path), [path]);
+
   const focused = focusIndex != null ? cells[focusIndex] : undefined;
 
   return (
@@ -170,21 +200,32 @@ function Scene({
       <ambientLight intensity={1.4} />
       <directionalLight position={[6, 10, 4]} intensity={2.4} />
       <directionalLight position={[-6, 4, -6]} intensity={0.6} />
-      {cells.map((c) => (
-        <Cell
-          key={c.index}
-          x={c.x}
-          z={c.z}
-          index={c.index}
-          isWall={c.isWall}
-          isMud={c.isMud}
-          isStart={c.index === maze.start}
-          isGoal={c.index === maze.goal}
-          isVisited={visited.has(c.index)}
-          interactive={interactive}
-          onCellClick={onCellClick}
-        />
-      ))}
+      {cells.map((c) => {
+        const isVisited = visited.has(c.index);
+        // Once the path is known (solved, or "no solution" - path.length 0 either way), anything
+        // visited but not on it was a dead end the algorithm backed out of. If there's no
+        // solution at all, that means everything explored gets marked discarded - a true reading
+        // of "none of this led anywhere".
+        const isDiscarded = isVisited && pathRevealed && !pathSet.has(c.index);
+        const isFrontier = !pathRevealed && frontier.has(c.index);
+        return (
+          <Cell
+            key={c.index}
+            x={c.x}
+            z={c.z}
+            index={c.index}
+            isWall={c.isWall}
+            isMud={c.isMud}
+            isStart={c.index === maze.start}
+            isGoal={c.index === maze.goal}
+            isVisited={isVisited}
+            isDiscarded={isDiscarded}
+            isFrontier={isFrontier}
+            interactive={interactive}
+            onCellClick={onCellClick}
+          />
+        );
+      })}
       <PathTube maze={maze} path={path} />
       {focused && <FocusRing x={focused.x} z={focused.z} />}
     </>
@@ -195,6 +236,8 @@ export function MazeCanvas({
   maze,
   visited,
   path,
+  pathRevealed,
+  frontier,
   interactive = false,
   onCellClick,
   controls = true,
@@ -204,6 +247,12 @@ export function MazeCanvas({
   maze: MazeState;
   visited?: Set<number>;
   path?: number[];
+  /** True once the search is done (found or not) and `path` reflects the final answer - gates
+   *  the discarded/dead-end red so it can't appear mid-search, before "discarded" means anything. */
+  pathRevealed?: boolean;
+  /** The most recently revealed cells during live playback - rendered as a brighter moving wave
+   *  ahead of the settled visited trail. Ignored once pathRevealed is true. */
+  frontier?: Set<number>;
   interactive?: boolean;
   onCellClick?: (index: number) => void;
   /** Set false for read-only previews (e.g. the algorithm race grid) to skip OrbitControls entirely. */
@@ -229,6 +278,8 @@ export function MazeCanvas({
         maze={maze}
         visited={visited ?? new Set()}
         path={path ?? []}
+        pathRevealed={pathRevealed ?? false}
+        frontier={frontier ?? new Set()}
         interactive={interactive}
         onCellClick={onCellClick}
         focusIndex={focusIndex}

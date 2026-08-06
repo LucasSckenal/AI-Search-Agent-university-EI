@@ -43,6 +43,8 @@ type GenMode = "perfect" | "random" | "empty";
 type Brush = CellKind | "start" | "goal";
 
 const ALGOS: AlgorithmId[] = ["bfs", "dfs", "ucs", "greedy", "astar"];
+// How many of the most-recently-revealed cells count as the live "frontier" wave (see `frontier` below).
+const FRONTIER_SIZE = 8;
 
 export default function LabirintoPage() {
   const [rows, setRows] = useState(19);
@@ -257,6 +259,14 @@ export default function LabirintoPage() {
     return new Set(result.exploredOrder.slice(0, revealCount));
   }, [result, revealCount]);
 
+  // The last few cells revealed - rendered as a brighter "wave" riding just ahead of the settled
+  // visited trail, so live playback reads as a search actively moving instead of cells just
+  // popping into a flat gray all at once. Only meaningful mid-animation (see pathRevealed below).
+  const frontier = useMemo(() => {
+    if (!result || showPath) return new Set<number>();
+    return new Set(result.exploredOrder.slice(Math.max(0, revealCount - FRONTIER_SIZE), revealCount));
+  }, [result, revealCount, showPath]);
+
   const path = useMemo(() => {
     if (!result || !showPath) return [] as number[];
     return result.path;
@@ -366,6 +376,7 @@ export default function LabirintoPage() {
               {[
                 ["#4a4f5c", "Parede"],
                 ["#5b6070", "Explorado"],
+                ["#c25a55", "Descartado"],
                 ["#8a5a2e", "Lama"],
                 ["#f5f6fa", "Caminho"],
               ].map(([color, label]) => (
@@ -418,6 +429,8 @@ export default function LabirintoPage() {
                 maze={maze}
                 visited={visited}
                 path={path}
+                pathRevealed={showPath}
+                frontier={frontier}
                 interactive
                 onCellClick={handleCellClick}
                 focusIndex={keyboardNav ? focusIndex : null}
@@ -705,6 +718,7 @@ export default function LabirintoPage() {
                           maze={maze}
                           visited={raceVisited}
                           path={done && r.found ? r.path : []}
+                          pathRevealed={done}
                           controls={false}
                           view="top"
                         />
