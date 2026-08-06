@@ -183,8 +183,8 @@ export default function JogoPage() {
         {/* Docked left rail */}
         <Rail>
           <div>
-            <h1 className="text-sm font-semibold tracking-tight">Jogo da Velha N×N</h1>
-            <p className="mt-1 text-[11px] leading-relaxed text-on-surface-variant">
+            <h1 className="text-xl font-bold tracking-tight">Jogo da Velha N×N</h1>
+            <p className="mt-2 text-[11px] leading-relaxed text-on-surface-variant">
               Busca adversária: Minimax e Minimax com poda Alfa-Beta.
             </p>
           </div>
@@ -193,7 +193,7 @@ export default function JogoPage() {
             <Icon name="tune" className="text-[16px]" /> Parâmetros ({size}x{size}, K={winLength}, {aiAlgo === "alphabeta" ? "Alfa-Beta" : "Minimax"})
           </button>
 
-          <div className="mt-auto flex flex-col gap-3 border-t border-white/5 pt-4">
+          <div className="mt-auto flex flex-col gap-3 pt-4">
             <button className="btn btn-primary" onClick={resetBoard}>
               <Icon name="refresh" className="text-[16px]" /> Reiniciar partida
             </button>
@@ -206,7 +206,7 @@ export default function JogoPage() {
         {/* Board dominates the remaining space */}
         <Stage>
           <StageHint>
-            TABULEIRO <b className="font-semibold text-primary">{size}×{size}</b> · K=<b className="font-semibold text-primary">{winLength}</b>
+            TABULEIRO <b className="readout-glow font-semibold text-primary">{size}×{size}</b> · K=<b className="readout-glow font-semibold text-primary">{winLength}</b>
           </StageHint>
           <div
             className="h-full w-full outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-primary/70"

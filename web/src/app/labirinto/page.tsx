@@ -338,8 +338,8 @@ export default function LabirintoPage() {
         {/* Docked left rail: problem + brush + run controls */}
         <Rail>
           <div>
-            <h1 className="text-sm font-semibold tracking-tight">Labirinto</h1>
-            <p className="mt-1 text-[11px] leading-relaxed text-on-surface-variant">
+            <h1 className="text-xl font-bold tracking-tight">Labirinto</h1>
+            <p className="mt-2 text-[11px] leading-relaxed text-on-surface-variant">
               Início (lavanda) até o objetivo (laranja) num grid com paredes e lama (custo 5).
               Arraste com o botão esquerdo para pintar, botão direito para girar a câmera.
             </p>
@@ -388,7 +388,7 @@ export default function LabirintoPage() {
             </div>
           </div>
 
-          <div className="mt-auto flex flex-col gap-2.5 border-t border-white/5 pt-3">
+          <div className="mt-auto flex flex-col gap-2.5 pt-3">
             <button className="btn btn-primary" onClick={() => runAlgorithm()}>
               <Icon name="play_arrow" /> Executar e animar
             </button>
@@ -407,11 +407,11 @@ export default function LabirintoPage() {
         {/* Canvas dominates the remaining space */}
         <Stage className="bg-[radial-gradient(ellipse_at_50%_35%,rgba(175,198,255,0.06),transparent_60%)]">
           <StageHint>
-            GRID <b className="font-semibold text-primary">{rows}×{cols}</b>
+            GRID <b className="readout-glow font-semibold text-primary">{rows}×{cols}</b>
             {result?.found && (
               <>
                 {" "}
-                · CUSTO <b className="font-semibold text-primary">{result.cost.toFixed(2)}</b>
+                · CUSTO <b className="readout-glow font-semibold text-primary">{result.cost.toFixed(2)}</b>
               </>
             )}
           </StageHint>

@@ -1236,3 +1236,11 @@ input[type="number"]:hover {
   color: var(--tertiary);
   text-shadow: 0 0 32px color-mix(in srgb, var(--tertiary) 50%, transparent);
 }
+
+/* Small accent-glow touch for the bolded values inside each problem page's StageHint corner
+   readout (grid size, cube state count, board size) - same idea as the hero/tutorial stat glow,
+   scaled down for an 11px readout instead of a 32-48px hero number so it reads as a subtle accent
+   rather than competing with the actual 3D scene. */
+.readout-glow {
+  text-shadow: 0 0 10px color-mix(in srgb, currentColor 45%, transparent);
+}

@@ -38,7 +38,7 @@ export function Timeline({
   const fraction = total > 0 ? Math.min(current / total, 1) : 0;
 
   return (
-    <div className="flex h-14 shrink-0 items-center gap-3 border-t border-white/8 bg-background px-4 sm:px-5">
+    <div className="flex h-14 shrink-0 items-center gap-3 bg-background px-4 sm:px-5">
       <div className="flex shrink-0 items-center gap-1.5">
         <span className={`h-1.5 w-1.5 shrink-0 rounded-full ${pulsing ? "animate-pulse" : ""}`} style={{ background: "var(--tertiary)" }} />
         <span className="hidden text-[10px] font-medium uppercase tracking-wide text-on-surface-variant/70 sm:inline">

@@ -14,14 +14,14 @@ export function StatsDrawer({ label = "Estatísticas", children }: { label?: str
       <button
         onClick={() => setOpen((o) => !o)}
         aria-expanded={open}
-        className={`absolute top-1/2 z-10 -translate-y-1/2 rounded-l-lg border border-r-0 border-white/10 bg-surface-container px-2 py-3.5 text-[10px] font-semibold uppercase tracking-wider text-on-surface-variant transition-[right] duration-300 [writing-mode:vertical-rl] hover:bg-surface-container-high hover:text-primary ${
+        className={`absolute top-1/2 z-10 -translate-y-1/2 rounded-l-lg border border-r-0 border-white/10 bg-surface-container px-2 py-3.5 text-[10px] font-semibold uppercase tracking-wider text-on-surface-variant transition-[right] duration-500 ease-out [writing-mode:vertical-rl] hover:bg-surface-container-high hover:text-primary ${
           open ? "right-[280px]" : "right-0"
         }`}
       >
         {label}
       </button>
       <aside
-        className={`absolute right-0 top-0 bottom-0 z-[5] flex w-[280px] flex-col gap-4 overflow-y-auto border-l border-white/10 bg-background p-4 shadow-2xl transition-transform duration-300 sm:p-5 ${
+        className={`absolute right-0 top-0 bottom-0 z-[5] flex w-[280px] flex-col gap-4 overflow-y-auto border-l border-white/10 bg-background p-4 shadow-2xl transition-transform duration-500 ease-out sm:p-5 ${
           open ? "translate-x-0" : "translate-x-full"
         }`}
       >

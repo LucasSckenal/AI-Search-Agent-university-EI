@@ -9,7 +9,7 @@ import { ReactNode } from "react";
  */
 export function Rail({ children }: { children: ReactNode }) {
   return (
-    <aside className="flex w-[clamp(240px,22vw,300px)] shrink-0 flex-col gap-4 overflow-y-auto border-r border-white/8 bg-background p-4 sm:p-5">
+    <aside className="flex w-[clamp(240px,22vw,300px)] shrink-0 flex-col gap-5 overflow-y-auto bg-background p-5 sm:p-6">
       {children}
     </aside>
   );

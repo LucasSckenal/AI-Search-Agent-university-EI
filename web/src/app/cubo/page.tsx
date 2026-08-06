@@ -238,8 +238,8 @@ export default function CuboPage() {
         {/* Docked left rail: actions only, all parameters live in the modal */}
         <Rail>
           <div>
-            <h1 className="text-sm font-semibold tracking-tight">Cubo Mágico {size}x{size}</h1>
-            <p className="mt-1 text-[11px] leading-relaxed text-on-surface-variant">
+            <h1 className="text-xl font-bold tracking-tight">Cubo Mágico {size}x{size}</h1>
+            <p className="mt-2 text-[11px] leading-relaxed text-on-surface-variant">
               {size === 2
                 ? "Pocket Cube com 3.674.160 estados — pequeno o bastante para comparar busca cega com busca informada de verdade."
                 : "Cubo padrão com ~4,3×10¹⁹ estados — bom demais para busca cega ir muito longe, ótimo para ver na prática por que heurística importa."}
@@ -263,7 +263,7 @@ export default function CuboPage() {
             </div>
           </div>
 
-          <div className="mt-auto flex flex-col gap-3 border-t border-white/5 pt-4">
+          <div className="mt-auto flex flex-col gap-3 pt-4">
             <button className="btn btn-primary" onClick={() => runSolve()} disabled={busy || exploring}>
               <Icon name="play_arrow" /> {busy ? "Calculando…" : "Resolver e animar"}
             </button>
@@ -279,7 +279,7 @@ export default function CuboPage() {
         {/* Canvas dominates the remaining space */}
         <Stage className="bg-[radial-gradient(circle_at_50%_38%,rgba(175,198,255,0.08),transparent_70%)]">
           <StageHint>
-            CUBO {size}×{size} · <b className="font-semibold text-primary">{size === 2 ? "3.674.160" : "~4,3×10¹⁹"}</b> ESTADOS
+            CUBO {size}×{size} · <b className="readout-glow font-semibold text-primary">{size === 2 ? "3.674.160" : "~4,3×10¹⁹"}</b> ESTADOS
           </StageHint>
           <div
             className={`pointer-events-none absolute right-4 top-4 z-[1] rounded-full px-3 py-1 text-[11px] font-medium ${
