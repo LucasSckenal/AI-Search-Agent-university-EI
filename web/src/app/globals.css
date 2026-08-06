@@ -775,6 +775,18 @@ input[type="number"]:hover {
 .flow-line {
   background: linear-gradient(to right, transparent, var(--outline-variant) 20%, var(--outline-variant) 80%, transparent);
 }
+.about-stat.acc-primary {
+  --accent: var(--primary);
+}
+.about-stat.acc-secondary {
+  --accent: var(--secondary);
+}
+.about-stat.acc-tertiary {
+  --accent: var(--tertiary);
+}
+.about-stat .mini-stat {
+  text-shadow: 0 0 20px color-mix(in srgb, var(--accent) 35%, transparent);
+}
 .mini-stat .blip {
   animation: blipPulse 1.8s ease-in-out infinite;
 }

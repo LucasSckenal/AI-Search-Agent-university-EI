@@ -47,10 +47,10 @@ const FLOW = [
 ] as const;
 
 const ABOUT_STATS = [
-  { k: "Problemas", v: "3", live: false },
-  { k: "Algoritmos", v: "7", live: false },
-  { k: "Estados do cubo", v: "3.674.160", live: false },
-  { k: "Execução", v: "100% local", live: true },
+  { k: "Problemas", v: "3", icon: "apps", accent: "primary", live: false },
+  { k: "Algoritmos", v: "7", icon: "account_tree", accent: "primary", live: false },
+  { k: "Estados do cubo", v: "3.674.160", icon: "view_in_ar", accent: "tertiary", live: false },
+  { k: "Execução", v: "100% local", icon: "bolt", accent: "secondary", live: true },
 ] as const;
 
 export default function Home() {
@@ -197,12 +197,20 @@ export default function Home() {
 
           <div className="grid grid-cols-2 gap-px overflow-hidden rounded-2xl border border-white/[0.07] bg-white/[0.07]">
             {ABOUT_STATS.map((s) => (
-              <div key={s.k} className="flex flex-col gap-1.5 bg-surface-container p-6">
-                <span className="text-[10.5px] uppercase tracking-[0.06em] text-on-surface-variant">{s.k}</span>
-                <span className="mini-stat flex items-center gap-1.5 font-mono text-sm text-primary">
-                  {s.live && <span className="blip h-1.5 w-1.5 rounded-full bg-secondary" />}
-                  <span className={s.live ? "text-secondary" : undefined}>{s.v}</span>
+              <div
+                key={s.k}
+                className={`about-stat acc-${s.accent} group flex flex-col gap-3 bg-surface-container p-6 transition-colors hover:bg-surface-container-high`}
+              >
+                <span className="flex h-8 w-8 items-center justify-center rounded-lg bg-[color-mix(in_srgb,var(--accent)_16%,transparent)] text-[color:var(--accent)]">
+                  <Icon name={s.icon} className="text-[16px]" />
                 </span>
+                <div>
+                  <div className="text-[10.5px] uppercase tracking-[0.06em] text-on-surface-variant">{s.k}</div>
+                  <div className="mini-stat mt-1 flex items-center gap-1.5 font-mono text-base font-semibold text-[color:var(--accent)]">
+                    {s.live && <span className="blip h-1.5 w-1.5 rounded-full bg-[color:var(--accent)]" />}
+                    {s.v}
+                  </div>
+                </div>
               </div>
             ))}
           </div>
