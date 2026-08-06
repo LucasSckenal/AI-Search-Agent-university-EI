@@ -769,6 +769,12 @@ input[type="number"]:hover {
   background: color-mix(in srgb, var(--primary) 16%, transparent);
   color: var(--primary);
 }
+/* Connects consecutive step icons: each step is `position: relative`, so `left: 50%` here lands
+   exactly on this step's own (centered) icon, and the width - one column plus one grid gap -
+   reaches exactly to the center of the next icon. See the grid-cols-3 gap-4 flow layout above. */
+.flow-line {
+  background: linear-gradient(to right, transparent, var(--outline-variant) 20%, var(--outline-variant) 80%, transparent);
+}
 .mini-stat .blip {
   animation: blipPulse 1.8s ease-in-out infinite;
 }

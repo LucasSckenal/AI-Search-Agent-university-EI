@@ -180,11 +180,14 @@ export default function Home() {
               estatísticas reais e permite comparar algoritmos na mesma instância.
             </p>
             <div className="grid grid-cols-1 gap-7 sm:grid-cols-3 sm:gap-4">
-              {FLOW.map((step) => (
-                <div key={step.title} className="flex flex-col items-center text-center">
-                  <span className="flow-num mb-3 flex h-9 w-9 items-center justify-center rounded-lg">
+              {FLOW.map((step, i) => (
+                <div key={step.title} className="relative flex flex-col items-center text-center">
+                  <span className="flow-num relative z-[1] mb-3 flex h-9 w-9 items-center justify-center rounded-lg">
                     <Icon name={step.icon} className="text-[18px]" />
                   </span>
+                  {i < FLOW.length - 1 && (
+                    <span className="flow-line absolute left-1/2 top-[18px] hidden h-px w-[calc(100%_+_1rem)] sm:block" />
+                  )}
                   <h3 className="mb-1 text-sm font-semibold text-on-surface">{step.title}</h3>
                   <p className="text-xs leading-relaxed text-on-surface-variant">{step.desc}</p>
                 </div>
