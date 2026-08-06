@@ -7,10 +7,10 @@ import { Toggle } from "@/components/shared/Toggle";
 import { Select } from "@/components/shared/Select";
 import { Modal } from "@/components/shared/Modal";
 import { SearchStatsTable, ALGO_COLOR } from "@/components/shared/SearchStatsTable";
-import { Sidebar } from "@/components/shared/Sidebar";
-import { CanvasStage, CanvasBox } from "@/components/shared/CanvasStage";
-import { StatsPanel } from "@/components/shared/StatsPanel";
-import { StatusFooter } from "@/components/shared/StatusFooter";
+import { Rail } from "@/components/shared/Rail";
+import { Stage, StageHint } from "@/components/shared/Stage";
+import { StatsDrawer, StatGrid } from "@/components/shared/StatsDrawer";
+import { Timeline } from "@/components/shared/Timeline";
 import { WebGLGate } from "@/components/shared/WebGLGate";
 import {
   MazeState,
@@ -323,97 +323,89 @@ export default function LabirintoPage() {
   const status = playing ? "ANIMANDO" : result ? (result.found ? "CONCLUÍDO" : "SEM SOLUÇÃO") : "PRONTO";
 
   return (
-    <div className="relative h-full w-full overflow-hidden">
-      {/* Left floating sidebar: problem + brush + run controls */}
-      <Sidebar>
-        <div>
-          <h1 className="text-sm font-semibold tracking-tight">Labirinto</h1>
-          <p className="mt-1 text-[11px] leading-relaxed text-on-surface-variant">
-            Início (lavanda) até o objetivo (laranja) num grid com paredes e lama (custo 5).
-            Arraste com o botão esquerdo para pintar, botão direito para girar a câmera.
-          </p>
-        </div>
-
-        <button className="btn btn-secondary" onClick={() => setAdvancedOpen(true)}>
-          <Icon name="tune" className="text-[16px]" /> Parâmetros ({rows}×{cols}, {ALGORITHM_LABELS[algorithm].split(" ")[0]})
-        </button>
-
-        <div>
-          <h3 className="mb-2 text-[11px] font-semibold uppercase tracking-wider text-on-surface-variant/70">
-            Edição do grid
-          </h3>
-          <div className="grid grid-cols-3 gap-1.5">
-            {(
-              [
-                ["wall", "Parede"],
-                ["mud", "Lama"],
-                ["empty", "Vazio"],
-                ["start", "Início"],
-                ["goal", "Objetivo"],
-              ] as [Brush, string][]
-            ).map(([b, label]) => (
-              <button
-                key={b}
-                onClick={() => setBrush(b)}
-                className={`btn ${brush === b ? "btn-primary" : "btn-secondary"} !px-2 !py-1.5 text-[11px]`}
-              >
-                {label}
-              </button>
-            ))}
+    <div className="flex h-full min-h-0 flex-col">
+      <div className="relative flex flex-1 min-h-0">
+        {/* Docked left rail: problem + brush + run controls */}
+        <Rail>
+          <div>
+            <h1 className="text-sm font-semibold tracking-tight">Labirinto</h1>
+            <p className="mt-1 text-[11px] leading-relaxed text-on-surface-variant">
+              Início (lavanda) até o objetivo (laranja) num grid com paredes e lama (custo 5).
+              Arraste com o botão esquerdo para pintar, botão direito para girar a câmera.
+            </p>
           </div>
-          <div className="mt-2.5 flex flex-wrap gap-x-3 gap-y-1 text-[11px]">
-            {[
-              ["#4a4f5c", "Parede"],
-              ["#5b6070", "Explorado"],
-              ["#8a5a2e", "Lama"],
-              ["#f5f6fa", "Caminho"],
-            ].map(([color, label]) => (
-              <div key={label} className="flex items-center gap-1.5">
-                <span className="h-2 w-2 rounded-full" style={{ background: color, boxShadow: `0 0 6px ${color}66` }} />
-                <span className="text-on-surface/80">{label}</span>
-              </div>
-            ))}
-          </div>
-        </div>
 
-        <div className="mt-auto flex flex-col gap-2.5 border-t border-white/5 pt-3">
-          <button className="btn btn-primary" onClick={() => runAlgorithm()}>
-            <Icon name="play_arrow" /> Executar e animar
+          <button className="btn btn-secondary" onClick={() => setAdvancedOpen(true)}>
+            <Icon name="tune" className="text-[16px]" /> Parâmetros ({rows}×{cols}, {ALGORITHM_LABELS[algorithm].split(" ")[0]})
           </button>
-          <div className="grid grid-cols-3 gap-1.5">
-            <button className="btn btn-secondary" onClick={() => setPlaying((p) => !p)} disabled={!result}>
-              <Icon name={playing ? "pause" : "play_arrow"} className="text-[18px]" />
-            </button>
-            <button
-              className="btn btn-secondary"
-              onClick={() => {
-                if (!result) return;
-                setRevealCount(result.exploredOrder.length);
-                setShowPath(true);
-                setPlaying(false);
-              }}
-              disabled={!result}
-            >
-              <Icon name="skip_next" className="text-[18px]" />
+
+          <div>
+            <h3 className="mb-2 text-[11px] font-semibold uppercase tracking-wider text-on-surface-variant/70">
+              Edição do grid
+            </h3>
+            <div className="grid grid-cols-3 gap-1.5">
+              {(
+                [
+                  ["wall", "Parede"],
+                  ["mud", "Lama"],
+                  ["empty", "Vazio"],
+                  ["start", "Início"],
+                  ["goal", "Objetivo"],
+                ] as [Brush, string][]
+              ).map(([b, label]) => (
+                <button
+                  key={b}
+                  onClick={() => setBrush(b)}
+                  className={`btn ${brush === b ? "btn-primary" : "btn-secondary"} !px-2 !py-1.5 text-[11px]`}
+                >
+                  {label}
+                </button>
+              ))}
+            </div>
+            <div className="mt-2.5 flex flex-wrap gap-x-3 gap-y-1 text-[11px]">
+              {[
+                ["#4a4f5c", "Parede"],
+                ["#5b6070", "Explorado"],
+                ["#8a5a2e", "Lama"],
+                ["#f5f6fa", "Caminho"],
+              ].map(([color, label]) => (
+                <div key={label} className="flex items-center gap-1.5">
+                  <span className="h-2 w-2 rounded-full" style={{ background: color, boxShadow: `0 0 6px ${color}66` }} />
+                  <span className="text-on-surface/80">{label}</span>
+                </div>
+              ))}
+            </div>
+          </div>
+
+          <div className="mt-auto flex flex-col gap-2.5 border-t border-white/5 pt-3">
+            <button className="btn btn-primary" onClick={() => runAlgorithm()}>
+              <Icon name="play_arrow" /> Executar e animar
             </button>
             <button className="btn btn-secondary" onClick={runComparison}>
-              <Icon name="compare_arrows" className="text-[18px]" />
+              <Icon name="compare_arrows" className="text-[16px]" /> Comparar algoritmos
+            </button>
+            <button className="btn btn-secondary" onClick={startRace}>
+              <Icon name="flag" className="text-[16px]" /> Corrida entre algoritmos
+            </button>
+            <button className="btn btn-secondary" onClick={runBatch}>
+              <Icon name="query_stats" className="text-[16px]" /> Comparação em lote (N execuções)
             </button>
           </div>
-          <button className="btn btn-secondary" onClick={startRace}>
-            <Icon name="flag" className="text-[16px]" /> Corrida entre algoritmos
-          </button>
-          <button className="btn btn-secondary" onClick={runBatch}>
-            <Icon name="query_stats" className="text-[16px]" /> Comparação em lote (N execuções)
-          </button>
-        </div>
-      </Sidebar>
+        </Rail>
 
-      {/* Center visualization */}
-      <CanvasStage>
-        <CanvasBox width={720} height={560}>
+        {/* Canvas dominates the remaining space */}
+        <Stage className="bg-[radial-gradient(ellipse_at_50%_35%,rgba(175,198,255,0.06),transparent_60%)]">
+          <StageHint>
+            GRID <b className="font-semibold text-primary">{rows}×{cols}</b>
+            {result?.found && (
+              <>
+                {" "}
+                · CUSTO <b className="font-semibold text-primary">{result.cost.toFixed(2)}</b>
+              </>
+            )}
+          </StageHint>
           <div
-            className="h-full w-full rounded-2xl outline-none focus-visible:ring-2 focus-visible:ring-primary/70"
+            className="h-full w-full outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-primary/70"
             tabIndex={0}
             role="application"
             aria-label="Grade do labirinto. Use as setas para mover o cursor e Enter ou espaço para pintar a célula selecionada com o pincel atual."
@@ -432,37 +424,55 @@ export default function LabirintoPage() {
               />
             </WebGLGate>
           </div>
-        </CanvasBox>
-      </CanvasStage>
+        </Stage>
 
-      {/* Small floating stats panel (bottom-right) */}
-      {result && (
-        <StatsPanel
-          items={[
-            ["Status", result.found ? "OK" : "falhou"],
-            ["Custo", result.found ? result.cost.toFixed(2) : "—"],
-            ["Expandidos", result.nodesExpanded.toLocaleString("pt-BR")],
-            ["Gerados", result.nodesGenerated.toLocaleString("pt-BR")],
-            [
-              "b*",
-              result.found
-                ? (effectiveBranchingFactor(result.nodesGenerated, result.actions.length)?.toFixed(2) ?? "—")
-                : "—",
-            ],
-            ["Tempo", `${result.timeMs.toFixed(1)}ms`],
-            ["Algoritmo", ALGORITHM_LABELS[result.algorithm].split(" ")[0]],
-          ]}
-        />
-      )}
+        {/* Collapsible stats drawer */}
+        {result && (
+          <StatsDrawer>
+            <div>
+              <h2 className="mb-2 text-[11px] font-semibold uppercase tracking-wider text-on-surface-variant/70">
+                Última execução
+              </h2>
+              <StatGrid
+                cols={2}
+                items={[
+                  ["Status", result.found ? "OK" : "falhou"],
+                  ["Custo", result.found ? result.cost.toFixed(2) : "—"],
+                  ["Expandidos", result.nodesExpanded.toLocaleString("pt-BR")],
+                  ["Gerados", result.nodesGenerated.toLocaleString("pt-BR")],
+                  [
+                    "b*",
+                    result.found
+                      ? (effectiveBranchingFactor(result.nodesGenerated, result.actions.length)?.toFixed(2) ?? "—")
+                      : "—",
+                  ],
+                  ["Tempo", `${result.timeMs.toFixed(1)}ms`],
+                ]}
+              />
+            </div>
+          </StatsDrawer>
+        )}
+      </div>
 
-      {/* Floating status pill */}
-      <StatusFooter
+      {/* Bottom timeline: scrubs through the search's node-reveal animation */}
+      <Timeline
         status={status}
         pulsing={playing}
-        segments={[
-          { label: "Algoritmo", value: ALGORITHM_LABELS[algorithm], accent: true },
-          { label: "Grid", value: `${rows}×${cols}` },
-        ]}
+        playing={playing}
+        onTogglePlay={() => setPlaying((p) => !p)}
+        onSkipEnd={() => {
+          if (!result) return;
+          setRevealCount(result.exploredOrder.length);
+          setShowPath(true);
+          setPlaying(false);
+        }}
+        current={revealCount}
+        total={result?.exploredOrder.length ?? 0}
+        unitLabel="nós"
+        disabled={!result}
+        speed={speed}
+        onSpeedChange={setSpeed}
+        speedLabel="Velocidade"
       />
 
       <Modal
@@ -477,9 +487,6 @@ export default function LabirintoPage() {
             onChange={(v) => setAlgorithm(v as AlgorithmId)}
             options={ALGOS.map((a) => ({ value: a, label: ALGORITHM_LABELS[a] }))}
           />
-        </Field>
-        <Field label={`Velocidade: ${speed} células/quadro`}>
-          <input type="range" min={1} max={200} value={speed} onChange={(e) => setSpeed(Number(e.target.value))} />
         </Field>
         <div className="border-t border-outline-variant pt-4">
           <Toggle checked={allowDiagonal} onChange={setAllowDiagonal} label="Movimento diagonal" />
@@ -559,6 +566,10 @@ export default function LabirintoPage() {
             </div>
           )}
         </div>
+
+        <Field label={`Velocidade: ${speed} células/quadro`}>
+          <input type="range" min={1} max={200} value={speed} onChange={(e) => setSpeed(Number(e.target.value))} />
+        </Field>
 
         <button
           className="btn btn-primary"

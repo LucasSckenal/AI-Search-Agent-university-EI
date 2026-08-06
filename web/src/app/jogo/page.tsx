@@ -5,10 +5,10 @@ import dynamic from "next/dynamic";
 import { Field, Icon } from "@/components/shared/Panel";
 import { Select } from "@/components/shared/Select";
 import { Modal } from "@/components/shared/Modal";
-import { Sidebar } from "@/components/shared/Sidebar";
-import { CanvasStage, CanvasBox } from "@/components/shared/CanvasStage";
-import { StatsPanel } from "@/components/shared/StatsPanel";
-import { StatusFooter } from "@/components/shared/StatusFooter";
+import { Rail } from "@/components/shared/Rail";
+import { Stage, StageHint } from "@/components/shared/Stage";
+import { StatsDrawer, StatGrid } from "@/components/shared/StatsDrawer";
+import { StatusBar } from "@/components/shared/StatusBar";
 import { WebGLGate } from "@/components/shared/WebGLGate";
 import {
   Board,
@@ -167,36 +167,49 @@ export default function JogoPage() {
   const status = thinking ? "PENSANDO" : over ? (winner !== 0 ? "FIM DE JOGO" : "EMPATE") : "SUA VEZ";
   const canInteract = !over && !thinking && mode === "human" && current === HUMAN;
 
+  const message = thinking ? (
+    "Agente pensando…"
+  ) : winner !== 0 ? (
+    <span className="font-medium text-primary">{winner === HUMAN ? "X venceu!" : "O venceu!"}</span>
+  ) : draw ? (
+    "Empate."
+  ) : (
+    `Vez de: ${current === 1 ? "X" : "O"}`
+  );
+
   return (
-    <div className="relative h-full w-full overflow-hidden">
-      {/* Left floating sidebar */}
-      <Sidebar>
-        <div>
-          <h1 className="text-sm font-semibold tracking-tight">Jogo da Velha N×N</h1>
-          <p className="mt-1 text-[11px] leading-relaxed text-on-surface-variant">
-            Busca adversária: Minimax e Minimax com poda Alfa-Beta.
-          </p>
-        </div>
+    <div className="flex h-full min-h-0 flex-col">
+      <div className="relative flex flex-1 min-h-0">
+        {/* Docked left rail */}
+        <Rail>
+          <div>
+            <h1 className="text-sm font-semibold tracking-tight">Jogo da Velha N×N</h1>
+            <p className="mt-1 text-[11px] leading-relaxed text-on-surface-variant">
+              Busca adversária: Minimax e Minimax com poda Alfa-Beta.
+            </p>
+          </div>
 
-        <button className="btn btn-secondary" onClick={() => setAdvancedOpen(true)}>
-          <Icon name="tune" className="text-[16px]" /> Parâmetros ({size}x{size}, K={winLength}, {aiAlgo === "alphabeta" ? "Alfa-Beta" : "Minimax"})
-        </button>
-
-        <div className="mt-auto flex flex-col gap-3 border-t border-white/5 pt-4">
-          <button className="btn btn-primary" onClick={resetBoard}>
-            <Icon name="refresh" className="text-[16px]" /> Reiniciar partida
+          <button className="btn btn-secondary" onClick={() => setAdvancedOpen(true)}>
+            <Icon name="tune" className="text-[16px]" /> Parâmetros ({size}x{size}, K={winLength}, {aiAlgo === "alphabeta" ? "Alfa-Beta" : "Minimax"})
           </button>
-          <button className="btn btn-secondary" onClick={runComparison} disabled={over || thinking}>
-            <Icon name="compare_arrows" className="text-[16px]" /> Comparar Minimax vs. Alfa-Beta
-          </button>
-        </div>
-      </Sidebar>
 
-      {/* Center board */}
-      <CanvasStage>
-        <CanvasBox width={520} height={520}>
+          <div className="mt-auto flex flex-col gap-3 border-t border-white/5 pt-4">
+            <button className="btn btn-primary" onClick={resetBoard}>
+              <Icon name="refresh" className="text-[16px]" /> Reiniciar partida
+            </button>
+            <button className="btn btn-secondary" onClick={runComparison} disabled={over || thinking}>
+              <Icon name="compare_arrows" className="text-[16px]" /> Comparar Minimax vs. Alfa-Beta
+            </button>
+          </div>
+        </Rail>
+
+        {/* Board dominates the remaining space */}
+        <Stage>
+          <StageHint>
+            TABULEIRO <b className="font-semibold text-primary">{size}×{size}</b> · K=<b className="font-semibold text-primary">{winLength}</b>
+          </StageHint>
           <div
-            className="h-full w-full rounded-2xl outline-none focus-visible:ring-2 focus-visible:ring-primary/70"
+            className="h-full w-full outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-primary/70"
             tabIndex={0}
             role="application"
             aria-label="Tabuleiro da velha. Use as setas para mover o cursor e Enter ou espaço para jogar na célula selecionada."
@@ -215,51 +228,32 @@ export default function JogoPage() {
               />
             </WebGLGate>
           </div>
-        </CanvasBox>
+        </Stage>
 
-        <div className="text-sm">
-          {winner !== 0 && (
-            <span className="font-medium text-primary">{winner === HUMAN ? "X venceu!" : "O venceu!"}</span>
-          )}
-          {draw && <span className="font-medium text-on-surface-variant">Empate.</span>}
-          {!over && (
-            <span className="text-on-surface-variant">
-              {thinking ? "Agente pensando…" : `Vez de: ${current === 1 ? "X" : "O"}`}
-            </span>
-          )}
-        </div>
-      </CanvasStage>
+        {/* Collapsible stats drawer */}
+        {lastStats && (
+          <StatsDrawer>
+            <div>
+              <h2 className="mb-2 text-[11px] font-semibold uppercase tracking-wider text-on-surface-variant/70">
+                Última jogada do agente
+              </h2>
+              <StatGrid
+                cols={2}
+                items={[
+                  ["Status", lastStats.truncated ? <span key="t" className="text-error">parcial</span> : "completo"],
+                  ["Nós explorados", lastStats.nodesExplored.toLocaleString("pt-BR")],
+                  ["Ramos podados", lastStats.prunedBranches.toLocaleString("pt-BR")],
+                  ["Tempo", `${lastStats.timeMs.toFixed(2)}ms`],
+                  ["Avaliação", String(lastStats.score)],
+                ]}
+              />
+            </div>
+          </StatsDrawer>
+        )}
+      </div>
 
-      {/* Small floating stats panel (bottom-right) */}
-      {lastStats && (
-        <StatsPanel
-          cols={2}
-          items={[
-            [
-              "Status",
-              lastStats.truncated ? (
-                <span className="text-error">parcial (limite)</span>
-              ) : (
-                "completo"
-              ),
-            ],
-            ["Nós explorados", lastStats.nodesExplored.toLocaleString("pt-BR")],
-            ["Ramos podados", lastStats.prunedBranches.toLocaleString("pt-BR")],
-            ["Tempo", `${lastStats.timeMs.toFixed(2)}ms`],
-            ["Avaliação", String(lastStats.score)],
-          ]}
-        />
-      )}
-
-      {/* Floating status pill */}
-      <StatusFooter
-        status={status}
-        pulsing={thinking}
-        segments={[
-          { label: "Agente", value: aiAlgo === "alphabeta" ? "Alfa-Beta" : "Minimax", accent: true },
-          { label: "Tabuleiro", value: `${size}×${size} · K=${winLength}` },
-        ]}
-      />
+      {/* Bottom status bar: turn-based, no continuous process to scrub through */}
+      <StatusBar status={status} pulsing={thinking} message={message} onReset={resetBoard} resetLabel="Reiniciar" />
 
       <Modal
         open={advancedOpen}

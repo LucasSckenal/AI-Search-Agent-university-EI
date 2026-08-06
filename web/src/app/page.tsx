@@ -30,7 +30,7 @@ const MODULES = [
 
 export default function Home() {
   return (
-    <main className="mx-auto max-w-7xl px-6 pb-20 pt-32">
+    <div className="mx-auto h-full max-w-7xl overflow-y-auto px-6 pb-20 pt-16">
       {/* Hero */}
       <section className="mb-28 flex flex-col items-center text-center">
         <div className="mb-8 rounded-full border border-primary/20 bg-primary/10 px-4 py-1">
@@ -156,6 +156,6 @@ export default function Home() {
           ))}
         </div>
       </footer>
-    </main>
+    </div>
   );
 }
