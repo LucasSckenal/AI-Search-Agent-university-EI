@@ -1,7 +1,7 @@
 import type { Metadata } from "next";
 import { Inter, JetBrains_Mono } from "next/font/google";
 import "./globals.css";
-import { TopBar } from "@/components/shared/TopBar";
+import { Sidebar, MobileDock } from "@/components/shared/Sidebar";
 import { CommandPalette } from "@/components/shared/CommandPalette";
 
 const inter = Inter({
@@ -31,9 +31,12 @@ export default function RootLayout({ children }: Readonly<{ children: React.Reac
           href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200&display=swap"
         />
       </head>
-      <body className="flex h-full min-h-screen flex-col bg-background text-on-surface">
-        <TopBar />
-        <main className="min-h-0 flex-1">{children}</main>
+      <body className="h-full min-h-screen bg-black text-on-surface">
+        <div className="app-shell">
+          <Sidebar />
+          <main className="main-shell">{children}</main>
+        </div>
+        <MobileDock />
         <CommandPalette />
       </body>
     </html>

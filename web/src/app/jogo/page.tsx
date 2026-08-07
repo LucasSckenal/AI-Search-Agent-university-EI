@@ -5,9 +5,8 @@ import dynamic from "next/dynamic";
 import { Field, Icon } from "@/components/shared/Panel";
 import { Select } from "@/components/shared/Select";
 import { Modal } from "@/components/shared/Modal";
-import { Rail } from "@/components/shared/Rail";
-import { Stage, StageHint } from "@/components/shared/Stage";
-import { StatsDrawer, StatGrid } from "@/components/shared/StatsDrawer";
+import { StageHint } from "@/components/shared/Stage";
+import { StatGrid } from "@/components/shared/StatGrid";
 import { StatusBar } from "@/components/shared/StatusBar";
 import { WebGLGate } from "@/components/shared/WebGLGate";
 import {
@@ -48,6 +47,7 @@ export default function JogoPage() {
   const [aiAlgo, setAiAlgo] = useState<AiAlgo>("alphabeta");
   const [advancedOpen, setAdvancedOpen] = useState(false);
   const [compareOpen, setCompareOpen] = useState(false);
+  const [statsOpen, setStatsOpen] = useState(false);
 
   const [board, setBoard] = useState<Board>(() => createBoard(3));
   const [current, setCurrent] = useState<Player>(HUMAN);
@@ -178,82 +178,90 @@ export default function JogoPage() {
   );
 
   return (
-    <div className="flex h-full min-h-0 flex-col">
-      <div className="relative flex flex-1 min-h-0">
-        {/* Docked left rail */}
-        <Rail>
-          <div>
-            <h1 className="text-xl font-bold tracking-tight">Jogo da Velha N×N</h1>
-            <p className="mt-2 text-[11px] leading-relaxed text-on-surface-variant">
-              Busca adversária: Minimax e Minimax com poda Alfa-Beta.
-            </p>
+    <div className="flex h-full min-h-0 flex-col overflow-y-auto p-5 sm:p-6">
+      <div className="content-head">
+        <div>
+          <div className="content-kicker">
+            <span>Jogo da Velha</span>
+            <span>/</span>
+            <span className="accent">{aiAlgo === "alphabeta" ? "Alfa-Beta" : "Minimax"}</span>
           </div>
-
-          <button className="btn btn-secondary" onClick={() => setAdvancedOpen(true)}>
-            <Icon name="tune" className="text-[16px]" /> Parâmetros ({size}x{size}, K={winLength}, {aiAlgo === "alphabeta" ? "Alfa-Beta" : "Minimax"})
+          <h1 className="content-title">Jogo da Velha N×N</h1>
+          <p className="content-sub">Busca adversária: Minimax e Minimax com poda Alfa-Beta.</p>
+        </div>
+        <div className="content-actions">
+          <button className="btn-pill" onClick={runComparison} disabled={over || thinking}>
+            <Icon name="compare_arrows" className="text-[15px]" /> Comparar
           </button>
-
-          <div className="mt-auto flex flex-col gap-3 pt-4">
-            <button className="btn btn-primary" onClick={resetBoard}>
-              <Icon name="refresh" className="text-[16px]" /> Reiniciar partida
-            </button>
-            <button className="btn btn-secondary" onClick={runComparison} disabled={over || thinking}>
-              <Icon name="compare_arrows" className="text-[16px]" /> Comparar Minimax vs. Alfa-Beta
-            </button>
-          </div>
-        </Rail>
-
-        {/* Board dominates the remaining space */}
-        <Stage>
-          <StageHint>
-            TABULEIRO <b className="readout-glow font-semibold text-primary">{size}×{size}</b> · K=<b className="readout-glow font-semibold text-primary">{winLength}</b>
-          </StageHint>
-          <div
-            className="h-full w-full outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-primary/70"
-            tabIndex={0}
-            role="application"
-            aria-label="Tabuleiro da velha. Use as setas para mover o cursor e Enter ou espaço para jogar na célula selecionada."
-            onKeyDown={handleGridKeyDown}
-            onFocus={() => setFocusIndex((f) => f ?? 0)}
-            onMouseDown={() => setKeyboardNav(false)}
-          >
-            <WebGLGate>
-              <BoardCanvas
-                board={board}
-                size={size}
-                winLine={winLine}
-                interactive={canInteract}
-                onCellClick={handleCellClick}
-                focusIndex={keyboardNav ? focusIndex : null}
-              />
-            </WebGLGate>
-          </div>
-        </Stage>
-
-        {/* Collapsible stats drawer */}
-        {lastStats && (
-          <StatsDrawer>
-            <div>
-              <h2 className="mb-2 text-[11px] font-semibold uppercase tracking-wider text-on-surface-variant/70">
-                Última jogada do agente
-              </h2>
-              <StatGrid
-                cols={2}
-                items={[
-                  ["Status", lastStats.truncated ? <span key="t" className="text-error">parcial</span> : "completo"],
-                  ["Nós explorados", lastStats.nodesExplored.toLocaleString("pt-BR")],
-                  ["Ramos podados", lastStats.prunedBranches.toLocaleString("pt-BR")],
-                  ["Tempo", `${lastStats.timeMs.toFixed(2)}ms`],
-                  ["Avaliação", String(lastStats.score)],
-                ]}
-              />
-            </div>
-          </StatsDrawer>
-        )}
+          <button className="btn-pill btn-pill-primary" onClick={resetBoard}>
+            <Icon name="refresh" className="text-[15px]" /> Reiniciar partida
+          </button>
+        </div>
       </div>
 
-      {/* Bottom status bar: turn-based, no continuous process to scrub through */}
-      <StatusBar status={status} pulsing={thinking} message={message} onReset={resetBoard} resetLabel="Reiniciar" />
+      <div className="workspace-card">
+        <div className="workspace-head">
+          <h2>
+            Tabuleiro — {size}×{size}
+          </h2>
+          <div className="workspace-links">
+            <button className="workspace-link" onClick={() => setAdvancedOpen(true)}>
+              <Icon name="tune" className="text-[13px]" /> Parâmetros
+            </button>
+            <button className="workspace-link" onClick={() => setStatsOpen(true)} disabled={!lastStats}>
+              <Icon name="query_stats" className="text-[13px]" /> Última jogada
+            </button>
+          </div>
+        </div>
+
+        <div className="canvas-body">
+          {/* Board dominates the remaining space */}
+          <div className="canvas-stage">
+            <StageHint>
+              TABULEIRO <b className="readout-glow font-semibold text-primary">{size}×{size}</b> · K=
+              <b className="readout-glow font-semibold text-primary">{winLength}</b>
+            </StageHint>
+            <div
+              className="h-full w-full outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-primary/70"
+              tabIndex={0}
+              role="application"
+              aria-label="Tabuleiro da velha. Use as setas para mover o cursor e Enter ou espaço para jogar na célula selecionada."
+              onKeyDown={handleGridKeyDown}
+              onFocus={() => setFocusIndex((f) => f ?? 0)}
+              onMouseDown={() => setKeyboardNav(false)}
+            >
+              <WebGLGate>
+                <BoardCanvas
+                  board={board}
+                  size={size}
+                  winLine={winLine}
+                  interactive={canInteract}
+                  onCellClick={handleCellClick}
+                  focusIndex={keyboardNav ? focusIndex : null}
+                />
+              </WebGLGate>
+            </div>
+          </div>
+
+          {/* Bottom status bar: turn-based, no continuous process to scrub through */}
+          <StatusBar status={status} pulsing={thinking} message={message} onReset={resetBoard} resetLabel="Reiniciar" />
+        </div>
+      </div>
+
+      <Modal open={statsOpen} onClose={() => setStatsOpen(false)} title="Última jogada do agente">
+        {lastStats && (
+          <StatGrid
+            cols={2}
+            items={[
+              ["Status", lastStats.truncated ? <span key="t" className="text-error">parcial</span> : "completo"],
+              ["Nós explorados", lastStats.nodesExplored.toLocaleString("pt-BR")],
+              ["Ramos podados", lastStats.prunedBranches.toLocaleString("pt-BR")],
+              ["Tempo", `${lastStats.timeMs.toFixed(2)}ms`],
+              ["Avaliação", String(lastStats.score)],
+            ]}
+          />
+        )}
+      </Modal>
 
       <Modal
         open={advancedOpen}

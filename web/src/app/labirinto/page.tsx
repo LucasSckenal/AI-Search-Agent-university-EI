@@ -7,9 +7,8 @@ import { Toggle } from "@/components/shared/Toggle";
 import { Select } from "@/components/shared/Select";
 import { Modal } from "@/components/shared/Modal";
 import { SearchStatsTable, ALGO_COLOR } from "@/components/shared/SearchStatsTable";
-import { Rail } from "@/components/shared/Rail";
-import { Stage, StageHint } from "@/components/shared/Stage";
-import { StatsDrawer, StatGrid } from "@/components/shared/StatsDrawer";
+import { StageHint } from "@/components/shared/Stage";
+import { StatGrid } from "@/components/shared/StatGrid";
 import { Timeline } from "@/components/shared/Timeline";
 import { WebGLGate } from "@/components/shared/WebGLGate";
 import {
@@ -58,6 +57,8 @@ export default function LabirintoPage() {
   const [speed, setSpeed] = useState(40); // cells revealed per tick
   const [advancedOpen, setAdvancedOpen] = useState(false);
   const [compareOpen, setCompareOpen] = useState(false);
+  const [editOpen, setEditOpen] = useState(false);
+  const [statsOpen, setStatsOpen] = useState(false);
 
   // Reproducibility: off by default (plain Math.random, like before). When enabled, maze
   // generation draws from a seeded PRNG instead, so a specific seed number can be cited in a
@@ -333,160 +334,177 @@ export default function LabirintoPage() {
   const status = playing ? "ANIMANDO" : result ? (result.found ? "CONCLUÍDO" : "SEM SOLUÇÃO") : "PRONTO";
 
   return (
-    <div className="flex h-full min-h-0 flex-col">
-      <div className="relative flex flex-1 min-h-0">
-        {/* Docked left rail: problem + brush + run controls */}
-        <Rail>
-          <div>
-            <h1 className="text-xl font-bold tracking-tight">Labirinto</h1>
-            <p className="mt-2 text-[11px] leading-relaxed text-on-surface-variant">
-              Início (lavanda) até o objetivo (laranja) num grid com paredes e lama (custo 5).
-              Arraste com o botão esquerdo para pintar, botão direito para girar a câmera.
-            </p>
+    <div className="flex h-full min-h-0 flex-col overflow-y-auto p-5 sm:p-6">
+      <div className="content-head">
+        <div>
+          <div className="content-kicker">
+            <span>Labirinto</span>
+            <span>/</span>
+            <span className="accent">{ALGORITHM_LABELS[algorithm]}</span>
           </div>
-
-          <button className="btn btn-secondary" onClick={() => setAdvancedOpen(true)}>
-            <Icon name="tune" className="text-[16px]" /> Parâmetros ({rows}×{cols}, {ALGORITHM_LABELS[algorithm].split(" ")[0]})
+          <h1 className="content-title">Labirinto</h1>
+          <p className="content-sub">
+            Início (lavanda) até o objetivo (laranja) num grid com paredes e lama (custo 5).
+            Arraste com o botão esquerdo para pintar, botão direito para girar a câmera.
+          </p>
+        </div>
+        <div className="content-actions">
+          <button className="btn-pill" onClick={runComparison}>
+            <Icon name="compare_arrows" className="text-[15px]" /> Comparar
           </button>
-
-          <div>
-            <h3 className="mb-2 text-[11px] font-semibold uppercase tracking-wider text-on-surface-variant/70">
-              Edição do grid
-            </h3>
-            <div className="grid grid-cols-3 gap-1.5">
-              {(
-                [
-                  ["wall", "Parede"],
-                  ["mud", "Lama"],
-                  ["empty", "Vazio"],
-                  ["start", "Início"],
-                  ["goal", "Objetivo"],
-                ] as [Brush, string][]
-              ).map(([b, label]) => (
-                <button
-                  key={b}
-                  onClick={() => setBrush(b)}
-                  className={`btn ${brush === b ? "btn-primary" : "btn-secondary"} !px-2 !py-1.5 text-[11px]`}
-                >
-                  {label}
-                </button>
-              ))}
-            </div>
-            <div className="mt-2.5 flex flex-wrap gap-x-3 gap-y-1 text-[11px]">
-              {[
-                ["#4a4f5c", "Parede"],
-                ["#5b6070", "Explorado"],
-                ["#c25a55", "Descartado"],
-                ["#8a5a2e", "Lama"],
-                ["#f5f6fa", "Caminho"],
-              ].map(([color, label]) => (
-                <div key={label} className="flex items-center gap-1.5">
-                  <span className="h-2 w-2 rounded-full" style={{ background: color, boxShadow: `0 0 6px ${color}66` }} />
-                  <span className="text-on-surface/80">{label}</span>
-                </div>
-              ))}
-            </div>
-          </div>
-
-          <div className="mt-auto flex flex-col gap-2.5 pt-3">
-            <button className="btn btn-primary" onClick={() => runAlgorithm()}>
-              <Icon name="play_arrow" /> Executar e animar
-            </button>
-            <button className="btn btn-secondary" onClick={runComparison}>
-              <Icon name="compare_arrows" className="text-[16px]" /> Comparar algoritmos
-            </button>
-            <button className="btn btn-secondary" onClick={startRace}>
-              <Icon name="flag" className="text-[16px]" /> Corrida entre algoritmos
-            </button>
-            <button className="btn btn-secondary" onClick={runBatch}>
-              <Icon name="query_stats" className="text-[16px]" /> Comparação em lote (N execuções)
-            </button>
-          </div>
-        </Rail>
-
-        {/* Canvas dominates the remaining space */}
-        <Stage className="bg-[radial-gradient(ellipse_at_50%_35%,rgba(175,198,255,0.06),transparent_60%)]">
-          <StageHint>
-            GRID <b className="readout-glow font-semibold text-primary">{rows}×{cols}</b>
-            {result?.found && (
-              <>
-                {" "}
-                · CUSTO <b className="readout-glow font-semibold text-primary">{result.cost.toFixed(2)}</b>
-              </>
-            )}
-          </StageHint>
-          <div
-            className="h-full w-full outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-primary/70"
-            tabIndex={0}
-            role="application"
-            aria-label="Grade do labirinto. Use as setas para mover o cursor e Enter ou espaço para pintar a célula selecionada com o pincel atual."
-            onKeyDown={handleGridKeyDown}
-            onFocus={() => setFocusIndex((f) => f ?? maze.start)}
-            onMouseDown={() => setKeyboardNav(false)}
-          >
-            <WebGLGate>
-              <MazeCanvas
-                maze={maze}
-                visited={visited}
-                path={path}
-                pathRevealed={showPath}
-                frontier={frontier}
-                interactive
-                onCellClick={handleCellClick}
-                focusIndex={keyboardNav ? focusIndex : null}
-              />
-            </WebGLGate>
-          </div>
-        </Stage>
-
-        {/* Collapsible stats drawer */}
-        {result && (
-          <StatsDrawer>
-            <div>
-              <h2 className="mb-2 text-[11px] font-semibold uppercase tracking-wider text-on-surface-variant/70">
-                Última execução
-              </h2>
-              <StatGrid
-                cols={2}
-                items={[
-                  ["Status", result.found ? "OK" : "falhou"],
-                  ["Custo", result.found ? result.cost.toFixed(2) : "—"],
-                  ["Expandidos", result.nodesExpanded.toLocaleString("pt-BR")],
-                  ["Gerados", result.nodesGenerated.toLocaleString("pt-BR")],
-                  [
-                    "b*",
-                    result.found
-                      ? (effectiveBranchingFactor(result.nodesGenerated, result.actions.length)?.toFixed(2) ?? "—")
-                      : "—",
-                  ],
-                  ["Tempo", `${result.timeMs.toFixed(1)}ms`],
-                ]}
-              />
-            </div>
-          </StatsDrawer>
-        )}
+          <button className="btn-pill btn-pill-primary" onClick={() => runAlgorithm()}>
+            <Icon name="play_arrow" className="text-[15px]" /> Executar e animar
+          </button>
+        </div>
       </div>
 
-      {/* Bottom timeline: scrubs through the search's node-reveal animation */}
-      <Timeline
-        status={status}
-        pulsing={playing}
-        playing={playing}
-        onTogglePlay={() => setPlaying((p) => !p)}
-        onSkipEnd={() => {
-          if (!result) return;
-          setRevealCount(result.exploredOrder.length);
-          setShowPath(true);
-          setPlaying(false);
-        }}
-        current={revealCount}
-        total={result?.exploredOrder.length ?? 0}
-        unitLabel="nós"
-        disabled={!result}
-        speed={speed}
-        onSpeedChange={setSpeed}
-        speedLabel="Velocidade"
-      />
+      <div className="workspace-card">
+        <div className="workspace-head">
+          <h2>
+            Canvas 3D — Labirinto {rows}×{cols}
+          </h2>
+          <div className="workspace-links">
+            <button className="workspace-link" onClick={() => setAdvancedOpen(true)}>
+              <Icon name="tune" className="text-[13px]" /> Parâmetros
+            </button>
+            <button className="workspace-link" onClick={startRace}>
+              <Icon name="flag" className="text-[13px]" /> Corrida
+            </button>
+            <button className="workspace-link" onClick={runBatch}>
+              <Icon name="query_stats" className="text-[13px]" /> Lote
+            </button>
+            <button className="workspace-link" onClick={() => setEditOpen(true)}>
+              <Icon name="brush" className="text-[13px]" /> Editar grid
+            </button>
+            <button className="workspace-link" onClick={() => setStatsOpen(true)} disabled={!result}>
+              <Icon name="query_stats" className="text-[13px]" /> Última execução
+            </button>
+          </div>
+        </div>
+
+        <div className="canvas-body">
+          {/* Canvas dominates the remaining space */}
+          <div className="canvas-stage bg-[radial-gradient(ellipse_at_50%_35%,rgba(175,198,255,0.06),transparent_60%)]">
+            <StageHint>
+              GRID <b className="readout-glow font-semibold text-primary">{rows}×{cols}</b> · PINCEL{" "}
+              <b className="readout-glow font-semibold text-primary">
+                {{ wall: "Parede", mud: "Lama", empty: "Vazio", start: "Início", goal: "Objetivo" }[brush]}
+              </b>
+              {result?.found && (
+                <>
+                  {" "}
+                  · CUSTO <b className="readout-glow font-semibold text-primary">{result.cost.toFixed(2)}</b>
+                </>
+              )}
+            </StageHint>
+            <div
+              className="h-full w-full outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-primary/70"
+              tabIndex={0}
+              role="application"
+              aria-label="Grade do labirinto. Use as setas para mover o cursor e Enter ou espaço para pintar a célula selecionada com o pincel atual."
+              onKeyDown={handleGridKeyDown}
+              onFocus={() => setFocusIndex((f) => f ?? maze.start)}
+              onMouseDown={() => setKeyboardNav(false)}
+            >
+              <WebGLGate>
+                <MazeCanvas
+                  maze={maze}
+                  visited={visited}
+                  path={path}
+                  pathRevealed={showPath}
+                  frontier={frontier}
+                  interactive
+                  onCellClick={handleCellClick}
+                  focusIndex={keyboardNav ? focusIndex : null}
+                />
+              </WebGLGate>
+            </div>
+          </div>
+
+          {/* Bottom timeline: scrubs through the search's node-reveal animation */}
+          <Timeline
+            status={status}
+            pulsing={playing}
+            playing={playing}
+            onTogglePlay={() => setPlaying((p) => !p)}
+            onSkipEnd={() => {
+              if (!result) return;
+              setRevealCount(result.exploredOrder.length);
+              setShowPath(true);
+              setPlaying(false);
+            }}
+            current={revealCount}
+            total={result?.exploredOrder.length ?? 0}
+            unitLabel="nós"
+            disabled={!result}
+            speed={speed}
+            onSpeedChange={setSpeed}
+            speedLabel="Velocidade"
+          />
+        </div>
+      </div>
+
+      <Modal
+        open={editOpen}
+        onClose={() => setEditOpen(false)}
+        title="Editar grid"
+        subtitle="Escolha o pincel e desenhe direto no canvas"
+      >
+        <div className="grid grid-cols-3 gap-1.5">
+          {(
+            [
+              ["wall", "Parede"],
+              ["mud", "Lama"],
+              ["empty", "Vazio"],
+              ["start", "Início"],
+              ["goal", "Objetivo"],
+            ] as [Brush, string][]
+          ).map(([b, label]) => (
+            <button
+              key={b}
+              onClick={() => setBrush(b)}
+              className={`btn ${brush === b ? "btn-primary" : "btn-secondary"} !px-2 !py-1.5 text-[11px]`}
+            >
+              {label}
+            </button>
+          ))}
+        </div>
+        <div className="mt-2.5 flex flex-wrap gap-x-3 gap-y-1 text-[11px]">
+          {[
+            ["#4a4f5c", "Parede"],
+            ["#5b6070", "Explorado"],
+            ["#c25a55", "Descartado"],
+            ["#8a5a2e", "Lama"],
+            ["#f5f6fa", "Caminho"],
+          ].map(([color, label]) => (
+            <div key={label} className="flex items-center gap-1.5">
+              <span className="h-2 w-2 rounded-full" style={{ background: color, boxShadow: `0 0 6px ${color}66` }} />
+              <span className="text-on-surface/80">{label}</span>
+            </div>
+          ))}
+        </div>
+      </Modal>
+
+      <Modal open={statsOpen} onClose={() => setStatsOpen(false)} title="Última execução">
+        {result && (
+          <StatGrid
+            cols={2}
+            items={[
+              ["Status", result.found ? "OK" : "falhou"],
+              ["Custo", result.found ? result.cost.toFixed(2) : "—"],
+              ["Expandidos", result.nodesExpanded.toLocaleString("pt-BR")],
+              ["Gerados", result.nodesGenerated.toLocaleString("pt-BR")],
+              [
+                "b*",
+                result.found
+                  ? (effectiveBranchingFactor(result.nodesGenerated, result.actions.length)?.toFixed(2) ?? "—")
+                  : "—",
+              ],
+              ["Tempo", `${result.timeMs.toFixed(1)}ms`],
+            ]}
+          />
+        )}
+      </Modal>
 
       <Modal
         open={advancedOpen}

@@ -6,7 +6,7 @@ import { Icon } from "@/components/shared/Panel";
 
 const OPEN_EVENT = "cmdk:open";
 
-/** Opens the palette from anywhere (e.g. TopBar's "Buscar" button) without prop-drilling state. */
+/** Opens the palette from anywhere (e.g. Sidebar's "Buscar" button) without prop-drilling state. */
 export function openCommandPalette() {
   if (typeof window !== "undefined") window.dispatchEvent(new Event(OPEN_EVENT));
 }

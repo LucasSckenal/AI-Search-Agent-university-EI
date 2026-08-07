@@ -1244,3 +1244,390 @@ input[type="number"]:hover {
 .readout-glow {
   text-shadow: 0 0 10px color-mix(in srgb, currentColor 45%, transparent);
 }
+
+/* ==========================================================================
+   App shell: docked sidebar (square corners) + a single rounded main card,
+   replacing the old TopBar-on-top layout. Mirrors the p-3/gap-3 + rounded-
+   [2.5rem] main-card pattern approved in the dashboard-layout mockup, using
+   the site's own Obsidian Flux tokens instead of the mockup's placeholder
+   colors. See Sidebar.tsx for the interactive half of this.
+   ========================================================================== */
+.app-shell {
+  display: flex;
+  height: 100vh;
+  width: 100vw;
+  gap: 12px;
+  padding: 12px;
+}
+
+.sidebar {
+  position: relative;
+  display: flex;
+  width: 256px;
+  flex-shrink: 0;
+  height: 100%;
+  flex-direction: column;
+  background: var(--background);
+  transition: width 0.3s ease;
+}
+.sidebar-collapsed {
+  width: 76px;
+}
+
+.sidebar-brand {
+  display: flex;
+  height: 72px;
+  flex-shrink: 0;
+  align-items: center;
+  gap: 10px;
+  padding: 0 16px;
+}
+.sidebar-collapsed .sidebar-brand {
+  justify-content: center;
+  padding: 0;
+}
+
+/* Collapse toggle: sits in the 12px gap between sidebar and main card, a bit right of the
+   gap's midpoint (not centered on the sidebar's own edge - see mockup iteration history). */
+.sidebar-collapse-btn {
+  position: absolute;
+  top: 36px;
+  right: -23px;
+  z-index: 20;
+  display: flex;
+  height: 26px;
+  width: 26px;
+  align-items: center;
+  justify-content: center;
+  border-radius: 999px;
+  background: var(--background);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  color: var(--on-surface-variant);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.4);
+  transition: color 150ms ease, border-color 150ms ease;
+}
+.sidebar-collapse-btn:hover {
+  color: var(--primary);
+  border-color: color-mix(in srgb, var(--primary) 40%, transparent);
+}
+
+.sidebar-search {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin: 0 12px 16px;
+  padding: 8px 12px;
+  border-radius: 8px;
+  background: var(--background);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  color: var(--on-surface-variant);
+  font-size: 12px;
+  white-space: nowrap;
+  overflow: hidden;
+}
+.sidebar-collapsed .sidebar-search {
+  justify-content: center;
+  padding: 8px;
+}
+
+.sidebar-nav {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  padding: 0 12px;
+}
+.sidebar-navitem {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 12px 14px;
+  border-radius: 12px;
+  font-size: 13.5px;
+  font-weight: 600;
+  color: var(--on-surface-variant);
+  white-space: nowrap;
+  overflow: hidden;
+  transition: background-color 150ms ease, color 150ms ease;
+}
+.sidebar-navitem:hover {
+  background: rgba(255, 255, 255, 0.05);
+  color: var(--on-surface);
+}
+.sidebar-navitem-active,
+.sidebar-navitem-active:hover {
+  background: color-mix(in srgb, var(--primary) 14%, transparent);
+  color: var(--primary);
+}
+.sidebar-collapsed .sidebar-navitem {
+  justify-content: center;
+  padding: 12px;
+}
+
+.sidebar-footer {
+  margin-top: auto;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 12px;
+  font-size: 11px;
+  color: var(--on-surface-variant);
+  white-space: nowrap;
+  overflow: hidden;
+}
+.sidebar-collapsed .sidebar-footer {
+  justify-content: center;
+}
+
+.sidebar-label {
+  transition: opacity 100ms ease;
+}
+.sidebar-collapsed .sidebar-label {
+  display: none;
+}
+
+/* The routed page renders inside this - a single rounded card sitting beside the (square-
+   cornered) sidebar, mirroring the reference dashboard's `rounded-[2.5rem] border overflow-
+   hidden` main panel. Each page manages its own internal scrolling (h-full overflow-y-auto),
+   same as it already did under the old TopBar layout. */
+.main-shell {
+  position: relative;
+  display: flex;
+  min-width: 0;
+  flex: 1;
+  flex-direction: column;
+  overflow: hidden;
+  border-radius: 32px;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  background: var(--background);
+  box-shadow: 0 0 10px rgba(0, 0, 0, 0.8);
+}
+@media (min-width: 1024px) {
+  .main-shell {
+    border-radius: 40px;
+  }
+}
+
+/* Below the lg breakpoint the sidebar hides entirely (there isn't room for a persistent 256px
+   rail) and MobileDock takes over cross-page navigation instead. */
+@media (max-width: 1023px) {
+  .app-shell {
+    gap: 0;
+    padding: 0;
+  }
+  .sidebar {
+    display: none;
+  }
+  .main-shell {
+    border-radius: 0;
+    border: none;
+  }
+}
+
+.mobile-dock {
+  display: none;
+}
+@media (max-width: 1023px) {
+  .mobile-dock {
+    position: fixed;
+    left: 50%;
+    bottom: 16px;
+    z-index: 150;
+    display: flex;
+    transform: translateX(-50%);
+    align-items: center;
+    gap: 4px;
+    padding: 8px;
+    border-radius: 24px;
+    background: color-mix(in srgb, var(--background) 85%, transparent);
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    backdrop-filter: blur(20px);
+    -webkit-backdrop-filter: blur(20px);
+    box-shadow: 0 20px 40px rgba(0, 0, 0, 0.5);
+  }
+  .mobile-dock-item {
+    display: flex;
+    height: 44px;
+    width: 44px;
+    align-items: center;
+    justify-content: center;
+    border-radius: 16px;
+    color: var(--on-surface-variant);
+  }
+  .mobile-dock-item-active {
+    background: color-mix(in srgb, var(--primary) 15%, transparent);
+    color: var(--primary);
+  }
+}
+
+/* ---------- workspace card: the canvas is the problem, so it gets the full card; secondary
+   content ("Parâmetros", "Editar grid", "Última execução"/"jogada") opens as a Modal instead
+   of competing for space in a docked side rail. Replaces Rail + Stage + StatsDrawer. ---------- */
+.workspace-card {
+  display: flex;
+  min-height: 0;
+  flex: 1;
+  flex-direction: column;
+  overflow: hidden;
+  border-radius: 32px;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  background: var(--surface-container-lowest);
+  box-shadow: inset 0 2px 20px rgba(0, 0, 0, 0.15);
+}
+.workspace-head {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+  padding: 16px 20px;
+}
+.workspace-head h2 {
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--on-surface-variant);
+}
+.workspace-links {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;
+}
+.workspace-link {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 12px;
+  border-radius: 8px;
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--primary);
+  background: color-mix(in srgb, var(--primary) 5%, transparent);
+  border: 1px solid color-mix(in srgb, var(--primary) 10%, transparent);
+  transition: background-color 150ms ease;
+}
+.workspace-link:hover:not(:disabled) {
+  background: color-mix(in srgb, var(--primary) 12%, transparent);
+}
+.workspace-link:disabled {
+  opacity: 0.35;
+  cursor: not-allowed;
+}
+
+/* ---------- page content-head: kicker + big title + sub + primary run controls, sitting above
+   the workspace card. Reuses each page's existing title/description copy, just restyled at the
+   size the mockup called for instead of inventing new marketing copy. ---------- */
+.content-head {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 24px;
+  margin-bottom: 24px;
+}
+.content-kicker {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.25em;
+  text-transform: uppercase;
+  color: var(--on-surface-variant);
+}
+.content-kicker .accent {
+  color: var(--primary);
+}
+.content-title {
+  margin-top: 8px;
+  font-size: 34px;
+  font-weight: 800;
+  letter-spacing: -0.02em;
+  line-height: 1.05;
+  color: var(--on-surface);
+}
+.content-sub {
+  margin-top: 10px;
+  max-width: 60ch;
+  font-size: 12.5px;
+  line-height: 1.6;
+  color: var(--on-surface-variant);
+}
+.content-actions {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 10px;
+  flex-shrink: 0;
+}
+.btn-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  height: 44px;
+  padding: 0 20px;
+  border-radius: 999px;
+  font-size: 11px;
+  font-weight: 800;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  background: rgba(255, 255, 255, 0.03);
+  color: var(--on-surface-variant);
+  transition: background-color 150ms ease, transform 150ms ease;
+}
+.btn-pill:hover:not(:disabled) {
+  background: rgba(255, 255, 255, 0.06);
+}
+.btn-pill:active:not(:disabled) {
+  transform: scale(0.98);
+}
+.btn-pill:disabled {
+  opacity: 0.35;
+  cursor: not-allowed;
+}
+.btn-pill-primary {
+  border-color: transparent;
+  background: linear-gradient(180deg, color-mix(in srgb, var(--primary) 60%, white), var(--primary));
+  color: var(--on-primary);
+  box-shadow: 0 10px 26px -10px color-mix(in srgb, var(--primary) 60%, transparent);
+}
+.btn-pill-primary:hover:not(:disabled) {
+  background: var(--primary);
+}
+
+@media (max-width: 640px) {
+  .content-title {
+    font-size: 26px;
+  }
+  .content-actions {
+    width: 100%;
+  }
+  .btn-pill {
+    flex: 1;
+    justify-content: center;
+  }
+}
+
+/* Canvas area inside the workspace card: the 3D stage plus its bottom playback bar
+   (Timeline/StatusBar), replacing the old Stage component's separate flex row. */
+.canvas-body {
+  position: relative;
+  display: flex;
+  min-height: 0;
+  flex: 1;
+  flex-direction: column;
+}
+.canvas-stage {
+  position: relative;
+  display: flex;
+  min-height: 0;
+  flex: 1;
+  align-items: center;
+  justify-content: center;
+  overflow: hidden;
+}

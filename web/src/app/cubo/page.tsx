@@ -7,9 +7,8 @@ import { Select } from "@/components/shared/Select";
 import { Modal } from "@/components/shared/Modal";
 import { Toggle } from "@/components/shared/Toggle";
 import { SearchStatsTable, ALGO_COLOR } from "@/components/shared/SearchStatsTable";
-import { Rail } from "@/components/shared/Rail";
-import { Stage, StageHint } from "@/components/shared/Stage";
-import { StatsDrawer, StatGrid } from "@/components/shared/StatsDrawer";
+import { StageHint } from "@/components/shared/Stage";
+import { StatGrid } from "@/components/shared/StatGrid";
 import { Timeline } from "@/components/shared/Timeline";
 import { WebGLGate } from "@/components/shared/WebGLGate";
 import {
@@ -65,6 +64,8 @@ export default function CuboPage() {
   const [maxNodes, setMaxNodes] = useState(260_000);
   const [advancedOpen, setAdvancedOpen] = useState(false);
   const [compareOpen, setCompareOpen] = useState(false);
+  const [actionsOpen, setActionsOpen] = useState(false);
+  const [statsOpen, setStatsOpen] = useState(false);
 
   // Search-exploration preview: before playing the real solution, flip rapidly through a sample of
   // the states the algorithm actually visited (result.exploredOrder, already full cube snapshots
@@ -233,141 +234,156 @@ export default function CuboPage() {
           : "PRONTO";
 
   return (
-    <div className="flex h-full min-h-0 flex-col">
-      <div className="relative flex flex-1 min-h-0">
-        {/* Docked left rail: actions only, all parameters live in the modal */}
-        <Rail>
-          <div>
-            <h1 className="text-xl font-bold tracking-tight">Cubo Mágico {size}x{size}</h1>
-            <p className="mt-2 text-[11px] leading-relaxed text-on-surface-variant">
-              {size === 2
-                ? "Pocket Cube com 3.674.160 estados — pequeno o bastante para comparar busca cega com busca informada de verdade."
-                : "Cubo padrão com ~4,3×10¹⁹ estados — bom demais para busca cega ir muito longe, ótimo para ver na prática por que heurística importa."}
-            </p>
+    <div className="flex h-full min-h-0 flex-col overflow-y-auto p-5 sm:p-6">
+      <div className="content-head">
+        <div>
+          <div className="content-kicker">
+            <span>Cubo Mágico</span>
+            <span>/</span>
+            <span className="accent">
+              {size}x{size}
+            </span>
           </div>
-
-          <button className="btn btn-secondary" onClick={() => setAdvancedOpen(true)}>
-            <Icon name="tune" className="text-[16px]" /> Parâmetros ({size}x{size}, {scrambleLen} mov., {ALGORITHM_LABELS[algorithm].split(" ")[0]})
+          <h1 className="content-title">
+            Cubo Mágico {size}x{size}
+          </h1>
+          <p className="content-sub">
+            {size === 2
+              ? "Pocket Cube com 3.674.160 estados — pequeno o bastante para comparar busca cega com busca informada de verdade."
+              : "Cubo padrão com ~4,3×10¹⁹ estados — bom demais para busca cega ir muito longe, ótimo para ver na prática por que heurística importa."}
+          </p>
+        </div>
+        <div className="content-actions">
+          <button className="btn-pill" onClick={runComparison} disabled={busy || exploring}>
+            <Icon name="compare_arrows" className="text-[15px]" /> Comparar
           </button>
+          <button className="btn-pill btn-pill-primary" onClick={() => runSolve()} disabled={busy || exploring}>
+            <Icon name="play_arrow" className="text-[15px]" /> {busy ? "Calculando…" : "Resolver e animar"}
+          </button>
+        </div>
+      </div>
 
-          <div className="flex flex-col gap-3">
-            <h3 className="text-[11px] font-semibold uppercase tracking-wider text-on-surface-variant/70">
-              Ações
-            </h3>
-            <button className="btn btn-secondary" onClick={() => doScramble()} disabled={busy || exploring}>
-              <Icon name="casino" className="text-[16px]" /> Embaralhar
+      <div className="workspace-card">
+        <div className="workspace-head">
+          <h2>
+            Canvas 3D — Cubo {size}×{size}
+          </h2>
+          <div className="workspace-links">
+            <button className="workspace-link" onClick={() => setAdvancedOpen(true)}>
+              <Icon name="tune" className="text-[13px]" /> Parâmetros
             </button>
-            <div className="rounded-xl bg-white/5 px-3 py-2 text-[12px]">
-              <span className="text-on-surface-variant">Sequência: </span>
-              <span className="font-mono text-on-surface">{scramble.join(" ") || "—"}</span>
+            <button className="workspace-link" onClick={runBatch} disabled={busy || exploring}>
+              <Icon name="query_stats" className="text-[13px]" /> Lote
+            </button>
+            <button className="workspace-link" onClick={() => setActionsOpen(true)}>
+              <Icon name="casino" className="text-[13px]" /> Ações
+            </button>
+            <button className="workspace-link" onClick={() => setStatsOpen(true)} disabled={!result}>
+              <Icon name="query_stats" className="text-[13px]" /> Última execução
+            </button>
+          </div>
+        </div>
+
+        <div className="canvas-body">
+          {/* Canvas dominates the remaining space */}
+          <div className="canvas-stage bg-[radial-gradient(circle_at_50%_38%,rgba(175,198,255,0.08),transparent_70%)]">
+            <StageHint>
+              CUBO {size}×{size} · <b className="readout-glow font-semibold text-primary">{size === 2 ? "3.674.160" : "~4,3×10¹⁹"}</b> ESTADOS
+            </StageHint>
+            <div
+              className={`pointer-events-none absolute right-4 top-4 z-[1] rounded-full px-3 py-1 text-[11px] font-medium ${
+                solved ? "bg-primary/20 text-primary" : "bg-white/5 text-on-surface-variant"
+              }`}
+            >
+              {solved ? "✓ Resolvido" : "Não resolvido"}
+            </div>
+            <div className="relative h-full w-full">
+              <WebGLGate>
+                <CubeCanvas
+                  cube={displayCube}
+                  size={size}
+                  animatingMove={animatingMove}
+                  onMoveSettled={handleMoveSettled}
+                  idle={!busy && !exploring && !playing}
+                />
+                {exploring && (
+                  <>
+                    <div
+                      className="pointer-events-none absolute inset-0 animate-pulse"
+                      style={{ boxShadow: `inset 0 0 42px ${ALGO_COLOR[algorithm]}66` }}
+                    />
+                    <div
+                      className="pointer-events-none absolute left-1/2 top-3 -translate-x-1/2 rounded-full bg-black/70 px-3 py-1 text-[11px] font-mono backdrop-blur-sm"
+                      style={{ color: ALGO_COLOR[algorithm] }}
+                    >
+                      🔍 Explorando nó {((exploreRealIndices[exploreStep] ?? 0) + 1).toLocaleString("pt-BR")} /{" "}
+                      {(result?.nodesExpanded ?? 0).toLocaleString("pt-BR")}
+                    </div>
+                  </>
+                )}
+              </WebGLGate>
             </div>
           </div>
 
-          <div className="mt-auto flex flex-col gap-3 pt-4">
-            <button className="btn btn-primary" onClick={() => runSolve()} disabled={busy || exploring}>
-              <Icon name="play_arrow" /> {busy ? "Calculando…" : "Resolver e animar"}
-            </button>
-            <button className="btn btn-secondary" onClick={runComparison} disabled={busy || exploring}>
-              <Icon name="compare_arrows" className="text-[16px]" /> Comparar algoritmos
-            </button>
-            <button className="btn btn-secondary" onClick={runBatch} disabled={busy || exploring}>
-              <Icon name="query_stats" className="text-[16px]" /> Comparação em lote (N execuções)
-            </button>
-          </div>
-        </Rail>
+          {/* Bottom timeline: scrubs through the move-by-move solution playback */}
+          <Timeline
+            status={status}
+            pulsing={busy || exploring || playing}
+            playing={playing}
+            onTogglePlay={() => setPlaying((p) => !p)}
+            onSkipEnd={() => {
+              if (!result?.found) return;
+              setExploring(false);
+              setDisplayCube(applyMoves(startCube, result.actions));
+              setStep(result.actions.length);
+              setAnimatingMove(null);
+              setPlaying(false);
+            }}
+            current={step}
+            total={result?.actions.length ?? 0}
+            unitLabel="movimentos"
+            disabled={!result?.found || exploring}
+          />
+        </div>
+      </div>
 
-        {/* Canvas dominates the remaining space */}
-        <Stage className="bg-[radial-gradient(circle_at_50%_38%,rgba(175,198,255,0.08),transparent_70%)]">
-          <StageHint>
-            CUBO {size}×{size} · <b className="readout-glow font-semibold text-primary">{size === 2 ? "3.674.160" : "~4,3×10¹⁹"}</b> ESTADOS
-          </StageHint>
-          <div
-            className={`pointer-events-none absolute right-4 top-4 z-[1] rounded-full px-3 py-1 text-[11px] font-medium ${
-              solved ? "bg-primary/20 text-primary" : "bg-white/5 text-on-surface-variant"
-            }`}
-          >
-            {solved ? "✓ Resolvido" : "Não resolvido"}
-          </div>
-          <div className="relative h-full w-full">
-            <WebGLGate>
-              <CubeCanvas
-                cube={displayCube}
-                size={size}
-                animatingMove={animatingMove}
-                onMoveSettled={handleMoveSettled}
-                idle={!busy && !exploring && !playing}
-              />
-              {exploring && (
-                <>
-                  <div
-                    className="pointer-events-none absolute inset-0 animate-pulse"
-                    style={{ boxShadow: `inset 0 0 42px ${ALGO_COLOR[algorithm]}66` }}
-                  />
-                  <div
-                    className="pointer-events-none absolute left-1/2 top-3 -translate-x-1/2 rounded-full bg-black/70 px-3 py-1 text-[11px] font-mono backdrop-blur-sm"
-                    style={{ color: ALGO_COLOR[algorithm] }}
-                  >
-                    🔍 Explorando nó {((exploreRealIndices[exploreStep] ?? 0) + 1).toLocaleString("pt-BR")} /{" "}
-                    {(result?.nodesExpanded ?? 0).toLocaleString("pt-BR")}
-                  </div>
-                </>
-              )}
-            </WebGLGate>
-          </div>
-        </Stage>
+      <Modal open={actionsOpen} onClose={() => setActionsOpen(false)} title="Ações" subtitle="Embaralhar e ver a sequência atual">
+        <button className="btn btn-secondary" onClick={() => doScramble()} disabled={busy || exploring}>
+          <Icon name="casino" className="text-[16px]" /> Embaralhar
+        </button>
+        <div className="rounded-xl bg-white/5 px-3 py-2 text-[12px]">
+          <span className="text-on-surface-variant">Sequência: </span>
+          <span className="font-mono text-on-surface">{scramble.join(" ") || "—"}</span>
+        </div>
+      </Modal>
 
-        {/* Collapsible stats drawer */}
+      <Modal open={statsOpen} onClose={() => setStatsOpen(false)} title="Última execução">
         {result && (
-          <StatsDrawer>
-            <div>
-              <h2 className="mb-2 text-[11px] font-semibold uppercase tracking-wider text-on-surface-variant/70">
-                Última execução
-              </h2>
-              <StatGrid
-                cols={2}
-                items={[
-                  ["Status", result.found ? "OK" : result.truncated ? "limite" : "falhou"],
-                  ["Movimentos", result.found ? String(result.actions.length) : "—"],
-                  ["Expandidos", result.nodesExpanded.toLocaleString("pt-BR")],
-                  [
-                    "b*",
-                    result.found
-                      ? (effectiveBranchingFactor(result.nodesGenerated, result.actions.length)?.toFixed(2) ?? "—")
-                      : "—",
-                  ],
-                  ["Tempo", `${result.timeMs.toFixed(1)}ms`],
-                ]}
-              />
-            </div>
+          <>
+            <StatGrid
+              cols={2}
+              items={[
+                ["Status", result.found ? "OK" : result.truncated ? "limite" : "falhou"],
+                ["Movimentos", result.found ? String(result.actions.length) : "—"],
+                ["Expandidos", result.nodesExpanded.toLocaleString("pt-BR")],
+                [
+                  "b*",
+                  result.found
+                    ? (effectiveBranchingFactor(result.nodesGenerated, result.actions.length)?.toFixed(2) ?? "—")
+                    : "—",
+                ],
+                ["Tempo", `${result.timeMs.toFixed(1)}ms`],
+              ]}
+            />
             {result.found && (
-              <div className="rounded-xl bg-white/5 px-3 py-2 text-[12px]">
+              <div className="mt-3 rounded-xl bg-white/5 px-3 py-2 text-[12px]">
                 <span className="text-on-surface-variant">Solução: </span>
                 <span className="font-mono text-on-surface">{result.actions.join(" ")}</span>
               </div>
             )}
-          </StatsDrawer>
+          </>
         )}
-      </div>
-
-      {/* Bottom timeline: scrubs through the move-by-move solution playback */}
-      <Timeline
-        status={status}
-        pulsing={busy || exploring || playing}
-        playing={playing}
-        onTogglePlay={() => setPlaying((p) => !p)}
-        onSkipEnd={() => {
-          if (!result?.found) return;
-          setExploring(false);
-          setDisplayCube(applyMoves(startCube, result.actions));
-          setStep(result.actions.length);
-          setAnimatingMove(null);
-          setPlaying(false);
-        }}
-        current={step}
-        total={result?.actions.length ?? 0}
-        unitLabel="movimentos"
-        disabled={!result?.found || exploring}
-      />
+      </Modal>
 
       <Modal
         open={advancedOpen}
