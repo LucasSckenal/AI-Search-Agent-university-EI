@@ -33,7 +33,7 @@ export function Modal({
     <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/70" onClick={onClose}>
       <div
         className={`panel-flat flex max-h-[80vh] flex-col overflow-hidden rounded-3xl shadow-2xl ${
-          wide ? "w-[720px]" : "w-[440px]"
+          wide ? "w-[min(960px,94vw)]" : "w-[440px]"
         }`}
         onClick={(e) => e.stopPropagation()}
       >

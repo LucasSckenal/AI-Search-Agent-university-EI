@@ -17,6 +17,7 @@ const PAGES = [
   { href: "/labirinto", label: "Labirinto", icon: "grid_view" },
   { href: "/cubo", label: "Cubo Mágico", icon: "view_in_ar" },
   { href: "/jogo", label: "Jogo da Velha", icon: "sports_esports" },
+  { href: "/goose", label: "Goose (AG)", icon: "directions_run" },
 ];
 
 /**

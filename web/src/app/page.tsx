@@ -2,7 +2,7 @@ import Link from "next/link";
 import { Icon } from "@/components/shared/Panel";
 import { FrontierShader } from "@/components/home/FrontierShader";
 import { HeroTicker } from "@/components/home/HeroTicker";
-import { MazePreview, CubePreview, TttPreview } from "@/components/home/ModulePreviews";
+import { MazePreview, CubePreview, TttPreview, GoosePreview } from "@/components/home/ModulePreviews";
 
 const MODULES = [
   {
@@ -11,8 +11,8 @@ const MODULES = [
     accent: "maze",
     preview: MazePreview,
     desc: "Navegação em uma grade com paredes e terreno com custo. Visualize a expansão da fronteira em tempo real e encontre o caminho ótimo.",
-    algos: ["BFS", "DFS", "UCS", "Gulosa", "A*"],
-    statLine: "5 algoritmos · grid até 35×45",
+    algos: ["BFS", "DFS", "UCS", "Gulosa", "A*", "AG"],
+    statLine: "6 algoritmos · grid até 35×45",
   },
   {
     href: "/cubo",
@@ -32,10 +32,19 @@ const MODULES = [
     algos: ["Minimax", "Alfa-Beta"],
     statLine: "Minimax + Alfa-Beta · tabuleiro até 6×6",
   },
+  {
+    href: "/goose",
+    title: "Goose",
+    accent: "goose",
+    preview: GoosePreview,
+    desc: "Uma população de redes neurais evolui, geração após geração, para sobreviver o máximo de tempo possível desviando de cactos e pássaros.",
+    algos: ["Algoritmo Genético"],
+    statLine: "Seleção, cruzamento e mutação · N gerações",
+  },
 ] as const;
 
 const STATS = [
-  { num: "7", label: "Algoritmos implementados — BFS, DFS, UCS, Gulosa, A*, Minimax, Alfa-Beta" },
+  { num: "8", label: "Algoritmos implementados — BFS, DFS, UCS, Gulosa, A*, Minimax, Alfa-Beta, Genético" },
   { num: "3.674.160", label: "Estados possíveis do Cubo Mágico 2×2, verificados por BFS exaustiva" },
   { num: "100%", label: "Execução local no navegador — nenhuma chamada a servidor" },
 ] as const;
@@ -47,8 +56,8 @@ const FLOW = [
 ] as const;
 
 const ABOUT_STATS = [
-  { k: "Problemas", v: "3", icon: "apps", accent: "primary", live: false },
-  { k: "Algoritmos", v: "7", icon: "account_tree", accent: "primary", live: false },
+  { k: "Problemas", v: "4", icon: "apps", accent: "primary", live: false },
+  { k: "Algoritmos", v: "8", icon: "account_tree", accent: "primary", live: false },
   { k: "Estados do cubo", v: "3.674.160", icon: "view_in_ar", accent: "tertiary", live: false },
   { k: "Execução", v: "100% local", icon: "bolt", accent: "secondary", live: true },
 ] as const;
@@ -118,12 +127,13 @@ export default function Home() {
       <section className="px-6 py-24">
         <div className="mx-auto mb-10 max-w-7xl">
           <div className="mb-2.5 text-[11px] font-semibold uppercase tracking-[0.1em] text-on-surface-variant">
-            Três problemas, um motor de busca
+            Quatro problemas, duas famílias de algoritmos
           </div>
           <h2 className="mb-2.5 text-[28px] font-semibold tracking-[-0.015em]">Escolha um módulo para explorar</h2>
           <p className="max-w-xl text-[14.5px] text-on-surface-variant">
-            Cada problema expõe os parâmetros do agente e do algoritmo, executa a busca com
-            estatísticas reais e permite comparar algoritmos na mesma instância.
+            Labirinto, Cubo Mágico e Jogo da Velha compartilham um motor de busca clássico
+            (cega, informada e adversária); o Goose evolui agentes com um Algoritmo Genético. Cada
+            problema expõe os parâmetros do agente e executa com estatísticas reais.
           </p>
         </div>
 
@@ -175,9 +185,9 @@ export default function Home() {
           <div className="rounded-2xl border border-white/[0.07] bg-surface-container p-9">
             <p className="mb-8 text-sm leading-relaxed text-on-surface-variant">
               Aplicação educacional para aplicar algoritmos clássicos de busca (BFS, DFS, UCS,
-              Gulosa, A*, Minimax e Alfa-Beta) na resolução de três problemas computacionais. Cada
-              módulo expõe os parâmetros do problema e do algoritmo, executa a busca com
-              estatísticas reais e permite comparar algoritmos na mesma instância.
+              Gulosa, A*, Minimax e Alfa-Beta), além de um Algoritmo Genético, na resolução de
+              quatro problemas computacionais. Cada módulo expõe os parâmetros do problema e do
+              algoritmo, executa a busca com estatísticas reais e permite comparar resultados.
             </p>
             <div className="grid grid-cols-1 gap-7 sm:grid-cols-3 sm:gap-4">
               {FLOW.map((step, i) => (

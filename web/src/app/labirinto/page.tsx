@@ -26,6 +26,9 @@ import { effectiveBranchingFactor } from "@/lib/core/metrics";
 import { seededRng, randomSeed } from "@/lib/core/rng";
 import { summarizeBatch, AlgorithmBatchSummary } from "@/lib/core/batch";
 import { BatchStatsTable } from "@/components/shared/BatchStatsTable";
+import { evolve, GaConfig, GaGenerationSummary, GaRunResult } from "@/lib/core/genetic";
+import { buildMazeGaOps, MazeGenome, walkChromosome } from "@/lib/maze/genetic";
+import { GeneticModal, MazeGaFormConfig } from "@/components/maze/GeneticModal";
 
 // WebGL only exists in the browser; loading it as a dynamic, SSR-disabled component keeps the
 // three.js/react-three-fiber bundle out of the server render entirely.
@@ -111,6 +114,31 @@ export default function LabirintoPage() {
     setRaceFinishOrder([]);
   };
 
+  // Genetic algorithm mode: an independent way to solve the same maze, evolving a population of
+  // move sequences instead of expanding a search frontier - doesn't fit the search()/SearchResult
+  // model at all, so it gets its own view mode. `viewMode` decides whether the canvas/Timeline
+  // below are driven by `result` (classic search) or by `gaRunResult` scrubbed to `gaGeneration`.
+  const [viewMode, setViewMode] = useState<"search" | "genetic">("search");
+  const [gaOpen, setGaOpen] = useState(false);
+  const [gaConfig, setGaConfig] = useState<MazeGaFormConfig>({
+    populationSize: 100,
+    generations: 250,
+    mutationRate: 0.1,
+    crossoverRate: 0.85,
+    eliteCount: 5,
+    tournamentSize: 5,
+    lengthMultiplier: 4,
+    allowDiagonal: false,
+    seed: randomSeed(),
+  });
+  const [gaRunning, setGaRunning] = useState(false);
+  const [gaProgressGen, setGaProgressGen] = useState(0);
+  const [gaLiveGenerations, setGaLiveGenerations] = useState<GaGenerationSummary[]>([]);
+  const [gaRunResult, setGaRunResult] = useState<GaRunResult<MazeGenome> | null>(null);
+  const [gaElapsedMs, setGaElapsedMs] = useState<number | null>(null);
+  const [gaGeneration, setGaGeneration] = useState(0);
+  const [gaPlaying, setGaPlaying] = useState(false);
+
   const regenerate = (mode: GenMode = genMode) => {
     const rng = useSeed ? seededRng(seed) : Math.random;
     let next: MazeState;
@@ -125,6 +153,10 @@ export default function LabirintoPage() {
     setPlaying(false);
     setFocusIndex(null);
     resetRace();
+    setViewMode("search");
+    setGaRunResult(null);
+    setGaLiveGenerations([]);
+    setGaPlaying(false);
   };
 
   // Regenerate whenever size/mode/density change.
@@ -152,6 +184,7 @@ export default function LabirintoPage() {
     setRevealCount(0);
     setShowPath(false);
     setPlaying(true);
+    setViewMode("search");
   };
 
   const runComparison = () => {
@@ -163,6 +196,57 @@ export default function LabirintoPage() {
     setShowPath(true);
     setPlaying(false);
     setCompareOpen(true);
+    setViewMode("search");
+  };
+
+  // Evolves gaConfig.generations generations, chunked across setTimeout(0) ticks so a large
+  // population×generations run never blocks the main thread in one go (mirrors runBatch's
+  // setTimeout precedent) - and so the convergence chart can animate as generations complete
+  // instead of only appearing once the whole run finishes.
+  const runGenetic = () => {
+    setGaRunning(true);
+    setGaRunResult(null);
+    setGaLiveGenerations([]);
+    setGaProgressGen(0);
+    setGaGeneration(0);
+    setGaPlaying(false);
+    setViewMode("genetic");
+
+    const config: GaConfig = {
+      populationSize: gaConfig.populationSize,
+      generations: gaConfig.generations,
+      eliteCount: gaConfig.eliteCount,
+      mutationRate: gaConfig.mutationRate,
+      crossoverRate: gaConfig.crossoverRate,
+      tournamentSize: gaConfig.tournamentSize,
+      seed: gaConfig.seed,
+    };
+    const ops = buildMazeGaOps(maze, { lengthMultiplier: gaConfig.lengthMultiplier, allowDiagonal: gaConfig.allowDiagonal });
+    const iterator = evolve(config, ops);
+    const startTime = performance.now();
+    const CHUNK_SIZE = 4;
+    const collected: GaGenerationSummary[] = [];
+
+    const step = () => {
+      for (let i = 0; i < CHUNK_SIZE; i++) {
+        const next = iterator.next();
+        if (next.done) {
+          const finalResult = next.value;
+          setGaRunResult(finalResult);
+          setGaLiveGenerations(finalResult.generations);
+          setGaElapsedMs(performance.now() - startTime);
+          setGaProgressGen(finalResult.generations.length);
+          setGaGeneration(finalResult.generations.length - 1);
+          setGaRunning(false);
+          return;
+        }
+        collected.push(next.value);
+      }
+      setGaLiveGenerations([...collected]);
+      setGaProgressGen(collected.length);
+      setTimeout(step, 0);
+    };
+    setTimeout(step, 0);
   };
 
   const runBatch = () => {
@@ -255,6 +339,26 @@ export default function LabirintoPage() {
     }
   }, [raceReveal, raceResults, raceFinishOrder]);
 
+  // GA generation scrubber: same 16ms-tick shape as the search playback timer above, just
+  // advancing a generation index instead of a node-reveal count.
+  useEffect(() => {
+    if (!gaPlaying || !gaRunResult) return;
+    if (gaGeneration >= gaRunResult.generations.length - 1) {
+      // eslint-disable-next-line react-hooks/set-state-in-effect -- stopping the playback loop it owns
+      setGaPlaying(false);
+      return;
+    }
+    const t = setTimeout(() => setGaGeneration((g) => Math.min(g + 1, gaRunResult.generations.length - 1)), 60);
+    return () => clearTimeout(t);
+  }, [gaPlaying, gaGeneration, gaRunResult]);
+
+  const gaWalk = useMemo(() => {
+    if (viewMode !== "genetic" || !gaRunResult) return null;
+    const genome = gaRunResult.bestPerGeneration[gaGeneration];
+    if (!genome) return null;
+    return walkChromosome(maze, genome);
+  }, [viewMode, gaRunResult, gaGeneration, maze]);
+
   const visited = useMemo(() => {
     if (!result) return new Set<number>();
     return new Set(result.exploredOrder.slice(0, revealCount));
@@ -296,6 +400,10 @@ export default function LabirintoPage() {
     setRevealCount(0);
     setShowPath(false);
     resetRace();
+    setViewMode("search");
+    setGaRunResult(null);
+    setGaLiveGenerations([]);
+    setGaPlaying(false);
   };
 
   const handleGridKeyDown = (e: React.KeyboardEvent) => {
@@ -331,7 +439,22 @@ export default function LabirintoPage() {
     setFocusIndex(next);
   };
 
-  const status = playing ? "ANIMANDO" : result ? (result.found ? "CONCLUÍDO" : "SEM SOLUÇÃO") : "PRONTO";
+  const status =
+    viewMode === "genetic"
+      ? gaRunning
+        ? "EVOLUINDO"
+        : gaRunResult
+          ? gaWalk?.reachedGoal
+            ? "OBJETIVO ALCANÇADO"
+            : "MELHOR TENTATIVA"
+          : "PRONTO"
+      : playing
+        ? "ANIMANDO"
+        : result
+          ? result.found
+            ? "CONCLUÍDO"
+            : "SEM SOLUÇÃO"
+          : "PRONTO";
 
   return (
     <div className="flex h-full min-h-0 flex-col overflow-y-auto p-5 sm:p-6">
@@ -367,6 +490,9 @@ export default function LabirintoPage() {
             <button className="workspace-link" onClick={() => setAdvancedOpen(true)}>
               <Icon name="tune" className="text-[13px]" /> Parâmetros
             </button>
+            <button className="workspace-link" onClick={() => setGaOpen(true)}>
+              <Icon name="psychology" className="text-[13px]" /> Genético
+            </button>
             <button className="workspace-link" onClick={startRace}>
               <Icon name="flag" className="text-[13px]" /> Corrida
             </button>
@@ -390,10 +516,13 @@ export default function LabirintoPage() {
               <b className="readout-glow font-semibold text-primary">
                 {{ wall: "Parede", mud: "Lama", empty: "Vazio", start: "Início", goal: "Objetivo" }[brush]}
               </b>
-              {result?.found && (
+              {(viewMode === "genetic" ? gaWalk : result?.found ? result : null) && (
                 <>
                   {" "}
-                  · CUSTO <b className="readout-glow font-semibold text-primary">{result.cost.toFixed(2)}</b>
+                  · CUSTO{" "}
+                  <b className="readout-glow font-semibold text-primary">
+                    {(viewMode === "genetic" ? gaWalk!.cost : result!.cost).toFixed(2)}
+                  </b>
                 </>
               )}
             </StageHint>
@@ -409,10 +538,10 @@ export default function LabirintoPage() {
               <WebGLGate>
                 <MazeCanvas
                   maze={maze}
-                  visited={visited}
-                  path={path}
-                  pathRevealed={showPath}
-                  frontier={frontier}
+                  visited={viewMode === "genetic" ? new Set<number>() : visited}
+                  path={viewMode === "genetic" ? (gaWalk?.visitedCells ?? []) : path}
+                  pathRevealed={viewMode === "genetic" ? Boolean(gaWalk) : showPath}
+                  frontier={viewMode === "genetic" ? new Set<number>() : frontier}
                   interactive
                   onCellClick={handleCellClick}
                   focusIndex={keyboardNav ? focusIndex : null}
@@ -421,26 +550,45 @@ export default function LabirintoPage() {
             </div>
           </div>
 
-          {/* Bottom timeline: scrubs through the search's node-reveal animation */}
-          <Timeline
-            status={status}
-            pulsing={playing}
-            playing={playing}
-            onTogglePlay={() => setPlaying((p) => !p)}
-            onSkipEnd={() => {
-              if (!result) return;
-              setRevealCount(result.exploredOrder.length);
-              setShowPath(true);
-              setPlaying(false);
-            }}
-            current={revealCount}
-            total={result?.exploredOrder.length ?? 0}
-            unitLabel="nós"
-            disabled={!result}
-            speed={speed}
-            onSpeedChange={setSpeed}
-            speedLabel="Velocidade"
-          />
+          {/* Bottom timeline: scrubs through the search's node-reveal animation, or (in genetic
+              mode) through the GA run's generations - same control, different data source. */}
+          {viewMode === "genetic" ? (
+            <Timeline
+              status={status}
+              pulsing={gaPlaying}
+              playing={gaPlaying}
+              onTogglePlay={() => setGaPlaying((p) => !p)}
+              onSkipEnd={() => {
+                if (!gaRunResult) return;
+                setGaGeneration(gaRunResult.generations.length - 1);
+                setGaPlaying(false);
+              }}
+              current={gaGeneration}
+              total={gaRunResult?.generations.length ?? 0}
+              unitLabel="gerações"
+              disabled={!gaRunResult}
+            />
+          ) : (
+            <Timeline
+              status={status}
+              pulsing={playing}
+              playing={playing}
+              onTogglePlay={() => setPlaying((p) => !p)}
+              onSkipEnd={() => {
+                if (!result) return;
+                setRevealCount(result.exploredOrder.length);
+                setShowPath(true);
+                setPlaying(false);
+              }}
+              current={revealCount}
+              total={result?.exploredOrder.length ?? 0}
+              unitLabel="nós"
+              disabled={!result}
+              speed={speed}
+              onSpeedChange={setSpeed}
+              speedLabel="Velocidade"
+            />
+          )}
         </div>
       </div>
 
@@ -650,6 +798,20 @@ export default function LabirintoPage() {
           <BatchStatsTable summaries={batchSummaries ?? []} />
         )}
       </Modal>
+
+      <GeneticModal
+        open={gaOpen}
+        onClose={() => setGaOpen(false)}
+        maze={maze}
+        config={gaConfig}
+        onConfigChange={(patch) => setGaConfig((c) => ({ ...c, ...patch }))}
+        running={gaRunning}
+        progressGeneration={gaProgressGen}
+        liveGenerations={gaLiveGenerations}
+        onRun={runGenetic}
+        runResult={gaRunResult}
+        elapsedMs={gaElapsedMs}
+      />
 
       {raceOpen && raceResults && (
         <div

@@ -403,6 +403,9 @@ input[type="number"]:hover {
 .card.game {
   --accent: var(--secondary);
 }
+.card.goose {
+  --accent: #7ee0a8;
+}
 .card h3 .arrow {
   transition: transform 180ms ease;
 }
@@ -762,6 +765,49 @@ input[type="number"]:hover {
   0%, 60% { opacity: 0; transform: rotate(45deg) scaleX(0); }
   70%, 84% { opacity: 1; transform: rotate(45deg) scaleX(1); }
   92%, 100% { opacity: 0; transform: rotate(45deg) scaleX(1); }
+}
+
+/* goose preview: a small silhouette hops in place on a 1.4s loop while obstacles scroll toward it
+   on their own independent loop - a stylized read of the endless runner rather than a literal
+   simulation, matching how the cube/ttt previews are stylized loops rather than a real solve. */
+.goose-preview svg {
+  width: 100%;
+  height: 100%;
+}
+.goose-preview .ground {
+  stroke: var(--outline-variant);
+  stroke-width: 1;
+}
+.goose-preview .obstacle rect {
+  fill: var(--accent, var(--primary));
+  opacity: 0.85;
+}
+.goose-preview .ob1 {
+  animation: gooseObstacle 3s linear infinite;
+}
+.goose-preview .ob2 {
+  animation: gooseObstacle 3s linear infinite;
+  animation-delay: 1.5s;
+}
+.goose-preview .goose {
+  transform: translate(22px, 36px);
+  animation: gooseHop 1.4s ease-in-out infinite;
+}
+.goose-preview .goose .body,
+.goose-preview .goose .head {
+  fill: var(--accent, var(--primary));
+  filter: drop-shadow(0 0 4px color-mix(in srgb, var(--accent, var(--primary)) 60%, transparent));
+}
+.goose-preview .goose .eye {
+  fill: var(--surface-container-lowest);
+}
+@keyframes gooseObstacle {
+  0% { transform: translateX(120px); }
+  100% { transform: translateX(-20px); }
+}
+@keyframes gooseHop {
+  0%, 55%, 100% { transform: translate(22px, 36px); }
+  25% { transform: translate(22px, 20px); }
 }
 
 /* ---------- about section ---------- */

@@ -66,6 +66,30 @@ export function CubePreview() {
   );
 }
 
+export function GoosePreview() {
+  return (
+    <div className="card-preview goose-preview">
+      <span className="badge">
+        <span className="material-symbols-outlined text-[13px]">directions_run</span>
+      </span>
+      <svg viewBox="0 0 110 66" preserveAspectRatio="xMidYMid meet">
+        <line className="ground" x1="0" y1="50" x2="110" y2="50" />
+        <g className="obstacle ob1">
+          <rect x="0" y="34" width="7" height="16" rx="1" />
+        </g>
+        <g className="obstacle ob2">
+          <rect x="0" y="38" width="6" height="12" rx="1" />
+        </g>
+        <g className="goose">
+          <rect className="body" x="0" y="0" width="16" height="14" rx="3" />
+          <rect className="head" x="10" y="-6" width="9" height="9" rx="2" />
+          <circle className="eye" cx="16" cy="-2" r="1" />
+        </g>
+      </svg>
+    </div>
+  );
+}
+
 export function TttPreview() {
   return (
     <div className="card-preview ttt-preview">
