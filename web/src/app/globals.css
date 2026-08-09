@@ -98,9 +98,15 @@
 
 html {
   color-scheme: dark;
+  /* The app is a single fixed-viewport shell (sidebar + rounded main card) where individual
+     panels scroll internally via their own overflow-y - the document itself should never scroll.
+     Without this, some browsers (seen in Firefox) let content push the shell taller than the
+     viewport, which scrolls the whole page and drags the shell's rounded top corner off-screen. */
+  overflow: hidden;
 }
 
 body {
+  overflow: hidden;
   background: var(--background);
   color: var(--on-surface);
   font-family: var(--font-sans);
@@ -405,6 +411,9 @@ input[type="number"]:hover {
 }
 .card.goose {
   --accent: #7ee0a8;
+}
+.card.tsp {
+  --accent: #6fd8c9;
 }
 .card h3 .arrow {
   transition: transform 180ms ease;
@@ -810,6 +819,69 @@ input[type="number"]:hover {
   25% { transform: translate(22px, 20px); }
 }
 
+/* tsp preview: mirrors the maze preview's route/waypoint language (a route that draws itself,
+   a spark travelling it) but as a closed tour through a handful of city dots instead of a maze
+   path - the same 6s draw-then-hold loop timing as .maze-preview so the two read as siblings. */
+.tsp-preview svg {
+  width: 100%;
+  height: 100%;
+}
+.tsp-preview .tsp-route {
+  fill: none;
+  stroke: var(--accent, var(--primary));
+  stroke-width: 2.2;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+  stroke-dasharray: 216;
+  stroke-dashoffset: 216;
+  filter: drop-shadow(0 0 4px color-mix(in srgb, var(--accent, var(--primary)) 70%, transparent));
+  animation: tspDraw 6s ease-in-out infinite;
+}
+@keyframes tspDraw {
+  0%, 10% {
+    stroke-dashoffset: 216;
+  }
+  70%, 92% {
+    stroke-dashoffset: 0;
+  }
+  100% {
+    stroke-dashoffset: 216;
+  }
+}
+.tsp-preview .tsp-spark {
+  fill: var(--accent, var(--primary));
+  offset-path: path("M14,50 L30,14 L58,10 L96,24 L82,54 L46,58 Z");
+  offset-rotate: 0deg;
+  offset-distance: 0%;
+  animation: tspSpark 6s ease-in-out infinite;
+}
+@keyframes tspSpark {
+  0%, 12% {
+    offset-distance: 0%;
+    opacity: 0;
+  }
+  16% {
+    opacity: 1;
+  }
+  70%, 92% {
+    offset-distance: 100%;
+    opacity: 1;
+  }
+  97%, 100% {
+    offset-distance: 100%;
+    opacity: 0;
+  }
+}
+.tsp-preview .tsp-city {
+  fill: var(--on-surface);
+  filter: drop-shadow(0 0 3px currentColor);
+}
+.tsp-preview .tsp-city.origin {
+  fill: var(--accent, var(--primary));
+  color: var(--accent, var(--primary));
+  animation: wpPulse 2.4s ease-in-out infinite;
+}
+
 /* ---------- about section ---------- */
 .flow-num {
   background: color-mix(in srgb, var(--primary) 16%, transparent);
@@ -894,6 +966,30 @@ input[type="number"]:hover {
   padding: 56px 28px;
   position: relative;
   overflow: hidden;
+}
+/* .tut-scroller (this screen's ancestor) has its own overflow-y:auto, and Firefox doesn't carry
+   main-shell's rounded-corner clip through into a nested scroll container - it only clips to a
+   plain rectangle there, so a full-bleed background (the hero shader/fade) shows square corners
+   at the very top/bottom of the scrolled area. Only the first/last screen actually touch
+   main-shell's real edge, so only they need their own matching radius (:first-of-type/
+   :last-of-type key off the <section> tag, skipping the preceding .tut-progress dots div). */
+.tut-screen:first-of-type {
+  border-top-left-radius: 32px;
+  border-top-right-radius: 32px;
+}
+.tut-screen:last-of-type {
+  border-bottom-left-radius: 32px;
+  border-bottom-right-radius: 32px;
+}
+@media (min-width: 1024px) {
+  .tut-screen:first-of-type {
+    border-top-left-radius: 40px;
+    border-top-right-radius: 40px;
+  }
+  .tut-screen:last-of-type {
+    border-bottom-left-radius: 40px;
+    border-bottom-right-radius: 40px;
+  }
 }
 
 .tut-reveal {
@@ -986,6 +1082,7 @@ input[type="number"]:hover {
   position: absolute;
   inset: 0;
   z-index: 0;
+  overflow: hidden;
 }
 .tut-hero-backdrop canvas {
   display: block;
@@ -1300,8 +1397,11 @@ input[type="number"]:hover {
    ========================================================================== */
 .app-shell {
   display: flex;
-  height: 100vh;
-  width: 100vw;
+  /* % instead of vh/vw: html/body are already height:100% (h-full), and unlike the viewport
+     units, % resolves against body's actual content box - sidestepping the classic vw-includes-
+     the-scrollbar-gutter mismatch that made this a few pixels too wide/tall in some browsers. */
+  height: 100%;
+  width: 100%;
   gap: 12px;
   padding: 12px;
 }
@@ -1439,6 +1539,13 @@ input[type="number"]:hover {
   position: relative;
   display: flex;
   min-width: 0;
+  /* Chrome auto-zeroes a flex item's content-based minimum size when its overflow isn't visible,
+     but Firefox doesn't reliably do the same through this nested app-shell > main-shell >
+     content-body chain - without an explicit floor, Firefox lets main-shell grow to fit its
+     (taller-than-viewport) content instead of clipping it, which pushes the whole document past
+     100vh and makes the page itself scroll in Firefox (dragging the rounded top corner off-screen)
+     even though the inner content-body already has its own overflow-y:auto. */
+  min-height: 0;
   flex: 1;
   flex-direction: column;
   overflow: hidden;
@@ -1446,6 +1553,7 @@ input[type="number"]:hover {
   border: 1px solid rgba(255, 255, 255, 0.08);
   background: var(--background);
   box-shadow: 0 0 10px rgba(0, 0, 0, 0.8);
+  isolation: isolate;
 }
 @media (min-width: 1024px) {
   .main-shell {
@@ -1467,6 +1575,27 @@ input[type="number"]:hover {
     border-radius: 0;
     border: none;
   }
+}
+
+/* Thin themed scrollbar for main-shell's internally-scrolling content panes - the default OS
+   scrollbar is a straight-edged rectangle that visibly clashes with main-shell's rounded corner
+   at the top/bottom-right where the two meet. */
+.content-scroll {
+  scrollbar-width: thin;
+  scrollbar-color: rgba(255, 255, 255, 0.18) transparent;
+}
+.content-scroll::-webkit-scrollbar {
+  width: 8px;
+}
+.content-scroll::-webkit-scrollbar-track {
+  background: transparent;
+}
+.content-scroll::-webkit-scrollbar-thumb {
+  background: rgba(255, 255, 255, 0.18);
+  border-radius: 999px;
+}
+.content-scroll::-webkit-scrollbar-thumb:hover {
+  background: rgba(255, 255, 255, 0.32);
 }
 
 .mobile-dock {

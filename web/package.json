@@ -10,7 +10,7 @@
     "build": "next build",
     "start": "next start",
     "lint": "eslint",
-    "test": "tsx test/core.test.ts && tsx test/maze.test.ts && tsx test/game.test.ts && tsx test/cube-fast.test.ts && tsx test/metrics.test.ts && tsx test/batch.test.ts",
+    "test": "tsx test/core.test.ts && tsx test/maze.test.ts && tsx test/game.test.ts && tsx test/cube-fast.test.ts && tsx test/metrics.test.ts && tsx test/batch.test.ts && tsx test/tsp.test.ts",
     "test:cube": "cross-env NODE_OPTIONS=--max-old-space-size=6144 tsx test/cube.test.ts",
     "test:all": "npm run test && npm run test:cube"
   },

@@ -150,5 +150,8 @@ export function FrontierShader() {
     };
   }, []);
 
-  return <canvas ref={canvasRef} className="block h-full w-full" />;
+  // clip-path (not just the ancestor's overflow:hidden) because Firefox composites WebGL canvases
+  // on their own GPU layer and can ignore an ancestor's overflow clip for that layer, letting the
+  // shader bleed past its container's edge - clip-path is honored per-element even then.
+  return <canvas ref={canvasRef} className="block h-full w-full" style={{ clipPath: "inset(0)" }} />;
 }

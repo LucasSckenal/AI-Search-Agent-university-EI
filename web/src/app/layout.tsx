@@ -16,9 +16,9 @@ const jbmono = JetBrains_Mono({
 
 export const metadata: Metadata = {
   metadataBase: new URL("https://agentes-busca-ia.vercel.app"),
-  title: "Agentes de Busca — Labirinto, Cubo Mágico, Jogo da Velha e Goose",
+  title: "Agentes de Busca — Labirinto, Cubo Mágico, Jogo da Velha, Goose e Caixeiro Viajante",
   description:
-    "Aplicação interativa para configurar, executar, visualizar e comparar algoritmos clássicos de busca (BFS, DFS, UCS, Gulosa, A*, Minimax e Poda Alfa-Beta) e um Algoritmo Genético evoluindo agentes.",
+    "Aplicação interativa para configurar, executar, visualizar e comparar algoritmos clássicos de busca (BFS, DFS, UCS, Gulosa, A*, Minimax e Poda Alfa-Beta), um Algoritmo Genético evoluindo agentes e rotas, e o Problema do Caixeiro Viajante resolvido por heurísticas e por Held-Karp.",
 };
 
 export default function RootLayout({ children }: Readonly<{ children: React.ReactNode }>) {

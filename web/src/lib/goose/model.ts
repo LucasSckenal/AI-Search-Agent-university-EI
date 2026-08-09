@@ -48,6 +48,12 @@ export const DUCK_HEIGHT = 0.5;
 const BASE_SPEED = 6;
 const SPEED_RAMP = 0.15; // units/s gained per second elapsed
 const MAX_SPEED = 14;
+
+/** `distance` doubles as the on-screen score, and the scene cycles through its 3 biomes every 100
+ *  points - so a run needs to reach at least 300 distance to have a chance of showing all of them.
+ *  Below this many steps the speed ramp (BASE_SPEED -> MAX_SPEED over dt) can't get there even if
+ *  the goose survives the whole run, so this is the floor for "Passos máximos". */
+export const GOOSE_MIN_STEPS_FOR_FULL_BIOME_CYCLE = 2100;
 const SPAWN_X = 14;
 const DESPAWN_X = -4;
 const BIRD_MIN_ELAPSED = 5; // birds only start appearing after this much survival time

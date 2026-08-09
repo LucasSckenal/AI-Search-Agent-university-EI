@@ -1,0 +1,30 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 200 200" fill="none">
+  <!-- neck + body, single flowing stroke -->
+  <path
+    d="M 78 172
+       C 48 170, 34 146, 40 120
+       C 45 100, 60 89, 68 74
+       C 76 59, 89 46, 106 40
+       C 115 37, 123 37, 129 40"
+    stroke="#afc6ff"
+    stroke-width="22"
+    stroke-linecap="round"
+    stroke-linejoin="round"
+    fill="none"
+  />
+  <!-- head knob -->
+  <circle cx="133" cy="44" r="17" fill="#afc6ff" />
+  <!-- beak -->
+  <path d="M 146 38 L 168 43 Q 172 44 168 46 L 146 50 Z" fill="#ffb77b" />
+  <!-- goggle -->
+  <rect x="120" y="33" width="21" height="13" rx="6" fill="#11131a" stroke="#cebdff" stroke-width="2.5" />
+  <circle cx="131" cy="39.5" r="2.6" fill="#cebdff" />
+  <!-- circuit accent: small node chain tucked behind the crown -->
+  <g stroke="#cebdff" stroke-width="2.2" fill="#cebdff" stroke-linecap="round">
+    <line x1="116" y1="30" x2="102" y2="22" />
+    <line x1="102" y1="22" x2="100" y2="12" />
+    <circle cx="116" cy="30" r="2.4" />
+    <circle cx="102" cy="22" r="2.4" />
+    <circle cx="100" cy="12" r="2.4" />
+  </g>
+</svg>

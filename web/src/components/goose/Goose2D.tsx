@@ -2,6 +2,22 @@
 
 import { useEffect, useRef } from "react";
 import { Obstacle, GOOSE_X } from "@/lib/goose/model";
+import {
+  loadSprite,
+  KENNEY_TILEMAP,
+  KENNEY_TILE_PX,
+  KENNEY_TILE_STRIDE,
+  KENNEY_CHARACTERS,
+  BIRD_FRAMES,
+  DEFAULT_SCENE_CONFIG,
+  BIOME_ORDER,
+  getBiomeGroundTop,
+  drawSkyFill,
+  drawBiomeMountain,
+  drawPaintedRow,
+  drawGroundLayers,
+  PaintedLayer,
+} from "@/lib/goose/scenery";
 
 export interface GooseRenderState {
   y: number;
@@ -13,12 +29,6 @@ export interface GooseRenderState {
    *  instead of a single frozen pose. */
   runPhase: number;
 }
-
-const SKY_TOP_COLOR = "#080a12";
-const BACKDROP_COLOR = "#11131a";
-const HILL_FAR_COLOR = "#1a1e2c";
-const BIRD_COLOR = "#ffb77b";
-const BIRD_EDGE_COLOR = "#a35f2c";
 
 // Fill color for the evolving population sweeps from a dull, unrefined slate at generation 0 to a
 // warm, saturated amber by the final generation - a "later generation" should visibly look like a
@@ -47,155 +57,31 @@ const GOOSE_FRAME_PX = 64;
 // ground - this is the real contact point to line up with `view.groundY` instead.
 const GOOSE_ART_BOTTOM_PX = 31;
 
-function loadSprite(src: string): HTMLImageElement | null {
-  if (typeof window === "undefined") return null;
-  const img = new Image();
-  img.src = src;
-  return img;
-}
-
 const GOOSE_SHEETS = {
   idle: { img: loadSprite("/sprites/goose/Idle.png"), frames: 2 },
   run: { img: loadSprite("/sprites/goose/Run.png"), frames: 4 },
   flap: { img: loadSprite("/sprites/goose/Flap.png"), frames: 4 },
 };
 
-/**
- * Ground/scenery tiles come from Kenney's CC0-licensed "Pixel Platformer" pack instead of the
- * earlier procedural dashes-and-dots ground - the sheet is a grid of 18x18px tiles with a 1px gap
- * (19px stride), coordinates found by inspecting the sheet directly.
- */
-const KENNEY_TILE_PX = 18;
-const KENNEY_TILE_STRIDE = 19;
-const KENNEY_TILEMAP = loadSprite("/sprites/kenney/tilemap.png");
-const GRASS_TILE = { col: 0, row: 0 };
-const TREE_TILE = { col: 6, row: 6 };
+// Same coords as DEFAULT_SCENE_CONFIG.hillDecor's cactus entry - obstacles reuse this tile
+// directly (rather than importing the whole decor list) since they only ever draw this one shape.
 const CACTUS_DECOR_TILE = { col: 7, row: 6 };
-const BUSH_TILE = { col: 4, row: 6 };
-const GROUND_TILE_WORLD_UNITS = 0.5;
-const HILL_DECOR: { col: number; row: number }[] = [TREE_TILE, CACTUS_DECOR_TILE, BUSH_TILE, TREE_TILE, BUSH_TILE];
-const DECOR_SPACING_PX = 130;
 
 const PIXELS_PER_UNIT = 44;
 const ANCHOR_X_FRACTION = 0.17;
 const GROUND_Y_FRACTION = 0.74;
 
-// Fixed star field, generated once at module load - the sky above the ground line was mostly
-// dead space before; stars/moon/hills give it depth without competing with the runner itself.
-const STARS: { xf: number; yf: number; r: number; a: number }[] = Array.from({ length: 46 }, () => ({
-  xf: Math.random(),
-  yf: Math.random() * 0.62,
-  r: Math.random() * 1.1 + 0.4,
-  a: Math.random() * 0.5 + 0.25,
-}));
+/** `groundOffset` doubles as the score shown by `drawScore` below, so this is literally "every 100
+ *  points" - cycles through BIOME_ORDER (forest -> desert -> ice -> forest -> ...). */
+const POINTS_PER_BIOME = 100;
 
-function drawSky(ctx: CanvasRenderingContext2D, width: number, height: number, groundY: number) {
-  const sky = ctx.createLinearGradient(0, 0, 0, groundY);
-  sky.addColorStop(0, SKY_TOP_COLOR);
-  sky.addColorStop(1, BACKDROP_COLOR);
-  ctx.fillStyle = sky;
-  ctx.fillRect(0, 0, width, height);
-}
+const BIOME_MOUNTAIN_TILE_HEIGHT = 104;
+const BIOME_MOUNTAIN_SPEED = 0.05;
 
-function drawStars(ctx: CanvasRenderingContext2D, width: number, height: number) {
-  for (const s of STARS) {
-    ctx.globalAlpha = s.a;
-    ctx.fillStyle = "#e8ecff";
-    ctx.beginPath();
-    ctx.arc(s.xf * width, s.yf * height, s.r, 0, Math.PI * 2);
-    ctx.fill();
-  }
-  ctx.globalAlpha = 1;
-}
-
-function drawMoon(ctx: CanvasRenderingContext2D, width: number, height: number, color: string) {
-  const mx = width * 0.83;
-  const my = height * 0.16;
-  const r = 13;
-  const glow = ctx.createRadialGradient(mx, my, 0, mx, my, r * 3.2);
-  glow.addColorStop(0, colorWithAlpha(color, 0.3));
-  glow.addColorStop(1, colorWithAlpha(color, 0));
-  ctx.fillStyle = glow;
-  ctx.beginPath();
-  ctx.arc(mx, my, r * 3.2, 0, Math.PI * 2);
-  ctx.fill();
-
-  ctx.fillStyle = color;
-  ctx.beginPath();
-  ctx.arc(mx, my, r, 0, Math.PI * 2);
-  ctx.fill();
-  ctx.fillStyle = SKY_TOP_COLOR;
-  ctx.beginPath();
-  ctx.arc(mx + r * 0.42, my - r * 0.18, r * 0.86, 0, Math.PI * 2);
-  ctx.fill();
-}
-
-/** A soft repeating sine silhouette, scrolled slower than the ground for parallax depth. */
-function drawHillLayer(
-  ctx: CanvasRenderingContext2D,
-  width: number,
-  baseY: number,
-  amplitude: number,
-  wavelength: number,
-  phase: number,
-  color: string
-) {
-  ctx.beginPath();
-  ctx.moveTo(0, baseY);
-  for (let x = 0; x <= width; x += 10) {
-    const y = baseY - amplitude * (0.5 + 0.5 * Math.sin(((x + phase) / wavelength) * Math.PI * 2));
-    ctx.lineTo(x, y);
-  }
-  ctx.lineTo(width, baseY + 4);
-  ctx.lineTo(0, baseY + 4);
-  ctx.closePath();
-  ctx.fillStyle = color;
-  ctx.fill();
-}
-
-function colorWithAlpha(rgb: string, alpha: number): string {
-  return rgb.replace("rgb", "rgba").replace(")", `, ${alpha})`);
-}
-
-function drawKenneyTile(ctx: CanvasRenderingContext2D, tile: { col: number; row: number }, dx: number, dy: number, size: number) {
-  const img = KENNEY_TILEMAP;
-  if (!img || !img.complete || img.naturalWidth === 0) return;
-  ctx.drawImage(img, tile.col * KENNEY_TILE_STRIDE, tile.row * KENNEY_TILE_STRIDE, KENNEY_TILE_PX, KENNEY_TILE_PX, dx, dy, size, size);
-}
-
-// Sampled from the tile art's own dirt tone, so the solid fill below the single tile row reads
-// as a continuation of the block instead of a visibly different color.
-const GROUND_FILL_COLOR = "#8a5a3b";
-
-/** A single row of the grass-top dirt tile across the ground band, scrolling in lockstep with
- *  the same `groundOffset` the obstacles and score readout already use - stacking many tile rows
- *  read as a wall of repeated mini-blocks, so everything below that one row is just a flat fill
- *  in the tile's own dirt tone instead. */
-function drawGroundTiles(ctx: CanvasRenderingContext2D, view: View, width: number, height: number, groundOffset: number) {
-  const tileSize = GROUND_TILE_WORLD_UNITS * view.scale;
-  const shiftPx = (((groundOffset * view.scale) % tileSize) + tileSize) % tileSize;
-  const cols = Math.ceil(width / tileSize) + 2;
-  ctx.fillStyle = GROUND_FILL_COLOR;
-  ctx.fillRect(0, view.groundY + tileSize, width, height - view.groundY - tileSize);
-  ctx.imageSmoothingEnabled = false;
-  for (let c = -1; c < cols; c++) {
-    drawKenneyTile(ctx, GRASS_TILE, c * tileSize - shiftPx, view.groundY, tileSize);
-  }
-}
-
-/** Scatters trees/cacti/bushes along the near hill line, parallax-scrolled slower than the
- *  ground so they read as background scenery instead of ground-level obstacles. */
-function drawHillDecor(ctx: CanvasRenderingContext2D, view: View, width: number, groundY: number, nearPhasePx: number) {
-  const decorSize = view.scale * 0.55;
-  const shiftPx = ((-nearPhasePx % DECOR_SPACING_PX) + DECOR_SPACING_PX) % DECOR_SPACING_PX;
-  const count = Math.ceil(width / DECOR_SPACING_PX) + 2;
-  ctx.imageSmoothingEnabled = false;
-  for (let i = -1; i < count; i++) {
-    const tile = HILL_DECOR[((i % HILL_DECOR.length) + HILL_DECOR.length) % HILL_DECOR.length];
-    const x = i * DECOR_SPACING_PX - shiftPx;
-    drawKenneyTile(ctx, tile, x - decorSize / 2, groundY - decorSize + 5, decorSize);
-  }
-}
+/** How many of each biome's 100 points are spent crossfading into the next one, instead of the
+ *  sky/mountain/ground-cap hard-cutting the instant `groundOffset` crosses a POINTS_PER_BIOME
+ *  boundary - the next biome's layers fade in on top of the current one over this window. */
+const BIOME_TRANSITION_WIDTH = 22;
 
 interface View {
   scale: number;
@@ -230,47 +116,37 @@ function drawCactus(ctx: CanvasRenderingContext2D, view: View, o: Obstacle) {
   );
 }
 
-/** A pterodactyl-style silhouette (body, downturned beak, and a two-segment zigzag wing) instead
- *  of a single flat rotated rectangle - the wing's chevron flips between an up-flap and a
- *  down-flap based on the obstacle's own x position, so it visibly flies as it scrolls by rather
- *  than gliding motionless. Position-driven (not time-driven) keeps it a pure function of the
- *  frame state, matching how the rest of this canvas has no animation clock of its own. */
+// How much bigger than its own hitbox the bird is drawn - the collision box (0.6x0.4 units) is
+// sized for fair gameplay, not legibility, so the sprite is scaled up around that same center
+// point purely for visibility, same idea as GOOSE_DRAW_UNITS below for the runner itself.
+const BIRD_DRAW_SCALE = 1.7;
+// Ping-pongs through the 3 flap frames (up, spread, down, spread, up, ...) instead of just
+// cycling 0-1-2-0-1-2, which would jump straight from "wings down" back to "wings up" - a real
+// flap eases through the middle pose both ways. Position-driven (not time-driven) keeps it a pure
+// function of the frame state, matching how the rest of this canvas has no animation clock of
+// its own.
+const BIRD_FLAP_SEQUENCE = [0, 1, 2, 1];
+
+/** Drawn from the same Kenney "Pixel Platformer" character sheet as the rest of the scenery's
+ *  tiles (a bat, reused as this game's flying obstacle) instead of a hand-drawn vector shape -
+ *  keeps it visually consistent with the cactus/ground tiles rather than standing out as the one
+ *  smooth, anti-aliased shape among crisp pixel art. */
 function drawBird(ctx: CanvasRenderingContext2D, view: View, o: Obstacle) {
+  const img = KENNEY_CHARACTERS;
+  if (!img || !img.complete || img.naturalWidth === 0) return;
+  // o.x runs negative just before the obstacle despawns (DESPAWN_X = -4), and JS's % keeps the
+  // sign of the dividend - a plain modulo would go negative there and index undefined out of the
+  // sequence array, so it's normalized into [0, length) first.
+  const step = ((Math.floor(o.x * 2.2) % BIRD_FLAP_SEQUENCE.length) + BIRD_FLAP_SEQUENCE.length) % BIRD_FLAP_SEQUENCE.length;
+  const frame = BIRD_FRAMES[BIRD_FLAP_SEQUENCE[step]];
+
   const cx = worldToScreenX(view, o.x);
   const cy = view.groundY - (o.y + o.height / 2) * view.scale;
-  const w = o.width * view.scale;
-  const h = o.height * view.scale;
-  const flapUp = Math.floor(o.x * 2.2) % 2 === 0;
+  const drawH = o.height * view.scale * BIRD_DRAW_SCALE;
+  const drawW = drawH * (frame.w / frame.h);
 
-  ctx.fillStyle = BIRD_COLOR;
-  ctx.strokeStyle = BIRD_EDGE_COLOR;
-  ctx.lineWidth = 1.5;
-
-  const rect = (x: number, y: number, rw: number, rh: number) => {
-    ctx.fillRect(x, y, rw, rh);
-    ctx.strokeRect(x, y, rw, rh);
-  };
-
-  rect(cx - w * 0.24, cy - h * 0.17, w * 0.48, h * 0.34);
-
-  ctx.save();
-  ctx.translate(cx + w * 0.22, cy - h * 0.01);
-  ctx.rotate(-0.22);
-  rect(0, -h * 0.09, w * 0.2, h * 0.18);
-  ctx.restore();
-
-  const innerAngle = flapUp ? -0.95 : 0.5;
-  const outerAngle = flapUp ? -0.3 : 1.15;
-  ctx.save();
-  ctx.translate(cx - w * 0.02, cy - h * 0.07);
-  ctx.rotate(innerAngle);
-  rect(-w * 0.03, -h * 0.07, w * 0.3, h * 0.15);
-  ctx.restore();
-  ctx.save();
-  ctx.translate(cx - w * 0.26, cy - h * 0.07);
-  ctx.rotate(outerAngle);
-  rect(-w * 0.02, -h * 0.06, w * 0.26, h * 0.13);
-  ctx.restore();
+  ctx.imageSmoothingEnabled = false;
+  ctx.drawImage(img, frame.x, frame.y, frame.w, frame.h, cx - drawW / 2, cy - drawH / 2, drawW, drawH);
 }
 
 /** World-unit height of a drawn 64px sprite frame (frame includes transparent padding around the
@@ -406,22 +282,48 @@ export function GooseCanvas({
     const view: View = { scale: PIXELS_PER_UNIT, anchorX: width * ANCHOR_X_FRACTION, groundY: height * GROUND_Y_FRACTION };
     const genColor = lerpColor(EARLY_GEN_COLOR, LATE_GEN_COLOR, generationRatio);
 
-    drawSky(ctx, width, height, view.groundY);
-    drawStars(ctx, width, view.groundY);
-    drawMoon(ctx, width, height, genColor);
+    const scene = DEFAULT_SCENE_CONFIG;
+    // Every POINTS_PER_BIOME points the biome advances - the sky fill, the mountain silhouette
+    // scene, and the ground's top cap swap (the empty forest/decor layers and the dirt fill stay
+    // put). Over the last BIOME_TRANSITION_WIDTH points of each biome, the upcoming biome's layers
+    // fade in on top so the swap reads as a crossfade instead of a hard cut.
+    const rawBiomeIndex = Math.max(0, groundOffset) / POINTS_PER_BIOME;
+    const biomeIndex = Math.floor(rawBiomeIndex) % BIOME_ORDER.length;
+    const biome = BIOME_ORDER[biomeIndex];
+    const nextBiome = BIOME_ORDER[(biomeIndex + 1) % BIOME_ORDER.length];
+    const posInBiome = (rawBiomeIndex - Math.floor(rawBiomeIndex)) * POINTS_PER_BIOME;
+    const transitionT = Math.max(0, Math.min(1, (posInBiome - (POINTS_PER_BIOME - BIOME_TRANSITION_WIDTH)) / BIOME_TRANSITION_WIDTH));
 
-    const glow = ctx.createRadialGradient(view.anchorX, view.groundY, 10, view.anchorX, view.groundY, height * 0.9);
-    glow.addColorStop(0, colorWithAlpha(genColor, 0.14));
-    glow.addColorStop(1, colorWithAlpha(genColor, 0));
-    ctx.fillStyle = glow;
-    ctx.fillRect(0, 0, width, height);
+    drawSkyFill(ctx, width, height, biome);
+    if (transitionT > 0) {
+      ctx.globalAlpha = transitionT;
+      drawSkyFill(ctx, width, height, nextBiome);
+      ctx.globalAlpha = 1;
+    }
 
-    const farPhase = -groundOffset * view.scale * 0.06;
-    const nearPhase = -groundOffset * view.scale * 0.14;
-    drawHillLayer(ctx, width, view.groundY - 6, 22, 220, farPhase, HILL_FAR_COLOR);
-    drawHillDecor(ctx, view, width, view.groundY - 2, nearPhase);
+    const mountainPhase = -groundOffset * view.scale * BIOME_MOUNTAIN_SPEED;
+    drawBiomeMountain(ctx, width, view.groundY, mountainPhase, biome, BIOME_MOUNTAIN_TILE_HEIGHT);
+    if (transitionT > 0) {
+      ctx.globalAlpha = transitionT;
+      drawBiomeMountain(ctx, width, view.groundY, mountainPhase, nextBiome, BIOME_MOUNTAIN_TILE_HEIGHT);
+      ctx.globalAlpha = 1;
+    }
 
-    drawGroundTiles(ctx, view, width, height, groundOffset);
+    const layerPhase = (layer: PaintedLayer) => -groundOffset * view.scale * layer.speed;
+    drawPaintedRow(ctx, width, view.groundY - scene.forestFar.baseYOffset, layerPhase(scene.forestFar), scene.forestFar);
+    drawPaintedRow(ctx, width, view.groundY - scene.forestNear.baseYOffset, layerPhase(scene.forestNear), scene.forestNear);
+    drawPaintedRow(ctx, width, view.groundY - scene.decor.baseYOffset, layerPhase(scene.decor), scene.decor);
+
+    const groundTop = getBiomeGroundTop(scene.groundTop, biome);
+    drawGroundLayers(ctx, width, height, view.groundY, groundOffset, view.scale, groundTop, scene.groundFill);
+    if (transitionT > 0) {
+      const nextGroundTop = getBiomeGroundTop(scene.groundTop, nextBiome);
+      const topBaseY = view.groundY + groundTop.tileSize;
+      const topPhase = -groundOffset * view.scale * groundTop.speed;
+      ctx.globalAlpha = transitionT;
+      drawPaintedRow(ctx, width, topBaseY, topPhase, nextGroundTop);
+      ctx.globalAlpha = 1;
+    }
 
     ctx.strokeStyle = lerpColor(EARLY_GEN_COLOR, LATE_GEN_COLOR, generationRatio * 0.4);
     ctx.globalAlpha = 0.6;

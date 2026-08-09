@@ -21,6 +21,8 @@ export function Timeline({
   speed,
   onSpeedChange,
   speedLabel,
+  speedMin = 1,
+  speedMax = 200,
 }: {
   status: string;
   pulsing?: boolean;
@@ -34,6 +36,8 @@ export function Timeline({
   speed?: number;
   onSpeedChange?: (v: number) => void;
   speedLabel?: string;
+  speedMin?: number;
+  speedMax?: number;
 }) {
   const fraction = total > 0 ? Math.min(current / total, 1) : 0;
 
@@ -76,7 +80,7 @@ export function Timeline({
       {onSpeedChange && (
         <div className="hidden shrink-0 items-center gap-2 text-[11px] text-on-surface-variant md:flex">
           {speedLabel}
-          <input type="range" min={1} max={200} value={speed} onChange={(e) => onSpeedChange(Number(e.target.value))} className="w-20" />
+          <input type="range" min={speedMin} max={speedMax} value={speed} onChange={(e) => onSpeedChange(Number(e.target.value))} className="w-20" />
         </div>
       )}
     </div>

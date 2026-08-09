@@ -21,7 +21,7 @@ export function MazePreview() {
   return (
     <div className="card-preview maze-preview">
       <span className="badge">
-        <span className="material-symbols-outlined text-[13px]">grid_view</span>
+        <span className="material-symbols-outlined text-[13px]">route</span>
       </span>
       <svg viewBox="0 0 110 66" preserveAspectRatio="xMidYMid meet">
         <defs>
@@ -49,7 +49,7 @@ export function CubePreview() {
   return (
     <div className="card-preview cube-preview">
       <span className="badge">
-        <span className="material-symbols-outlined text-[13px]">view_in_ar</span>
+        <span className="material-symbols-outlined text-[13px]">grid_view</span>
       </span>
       <div className="cube-scene">
         <div className="cube">
@@ -85,6 +85,31 @@ export function GoosePreview() {
           <rect className="head" x="10" y="-6" width="9" height="9" rx="2" />
           <circle className="eye" cx="16" cy="-2" r="1" />
         </g>
+      </svg>
+    </div>
+  );
+}
+
+export function TspPreview() {
+  const cities = [
+    [14, 50],
+    [30, 14],
+    [58, 10],
+    [96, 24],
+    [82, 54],
+    [46, 58],
+  ];
+  return (
+    <div className="card-preview tsp-preview">
+      <span className="badge">
+        <span className="material-symbols-outlined text-[13px]">view_in_ar</span>
+      </span>
+      <svg viewBox="0 0 110 66" preserveAspectRatio="xMidYMid meet">
+        <path className="tsp-route" d="M14,50 L30,14 L58,10 L96,24 L82,54 L46,58 Z" />
+        <circle className="tsp-spark" r="2.6" />
+        {cities.map(([x, y], i) => (
+          <circle key={i} className={`tsp-city ${i === 0 ? "origin" : ""}`} cx={x} cy={y} r={i === 0 ? 3 : 2.2} />
+        ))}
       </svg>
     </div>
   );

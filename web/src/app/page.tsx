@@ -2,7 +2,7 @@ import Link from "next/link";
 import { Icon } from "@/components/shared/Panel";
 import { FrontierShader } from "@/components/home/FrontierShader";
 import { HeroTicker } from "@/components/home/HeroTicker";
-import { MazePreview, CubePreview, TttPreview, GoosePreview } from "@/components/home/ModulePreviews";
+import { MazePreview, CubePreview, TttPreview, GoosePreview, TspPreview } from "@/components/home/ModulePreviews";
 
 const MODULES = [
   {
@@ -41,10 +41,23 @@ const MODULES = [
     algos: ["Algoritmo Genético"],
     statLine: "Seleção, cruzamento e mutação · N gerações",
   },
+  {
+    href: "/tsp",
+    title: "Caixeiro Viajante",
+    accent: "tsp",
+    preview: TspPreview,
+    desc: "Encontre a rota mais curta que visita todas as cidades exatamente uma vez e retorna ao início. Compare uma heurística construtiva, busca local, um algoritmo genético e a solução exata.",
+    algos: ["Vizinho Mais Próximo", "2-opt", "AG", "Held-Karp"],
+    statLine: "4 algoritmos · solução exata até 12 cidades",
+  },
 ] as const;
 
 const STATS = [
-  { num: "8", label: "Algoritmos implementados — BFS, DFS, UCS, Gulosa, A*, Minimax, Alfa-Beta, Genético" },
+  {
+    num: "11",
+    label:
+      "Algoritmos implementados — BFS, DFS, UCS, Gulosa, A*, Minimax, Alfa-Beta, Genético, Vizinho Mais Próximo, 2-opt, Held-Karp",
+  },
   { num: "3.674.160", label: "Estados possíveis do Cubo Mágico 2×2, verificados por BFS exaustiva" },
   { num: "100%", label: "Execução local no navegador — nenhuma chamada a servidor" },
 ] as const;
@@ -56,18 +69,21 @@ const FLOW = [
 ] as const;
 
 const ABOUT_STATS = [
-  { k: "Problemas", v: "4", icon: "apps", accent: "primary", live: false },
-  { k: "Algoritmos", v: "8", icon: "account_tree", accent: "primary", live: false },
+  { k: "Problemas", v: "5", icon: "apps", accent: "primary", live: false },
+  { k: "Algoritmos", v: "11", icon: "account_tree", accent: "primary", live: false },
   { k: "Estados do cubo", v: "3.674.160", icon: "view_in_ar", accent: "tertiary", live: false },
   { k: "Execução", v: "100% local", icon: "bolt", accent: "secondary", live: true },
 ] as const;
 
 export default function Home() {
   return (
-    <div className="h-full overflow-y-auto">
+    <div className="h-full overflow-y-auto content-scroll">
       {/* Hero: full-bleed WebGL "search frontier" backdrop behind the pitch */}
-      <section className="relative flex min-h-[92vh] items-center overflow-hidden px-6 pb-24 pt-24">
-        <div className="hero-backdrop absolute inset-0 z-0 pointer-events-none">
+      {/* rounded-t matches .main-shell's own radius: this section is the first child of a nested
+          overflow-y:auto scroller, and Firefox doesn't carry main-shell's rounded clip through
+          into that nested scroll container, leaving square corners on this full-bleed hero. */}
+      <section className="relative flex min-h-[92vh] items-center overflow-hidden rounded-t-[32px] px-6 pb-24 pt-24 lg:rounded-t-[40px]">
+        <div className="hero-backdrop absolute inset-0 z-0 overflow-hidden pointer-events-none">
           <FrontierShader />
         </div>
         <div className="hero-vignette absolute inset-0 z-0 pointer-events-none" />
@@ -127,13 +143,15 @@ export default function Home() {
       <section className="px-6 py-24">
         <div className="mx-auto mb-10 max-w-7xl">
           <div className="mb-2.5 text-[11px] font-semibold uppercase tracking-[0.1em] text-on-surface-variant">
-            Quatro problemas, duas famílias de algoritmos
+            Cinco problemas, duas famílias de algoritmos
           </div>
           <h2 className="mb-2.5 text-[28px] font-semibold tracking-[-0.015em]">Escolha um módulo para explorar</h2>
           <p className="max-w-xl text-[14.5px] text-on-surface-variant">
             Labirinto, Cubo Mágico e Jogo da Velha compartilham um motor de busca clássico
-            (cega, informada e adversária); o Goose evolui agentes com um Algoritmo Genético. Cada
-            problema expõe os parâmetros do agente e executa com estatísticas reais.
+            (cega, informada e adversária); Goose e Caixeiro Viajante evoluem soluções com um
+            Algoritmo Genético, e o Caixeiro Viajante ainda compara isso a uma heurística
+            construtiva, busca local e a solução exata. Cada problema expõe os parâmetros do agente
+            e executa com estatísticas reais.
           </p>
         </div>
 
@@ -185,8 +203,9 @@ export default function Home() {
           <div className="rounded-2xl border border-white/[0.07] bg-surface-container p-9">
             <p className="mb-8 text-sm leading-relaxed text-on-surface-variant">
               Aplicação educacional para aplicar algoritmos clássicos de busca (BFS, DFS, UCS,
-              Gulosa, A*, Minimax e Alfa-Beta), além de um Algoritmo Genético, na resolução de
-              quatro problemas computacionais. Cada módulo expõe os parâmetros do problema e do
+              Gulosa, A*, Minimax e Alfa-Beta), um Algoritmo Genético e, no Caixeiro Viajante,
+              heurísticas de otimização (Vizinho Mais Próximo, 2-opt e Held-Karp), na resolução de
+              cinco problemas computacionais. Cada módulo expõe os parâmetros do problema e do
               algoritmo, executa a busca com estatísticas reais e permite comparar resultados.
             </p>
             <div className="grid grid-cols-1 gap-7 sm:grid-cols-3 sm:gap-4">

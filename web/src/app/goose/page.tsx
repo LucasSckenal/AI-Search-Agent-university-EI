@@ -28,7 +28,7 @@ export default function GoosePage() {
     crossoverRate: 0.7,
     eliteCount: 3,
     tournamentSize: 4,
-    maxSteps: 1200,
+    maxSteps: 2400,
     seed: randomSeed(),
     runSeed: randomSeed(),
   });
@@ -41,6 +41,8 @@ export default function GoosePage() {
   const [selectedGeneration, setSelectedGeneration] = useState(0);
   const [frameIndex, setFrameIndex] = useState(0);
   const [playing, setPlaying] = useState(false);
+  const [speed, setSpeed] = useState(1); // frames advanced per tick
+  const [genPickerOpen, setGenPickerOpen] = useState(false);
 
   // Evolves gaConfig.generations generations, chunked across setTimeout(0) ticks - goose fitness
   // evaluations are heavier than the maze's (a full physics simulation per genome instead of a
@@ -127,9 +129,9 @@ export default function GoosePage() {
       setPlaying(false);
       return;
     }
-    const t = setTimeout(() => setFrameIndex((f) => Math.min(f + 1, playback.maxLen - 1)), 1000 / 60);
+    const t = setTimeout(() => setFrameIndex((f) => Math.min(f + Math.max(1, speed), playback.maxLen - 1)), 1000 / 60);
     return () => clearTimeout(t);
-  }, [playing, frameIndex, playback, gaRunResult, selectedGeneration]);
+  }, [playing, frameIndex, playback, gaRunResult, selectedGeneration, speed]);
 
   const obstacles = useMemo(() => {
     if (!playback) return [];
@@ -168,6 +170,15 @@ export default function GoosePage() {
     setPlaying(false);
   };
 
+  const jumpToGeneration = (gen: number) => {
+    if (!gaRunResult) return;
+    const next = Math.max(0, Math.min(gaRunResult.generations.length - 1, gen));
+    setSelectedGeneration(next);
+    setFrameIndex(0);
+    setPlaying(false);
+    setGenPickerOpen(false);
+  };
+
   const bestOfGeneration = playback?.allFrames[0]?.[playback.allFrames[0].length - 1];
   const status = gaRunning ? "EVOLUINDO" : gaRunResult ? "OBSERVANDO GERAÇÃO" : "PRONTO";
   const generationRatio = gaRunResult && gaRunResult.generations.length > 1
@@ -204,9 +215,6 @@ export default function GoosePage() {
         <div className="workspace-head">
           <h2>Corrida do Goose</h2>
           <div className="workspace-links">
-            <button className="workspace-link" onClick={() => setGaOpen(true)}>
-              <Icon name="tune" className="text-[13px]" /> Parâmetros
-            </button>
             <button className="workspace-link" onClick={() => setStatsOpen(true)} disabled={!gaRunResult}>
               <Icon name="query_stats" className="text-[13px]" /> Última geração
             </button>
@@ -241,7 +249,13 @@ export default function GoosePage() {
               >
                 <Icon name="chevron_left" className="text-[16px]" />
               </button>
-              <span className="font-mono">Geração {selectedGeneration}</span>
+              <button
+                onClick={() => setGenPickerOpen(true)}
+                className="flex items-center gap-1.5 rounded-full border border-white/10 bg-white/5 px-3 py-1 font-mono text-on-surface transition-colors hover:bg-white/10"
+              >
+                Geração {selectedGeneration}
+                <Icon name="expand_more" className="text-[14px] text-on-surface-variant" />
+              </button>
               <button
                 className="flex h-7 w-7 items-center justify-center rounded-full border border-white/10 bg-white/5 text-on-surface transition-colors hover:bg-white/10 disabled:opacity-30"
                 onClick={() => stepGeneration(1)}
@@ -266,6 +280,10 @@ export default function GoosePage() {
             total={playback?.maxLen ?? 0}
             unitLabel="quadros"
             disabled={!playback}
+            speed={speed}
+            onSpeedChange={setSpeed}
+            speedLabel="Velocidade"
+            speedMax={8}
           />
         </div>
       </div>
@@ -282,6 +300,26 @@ export default function GoosePage() {
         runResult={gaRunResult}
         elapsedMs={gaElapsedMs}
       />
+
+      <Modal open={genPickerOpen} onClose={() => setGenPickerOpen(false)} title="Escolher geração" wide>
+        {gaRunResult && (
+          <div className="grid grid-cols-6 gap-2 sm:grid-cols-8">
+            {gaRunResult.generations.map((_, i) => (
+              <button
+                key={i}
+                onClick={() => jumpToGeneration(i)}
+                className={`rounded-lg border px-2 py-1.5 font-mono text-[12px] transition-colors ${
+                  i === selectedGeneration
+                    ? "border-primary bg-primary/15 text-primary"
+                    : "border-white/10 bg-white/5 text-on-surface hover:bg-white/10"
+                }`}
+              >
+                {i}
+              </button>
+            ))}
+          </div>
+        )}
+      </Modal>
 
       <Modal open={statsOpen} onClose={() => setStatsOpen(false)} title="Última geração">
         {bestOfGeneration && (

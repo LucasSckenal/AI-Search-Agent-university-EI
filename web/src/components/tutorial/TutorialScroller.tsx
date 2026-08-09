@@ -38,7 +38,7 @@ export function TutorialScroller({ children }: { children: ReactNode[] }) {
   }, [count]);
 
   return (
-    <div className="tut-scroller">
+    <div className="tut-scroller content-scroll">
       <div className="tut-progress">
         {Array.from({ length: count }).map((_, i) => (
           <div key={i} className={`tut-dot ${i === active ? "active" : ""}`} />
