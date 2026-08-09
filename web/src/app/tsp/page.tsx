@@ -45,6 +45,16 @@ const MODE_LABELS: Record<TspMode, string> = {
   optimal: "Ótimo (Held-Karp)",
 };
 
+// Golden-angle hue stepping spreads consecutive generations far apart around the color wheel
+// (unlike an even 1/n slice, it never clusters similar hues next to each other regardless of how
+// many generations there are), so scrubbing through the GA timeline visibly changes the car's color
+// generation to generation.
+const GOLDEN_ANGLE = 137.508;
+function generationCarColor(generation: number): string {
+  const hue = (generation * GOLDEN_ANGLE) % 360;
+  return `hsl(${hue.toFixed(1)}, 72%, 64%)`;
+}
+
 export default function TspPage() {
   const [cityCount, setCityCount] = useState(10);
   // Deterministic placeholder for SSR (avoids a hydration mismatch, same precedent as labirinto's
@@ -58,6 +68,11 @@ export default function TspPage() {
   const [statsOpen, setStatsOpen] = useState(false);
   const [compareOpen, setCompareOpen] = useState(false);
   const [showGhostOptimal, setShowGhostOptimal] = useState(false);
+  const [carSpeedMultiplier, setCarSpeedMultiplier] = useState(1);
+  // Playback speed for the Timeline scrubber (2-opt swaps / GA generations per tick) - same
+  // Timeline-integrated "Velocidade" slider Labirinto and Goose already expose, standardizing the
+  // control's position and label across pages instead of TSP being the odd one out.
+  const [playbackSpeed, setPlaybackSpeed] = useState(1);
 
   const nnTour = useMemo(() => (cities.length > 0 ? nearestNeighborTour(cities) : []), [cities]);
   const nnLength = useMemo(() => (nnTour.length > 0 ? tourLength(cities, nnTour) : 0), [cities, nnTour]);
@@ -185,7 +200,8 @@ export default function TspPage() {
     else if (mode === "genetic") runGenetic();
   };
 
-  // 2-opt scrub: advances one accepted swap per tick, so the route visibly "untangles" swap by swap.
+  // 2-opt scrub: advances `playbackSpeed` accepted swaps per tick, so the route visibly "untangles"
+  // swap by swap (or in faster bursts once the Timeline's Velocidade slider is turned up).
   useEffect(() => {
     if (!twoOptPlaying || !twoOptRun) return;
     if (twoOptFrame >= twoOptRun.length - 1) {
@@ -193,11 +209,12 @@ export default function TspPage() {
       setTwoOptPlaying(false);
       return;
     }
-    const t = setTimeout(() => setTwoOptFrame((f) => Math.min(f + 1, twoOptRun.length - 1)), 110);
+    const t = setTimeout(() => setTwoOptFrame((f) => Math.min(f + playbackSpeed, twoOptRun.length - 1)), 110);
     return () => clearTimeout(t);
-  }, [twoOptPlaying, twoOptFrame, twoOptRun]);
+  }, [twoOptPlaying, twoOptFrame, twoOptRun, playbackSpeed]);
 
-  // GA generation scrub: same 60ms-tick shape as maze/page.tsx's GA scrubber.
+  // GA generation scrub: same 60ms-tick shape as maze/page.tsx's GA scrubber, advancing
+  // `playbackSpeed` generations per tick.
   useEffect(() => {
     if (!gaPlaying || !gaRunResult) return;
     if (selectedGeneration >= gaRunResult.generations.length - 1) {
@@ -205,9 +222,9 @@ export default function TspPage() {
       setGaPlaying(false);
       return;
     }
-    const t = setTimeout(() => setSelectedGeneration((g) => Math.min(g + 1, gaRunResult.generations.length - 1)), 60);
+    const t = setTimeout(() => setSelectedGeneration((g) => Math.min(g + playbackSpeed, gaRunResult.generations.length - 1)), 60);
     return () => clearTimeout(t);
-  }, [gaPlaying, selectedGeneration, gaRunResult]);
+  }, [gaPlaying, selectedGeneration, gaRunResult, playbackSpeed]);
 
   const stepGeneration = (delta: number) => {
     if (!gaRunResult) return;
@@ -320,8 +337,8 @@ export default function TspPage() {
           </p>
         </div>
         <div className="content-actions">
-          <button className="btn-pill" onClick={() => setParamsOpen(true)}>
-            <Icon name="tune" className="text-[15px]" /> Parâmetros
+          <button className="btn-pill" onClick={() => setCompareOpen(true)}>
+            <Icon name="compare_arrows" className="text-[15px]" /> Comparar
           </button>
           <button className="btn-pill btn-pill-primary" onClick={runActive} disabled={runDisabled}>
             <Icon name="play_arrow" className="text-[15px]" /> {runLabel}
@@ -335,8 +352,12 @@ export default function TspPage() {
             value={mode}
             onChange={(v) => setMode(v as TspMode)}
             options={(Object.keys(MODE_LABELS) as TspMode[]).map((m) => ({ value: m, label: MODE_LABELS[m] }))}
+            className="!w-auto shrink-0"
           />
           <div className="workspace-links">
+            <button className="workspace-link" onClick={() => setParamsOpen(true)}>
+              <Icon name="tune" className="text-[13px]" /> Parâmetros
+            </button>
             <button className="workspace-link" onClick={() => setGaOpen(true)}>
               <Icon name="psychology" className="text-[13px]" /> Genético
             </button>
@@ -346,9 +367,6 @@ export default function TspPage() {
               disabled={!optimalResult}
             >
               <Icon name="visibility" className="text-[13px]" /> Comparar com ótimo
-            </button>
-            <button className="workspace-link" onClick={() => setCompareOpen(true)}>
-              <Icon name="compare_arrows" className="text-[13px]" /> Comparação
             </button>
             <button className="workspace-link" onClick={() => setStatsOpen(true)} disabled={!currentModeResult}>
               <Icon name="query_stats" className="text-[13px]" /> Última execução
@@ -378,7 +396,14 @@ export default function TspPage() {
               )}
             </StageHint>
             <WebGLGate>
-              <TspCanvas cities={cities} tour={activeTour} compareTour={compareTour} highlightEdges={highlightEdges} />
+              <TspCanvas
+                cities={cities}
+                tour={activeTour}
+                compareTour={compareTour}
+                highlightEdges={highlightEdges}
+                carColor={mode === "genetic" ? generationCarColor(selectedGeneration) : undefined}
+                speedMultiplier={carSpeedMultiplier}
+              />
             </WebGLGate>
           </div>
 
@@ -423,6 +448,11 @@ export default function TspPage() {
               total={gaRunResult?.generations.length ?? 0}
               unitLabel="gerações"
               disabled={!gaRunResult}
+              speed={playbackSpeed}
+              onSpeedChange={setPlaybackSpeed}
+              speedLabel="Velocidade"
+              speedMin={1}
+              speedMax={30}
             />
           ) : mode === "twoopt" ? (
             <Timeline
@@ -439,6 +469,11 @@ export default function TspPage() {
               total={twoOptRun?.length ?? 0}
               unitLabel="trocas"
               disabled={!twoOptRun}
+              speed={playbackSpeed}
+              onSpeedChange={setPlaybackSpeed}
+              speedLabel="Velocidade"
+              speedMin={1}
+              speedMax={30}
             />
           ) : (
             <Timeline
@@ -517,7 +552,12 @@ export default function TspPage() {
         <StatGrid cols={3} items={compareItems} />
       </Modal>
 
-      <Modal open={paramsOpen} onClose={() => setParamsOpen(false)} title="Parâmetros" subtitle="Número de cidades e seed da instância">
+      <Modal
+        open={paramsOpen}
+        onClose={() => setParamsOpen(false)}
+        title="Parâmetros"
+        subtitle="Número de cidades, seed da instância e velocidade do carro"
+      >
         <Field label={`Cidades: ${cityCount}`}>
           <input type="range" min={4} max={60} value={cityCount} onChange={(e) => setCityCount(Number(e.target.value))} />
         </Field>
@@ -534,6 +574,18 @@ export default function TspPage() {
                 <Icon name="casino" className="text-[16px]" />
               </button>
             </div>
+          </Field>
+        </div>
+        <div className="border-t border-outline-variant pt-4">
+          <Field label={`Velocidade do carro: ${carSpeedMultiplier.toFixed(2)}x`}>
+            <input
+              type="range"
+              min={0.25}
+              max={3}
+              step={0.25}
+              value={carSpeedMultiplier}
+              onChange={(e) => setCarSpeedMultiplier(Number(e.target.value))}
+            />
           </Field>
         </div>
         {!heldKarpAvailable && (

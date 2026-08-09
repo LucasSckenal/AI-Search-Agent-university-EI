@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo, useRef } from "react";
+import { useEffect, useMemo, useRef } from "react";
 import { Canvas, useFrame } from "@react-three/fiber";
 import { OrbitControls } from "@react-three/drei";
 import * as THREE from "three";
@@ -50,42 +50,138 @@ function hashJitter(seed: number): number {
  *  and a couple of small trees matter most here since the camera looks almost straight down - that's
  *  the one face of every building actually visible most of the time. The tour's origin city gets one
  *  taller landmark tower, a beacon light, and a glowing plaza ring instead of a small cluster. */
+// Four non-origin "archetypes" so cities read as visibly different settlements from a distance
+// instead of a repeated stamp - a lone cottage, a loose town, a packed downtown block, or a couple
+// of thin spires - rather than only varying each building's own height/color within one fixed shape.
+type Archetype = "village" | "town" | "district" | "tower";
+
+const ARCHETYPE_PALETTES: Record<Archetype, string[]> = {
+  village: ["#e8ddc7", "#d8c9a8", "#c2c6d6"],
+  town: CITY_COLORS,
+  district: ["#c2c6d6", "#9aa0b8", "#7c84a0"],
+  tower: ["#b9c4e0", "#8f9ecf", "#aab4cc"],
+};
+
+function pickArchetype(seed: number): Archetype {
+  const roll = hashJitter(seed);
+  if (roll < 0.3) return "village";
+  if (roll < 0.62) return "town";
+  if (roll < 0.85) return "district";
+  return "tower";
+}
+
 function CityBlock({ city, position, isOrigin }: { city: City; position: THREE.Vector3; isOrigin: boolean }) {
+  const archetype = useMemo(() => pickArchetype(city.id + 900), [city.id]);
+
   const buildings = useMemo(() => {
-    const count = isOrigin ? 1 : 2 + Math.floor(hashJitter(city.id) * 2);
+    let count: number;
+    let hBase: number;
+    let hRange: number;
+    let wBase: number;
+    let wRange: number;
+    let radiusBase: number;
+    let radiusRange: number;
+    let emissiveIntensity: number;
+
+    if (isOrigin) {
+      count = 1;
+      hBase = 1.3;
+      hRange = 0.45;
+      wBase = 0.15;
+      wRange = 0.09;
+      radiusBase = 0;
+      radiusRange = 0;
+      emissiveIntensity = 0.5;
+    } else {
+      switch (archetype) {
+        case "village":
+          count = 1;
+          hBase = 0.3;
+          hRange = 0.35;
+          wBase = 0.16;
+          wRange = 0.1;
+          radiusBase = 0;
+          radiusRange = 0;
+          emissiveIntensity = 0.15;
+          break;
+        case "district":
+          count = 4 + Math.floor(hashJitter(city.id) * 2);
+          hBase = 0.55;
+          hRange = 0.85;
+          wBase = 0.13;
+          wRange = 0.08;
+          radiusBase = 0.1;
+          radiusRange = 0.05;
+          emissiveIntensity = 0.22;
+          break;
+        case "tower":
+          count = 1 + Math.floor(hashJitter(city.id) * 2);
+          hBase = 1.1;
+          hRange = 0.8;
+          wBase = 0.1;
+          wRange = 0.05;
+          radiusBase = 0.08;
+          radiusRange = 0.04;
+          emissiveIntensity = 0.35;
+          break;
+        default: // town
+          count = 2 + Math.floor(hashJitter(city.id) * 2);
+          hBase = 0.4;
+          hRange = 0.5;
+          wBase = 0.15;
+          wRange = 0.09;
+          radiusBase = 0.13;
+          radiusRange = 0.07;
+          emissiveIntensity = 0.2;
+      }
+    }
+
+    const palette = isOrigin ? CITY_COLORS : ARCHETYPE_PALETTES[archetype];
+
     return Array.from({ length: count }, (_, i) => {
       const seed = city.id * 97 + i * 13;
-      const h = isOrigin ? 0.6 + hashJitter(seed) * 0.18 : 0.16 + hashJitter(seed) * 0.24;
-      const w = 0.08 + hashJitter(seed + 1) * 0.05;
+      const h = hBase + hashJitter(seed) * hRange;
+      const w = wBase + hashJitter(seed + 1) * wRange;
       const angle = (i / count) * Math.PI * 2 + hashJitter(seed + 2) * 2;
-      const radius = count === 1 ? 0 : 0.07 + hashJitter(seed + 3) * 0.04;
-      const colorIndex = Math.floor(hashJitter(seed + 4) * CITY_COLORS.length);
-      const pitchedRoof = hashJitter(seed + 5) > 0.55;
+      const radius = count === 1 ? 0 : radiusBase + hashJitter(seed + 3) * radiusRange;
+      const colorIndex = Math.floor(hashJitter(seed + 4) * palette.length);
+      const pitchedRoof = archetype !== "tower" && hashJitter(seed + 5) > 0.55;
       const hasRoofDetail = !pitchedRoof && hashJitter(seed + 6) > 0.5;
       return {
         h,
         w,
         x: Math.cos(angle) * radius,
         z: Math.sin(angle) * radius,
-        color: CITY_COLORS[colorIndex],
+        color: palette[colorIndex],
         pitchedRoof,
         hasRoofDetail,
+        emissiveIntensity,
       };
     });
-  }, [city.id, isOrigin]);
+  }, [city.id, isOrigin, archetype]);
 
   const trees = useMemo(() => {
-    if (isOrigin) return [];
-    const count = hashJitter(city.id + 500) > 0.35 ? 1 + Math.floor(hashJitter(city.id + 501) * 2) : 0;
+    if (isOrigin || archetype === "tower") return [];
+    const threshold = archetype === "village" ? 0.15 : archetype === "district" ? 0.7 : 0.35;
+    const maxExtra = archetype === "village" ? 3 : 2;
+    const count = hashJitter(city.id + 500) > threshold ? 1 + Math.floor(hashJitter(city.id + 501) * maxExtra) : 0;
     return Array.from({ length: count }, (_, i) => {
       const seed = city.id * 211 + i * 29;
       const angle = hashJitter(seed) * Math.PI * 2;
       const radius = 0.1 + hashJitter(seed + 1) * 0.06;
       return { x: Math.cos(angle) * radius, z: Math.sin(angle) * radius, scale: 0.85 + hashJitter(seed + 2) * 0.3 };
     });
-  }, [city.id, isOrigin]);
+  }, [city.id, isOrigin, archetype]);
 
-  const plazaRadius = isOrigin ? 0.26 : 0.19;
+  const plazaRadius = isOrigin
+    ? 0.42
+    : archetype === "village"
+      ? 0.24
+      : archetype === "district"
+        ? 0.4
+        : archetype === "tower"
+          ? 0.3
+          : 0.34;
   const tallest = Math.max(...buildings.map((b) => b.h));
 
   return (
@@ -110,20 +206,20 @@ function CityBlock({ city, position, isOrigin }: { city: City; position: THREE.V
               <meshStandardMaterial
                 color={color}
                 emissive={color}
-                emissiveIntensity={isOrigin ? 0.5 : 0.2}
+                emissiveIntensity={b.emissiveIntensity}
                 roughness={0.5}
                 metalness={0.15}
               />
             </mesh>
             {b.pitchedRoof && (
-              <mesh position={[0, roofY + 0.035, 0]} rotation={[0, Math.PI / 4, 0]} castShadow>
-                <coneGeometry args={[b.w * 0.72, 0.07, 4]} />
+              <mesh position={[0, roofY + (b.w * 0.5) / 2, 0]} rotation={[0, Math.PI / 4, 0]} castShadow>
+                <coneGeometry args={[b.w * 0.72, b.w * 0.5, 4]} />
                 <meshStandardMaterial color={color} roughness={0.65} />
               </mesh>
             )}
             {b.hasRoofDetail && (
-              <mesh position={[b.w * 0.22, roofY + 0.02, b.w * 0.22]}>
-                <boxGeometry args={[0.025, 0.04, 0.025]} />
+              <mesh position={[b.w * 0.22, roofY + b.w * 0.15, b.w * 0.22]}>
+                <boxGeometry args={[b.w * 0.16, b.w * 0.3, b.w * 0.16]} />
                 <meshStandardMaterial color="#0d0f16" roughness={0.8} />
               </mesh>
             )}
@@ -143,8 +239,8 @@ function CityBlock({ city, position, isOrigin }: { city: City; position: THREE.V
         </group>
       ))}
       {isOrigin && (
-        <mesh position={[0, tallest + 0.08, 0]}>
-          <sphereGeometry args={[0.035, 10, 10]} />
+        <mesh position={[0, tallest + 0.12, 0]}>
+          <sphereGeometry args={[0.055, 10, 10]} />
           <meshBasicMaterial color={ORIGIN_COLOR} />
         </mesh>
       )}
@@ -345,17 +441,38 @@ const BOUNCE_AMPLITUDE = 0.006;
  *  (there's no premade vehicle sprite/model in this project's assets), oriented every frame via
  *  `lookAt` along the route curve's tangent rather than hand-derived trig, so it always faces the
  *  way it's actually moving regardless of the curve's local twist. */
-function Car({ curve }: { curve: THREE.CatmullRomCurve3 | null }) {
+function Car({
+  curve,
+  color = CAR_COLOR,
+  speedMultiplier = 1,
+}: {
+  curve: THREE.CatmullRomCurve3 | null;
+  color?: string;
+  speedMultiplier?: number;
+}) {
   const groupRef = useRef<THREE.Group>(null);
   const progressRef = useRef(0);
   const distanceRef = useRef(0);
   const lookTarget = useMemo(() => new THREE.Vector3(), []);
+  const spotLightRef = useRef<THREE.SpotLight>(null);
+  const spotTargetRef = useRef<THREE.Object3D>(null);
+
+  // A spotlight's `target` has to be an actual Object3D instance, not a position - wiring it up
+  // imperatively once both refs exist is the standard r3f pattern (setting it as a JSX prop would
+  // only ever see spotTargetRef.current as null, since that ref isn't populated until after this
+  // first render commits).
+  useEffect(() => {
+    if (spotLightRef.current && spotTargetRef.current) {
+      spotLightRef.current.target = spotTargetRef.current;
+    }
+  }, []);
 
   useFrame((_, delta) => {
     if (!curve || !groupRef.current) return;
     const length = Math.max(curve.getLength(), 0.001);
-    progressRef.current = (progressRef.current + (CAR_SPEED * delta) / length) % 1;
-    distanceRef.current += CAR_SPEED * delta;
+    const speed = CAR_SPEED * speedMultiplier;
+    progressRef.current = (progressRef.current + (speed * delta) / length) % 1;
+    distanceRef.current += speed * delta;
     const pos = curve.getPointAt(progressRef.current);
     const tangent = curve.getTangentAt(progressRef.current);
     const bounce = Math.sin(distanceRef.current * BOUNCE_FREQUENCY) * BOUNCE_AMPLITUDE;
@@ -377,13 +494,13 @@ function Car({ curve }: { curve: THREE.CatmullRomCurve3 | null }) {
     <group ref={groupRef}>
       <mesh castShadow position={[0, 0.09, 0]}>
         <boxGeometry args={[0.24, 0.14, 0.42]} />
-        <meshStandardMaterial color={CAR_COLOR} emissive={CAR_COLOR} emissiveIntensity={0.25} roughness={0.4} metalness={0.2} />
+        <meshStandardMaterial color={color} emissive={color} emissiveIntensity={0.25} roughness={0.4} metalness={0.2} />
       </mesh>
-      <mesh position={[0, 0.19, -0.03]}>
+      <mesh position={[0, 0.19, 0.03]}>
         <boxGeometry args={[0.16, 0.09, 0.22]} />
         <meshStandardMaterial color="#11131a" roughness={0.3} metalness={0.3} />
       </mesh>
-      <mesh position={[0, 0.238, 0.06]}>
+      <mesh position={[0, 0.238, -0.06]}>
         <boxGeometry args={[0.17, 0.014, 0.03]} />
         <meshStandardMaterial color="#11131a" roughness={0.4} metalness={0.3} />
       </mesh>
@@ -394,13 +511,34 @@ function Car({ curve }: { curve: THREE.CatmullRomCurve3 | null }) {
         </mesh>
       ))}
       {[-0.07, 0.07].map((x, i) => (
-        <mesh key={i} position={[x, 0.09, -0.22]}>
-          <sphereGeometry args={[0.025, 8, 8]} />
-          <meshBasicMaterial color="#ffffff" />
-        </mesh>
+        <group key={i} position={[x, 0.09, 0.22]}>
+          <mesh>
+            <sphereGeometry args={[0.028, 8, 8]} />
+            <meshBasicMaterial color="#fff6dd" />
+          </mesh>
+          <mesh scale={2.2}>
+            <sphereGeometry args={[0.028, 8, 8]} />
+            <meshBasicMaterial color="#fff6dd" transparent opacity={0.3} blending={THREE.AdditiveBlending} depthWrite={false} />
+          </mesh>
+        </group>
       ))}
+      {/* The real headlight: an actual light source shining ahead of the car, not just a glowing
+          dot - reads as a bright pool on the road ahead when seen from this near-top-down camera.
+          Front is local +Z here: unlike a camera/light, Object3D.lookAt() points a generic mesh's
+          +Z axis (not -Z) at the target, so the group's "forward" after Car's per-frame lookAt is +Z. */}
+      <spotLight
+        ref={spotLightRef}
+        position={[0, 0.16, 0.2]}
+        angle={0.5}
+        penumbra={0.5}
+        intensity={5}
+        distance={1.3}
+        decay={2}
+        color="#fff2cf"
+      />
+      <object3D ref={spotTargetRef} position={[0, 0, 0.85]} />
       {[-0.07, 0.07].map((x, i) => (
-        <mesh key={i} position={[x, 0.09, 0.2]}>
+        <mesh key={i} position={[x, 0.09, -0.2]}>
           <sphereGeometry args={[0.02, 8, 8]} />
           <meshBasicMaterial color="#ff4d4d" />
         </mesh>
@@ -414,11 +552,15 @@ function Scene({
   tour,
   compareTour,
   highlightEdges,
+  carColor,
+  speedMultiplier,
 }: {
   cities: City[];
   tour: number[] | null;
   compareTour: number[] | null;
   highlightEdges?: [number, number][];
+  carColor?: string;
+  speedMultiplier?: number;
 }) {
   const points = useMemo(() => {
     if (!tour) return [];
@@ -454,7 +596,22 @@ function Scene({
         <meshStandardMaterial color={GROUND_COLOR} roughness={1} metalness={0} />
       </mesh>
       <hemisphereLight args={["#5c6a8f", "#0d0f16", 0.85]} />
-      <directionalLight position={[6, 10, 4]} intensity={2.1} castShadow shadow-mapSize-width={1024} shadow-mapSize-height={1024} />
+      {/* Default shadow-camera frustum is a tiny +-5 unit box, far smaller than this scene's real
+          span - without widening it, buildings away from the origin would silently drop their
+          shadows. Sized to the same groundSize the fog/floor already use. */}
+      <directionalLight
+        position={[6, 10, 4]}
+        intensity={2.1}
+        castShadow
+        shadow-mapSize-width={1024}
+        shadow-mapSize-height={1024}
+        shadow-camera-left={-groundSize / 2}
+        shadow-camera-right={groundSize / 2}
+        shadow-camera-top={groundSize / 2}
+        shadow-camera-bottom={-groundSize / 2}
+        shadow-camera-near={0.5}
+        shadow-camera-far={groundSize * 3}
+      />
       <directionalLight position={[-6, 4, -6]} intensity={0.5} />
 
       {compareCurve && <Road curve={compareCurve} width={GHOST_ROAD_WIDTH} color={GHOST_COLOR} opacity={0.32} />}
@@ -466,7 +623,7 @@ function Scene({
       {cities.map((c, i) => (
         <CityBlock key={c.id} city={c} position={toScene(c)} isOrigin={i === 0} />
       ))}
-      <Car curve={curve} />
+      <Car curve={curve} color={carColor} speedMultiplier={speedMultiplier} />
     </>
   );
 }
@@ -478,16 +635,20 @@ interface TspCanvasProps {
   compareTour?: number[] | null;
   /** City-id edge pairs to draw emphasized (from a 2-opt TourStep's newEdges). */
   highlightEdges?: [number, number][];
+  /** Overrides the car's default color - e.g. a hue tied to the GA's current generation. */
+  carColor?: string;
+  /** Multiplies the car's base driving speed - the "speed manager" slider on the page. */
+  speedMultiplier?: number;
 }
 
-export function TspCanvas({ cities, tour, compareTour, highlightEdges }: TspCanvasProps) {
+export function TspCanvas({ cities, tour, compareTour, highlightEdges, carColor, speedMultiplier }: TspCanvasProps) {
   const groundSize = Math.max(TSP_WORLD_SIZE * SCENE_SCALE, 4);
   const dist = groundSize * 0.95 + 2;
-  // A shallow-angle near-overhead camera (not a mathematically perfect 90° top-down), same trick
-  // Maze3D's own "top" view uses - a camera looking straight down along its up vector is a
-  // gimbal-lock singularity for OrbitControls (indeterminate azimuth), so a small real z-offset
-  // keeps it stable while still reading as a top-down view.
-  const cameraPosition: [number, number, number] = [0.01, dist * 1.35, dist * 0.42];
+  // A more oblique 3/4 angle (not a mathematically perfect 90° top-down), tilted enough to read
+  // building heights and road elevation at a glance while still showing the whole route layout -
+  // the requested default. x stays off exactly 0 to dodge OrbitControls' gimbal-lock singularity
+  // (a camera looking straight down its own up vector has an indeterminate azimuth).
+  const cameraPosition: [number, number, number] = [0.01, dist * 0.95, dist * 0.95];
 
   return (
     <Canvas
@@ -496,7 +657,14 @@ export function TspCanvas({ cities, tour, compareTour, highlightEdges }: TspCanv
       gl={{ antialias: true, alpha: true }}
       onContextMenu={(e) => e.preventDefault()}
     >
-      <Scene cities={cities} tour={tour} compareTour={compareTour ?? null} highlightEdges={highlightEdges} />
+      <Scene
+        cities={cities}
+        tour={tour}
+        compareTour={compareTour ?? null}
+        highlightEdges={highlightEdges}
+        carColor={carColor}
+        speedMultiplier={speedMultiplier}
+      />
       <OrbitControls
         enablePan={false}
         enableDamping
@@ -504,7 +672,7 @@ export function TspCanvas({ cities, tour, compareTour, highlightEdges }: TspCanv
         minDistance={groundSize * 0.4}
         maxDistance={groundSize * 2.4}
         minPolarAngle={0.08}
-        maxPolarAngle={0.55}
+        maxPolarAngle={0.95}
         rotateSpeed={0.5}
         mouseButtons={{ LEFT: THREE.MOUSE.ROTATE, MIDDLE: THREE.MOUSE.DOLLY, RIGHT: THREE.MOUSE.ROTATE }}
         touches={{ ONE: THREE.TOUCH.ROTATE, TWO: THREE.TOUCH.DOLLY_ROTATE }}
