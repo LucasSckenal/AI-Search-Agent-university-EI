@@ -14,10 +14,13 @@ const PLAZA_COLOR = "#1a1d27";
 const CITY_COLORS = ["#e1e2ec", "#c2c6d6", "#9aa0b8"];
 const ORIGIN_COLOR = "#afc6ff";
 const ROAD_COLOR = "#2a2d38";
+const CURB_COLOR = "#3d4250";
 const ROAD_LINE_COLOR = "#f4d35e";
+const LAMP_GLOW_COLOR = "#ffe3a3";
 const GHOST_COLOR = "#cebdff";
 const HIGHLIGHT_COLOR = "#ffb77b";
 const CAR_COLOR = "#ffb77b";
+const TREE_COLOR = "#4f8f5b";
 
 // World coordinates (0..TSP_WORLD_SIZE) shrink into scene units by this factor, centered on the
 // origin - same centering convention Maze3D uses for its grid (subtract half the extent).
@@ -41,10 +44,12 @@ function hashJitter(seed: number): number {
   return x - Math.floor(x);
 }
 
-/** Each city renders as a tiny block of 1-3 buildings on a plaza pad, rather than a single
- *  abstract marker - heights/footprints/positions within the block vary deterministically by the
- *  city's own id, so it reads as a little town instead of a repeated stamp. The tour's origin city
- *  gets one taller landmark tower with a beacon light instead of a small cluster. */
+/** Each city renders as a tiny block of buildings on a plaza pad, rather than a single abstract
+ *  marker - heights/footprints/roof styles/positions vary deterministically by the city's own id,
+ *  so it reads as a little town instead of a repeated stamp. Rooftops (pitched vs flat-with-a-detail)
+ *  and a couple of small trees matter most here since the camera looks almost straight down - that's
+ *  the one face of every building actually visible most of the time. The tour's origin city gets one
+ *  taller landmark tower, a beacon light, and a glowing plaza ring instead of a small cluster. */
 function CityBlock({ city, position, isOrigin }: { city: City; position: THREE.Vector3; isOrigin: boolean }) {
   const buildings = useMemo(() => {
     const count = isOrigin ? 1 : 2 + Math.floor(hashJitter(city.id) * 2);
@@ -55,7 +60,28 @@ function CityBlock({ city, position, isOrigin }: { city: City; position: THREE.V
       const angle = (i / count) * Math.PI * 2 + hashJitter(seed + 2) * 2;
       const radius = count === 1 ? 0 : 0.07 + hashJitter(seed + 3) * 0.04;
       const colorIndex = Math.floor(hashJitter(seed + 4) * CITY_COLORS.length);
-      return { h, w, x: Math.cos(angle) * radius, z: Math.sin(angle) * radius, color: CITY_COLORS[colorIndex] };
+      const pitchedRoof = hashJitter(seed + 5) > 0.55;
+      const hasRoofDetail = !pitchedRoof && hashJitter(seed + 6) > 0.5;
+      return {
+        h,
+        w,
+        x: Math.cos(angle) * radius,
+        z: Math.sin(angle) * radius,
+        color: CITY_COLORS[colorIndex],
+        pitchedRoof,
+        hasRoofDetail,
+      };
+    });
+  }, [city.id, isOrigin]);
+
+  const trees = useMemo(() => {
+    if (isOrigin) return [];
+    const count = hashJitter(city.id + 500) > 0.35 ? 1 + Math.floor(hashJitter(city.id + 501) * 2) : 0;
+    return Array.from({ length: count }, (_, i) => {
+      const seed = city.id * 211 + i * 29;
+      const angle = hashJitter(seed) * Math.PI * 2;
+      const radius = 0.1 + hashJitter(seed + 1) * 0.06;
+      return { x: Math.cos(angle) * radius, z: Math.sin(angle) * radius, scale: 0.85 + hashJitter(seed + 2) * 0.3 };
     });
   }, [city.id, isOrigin]);
 
@@ -68,21 +94,54 @@ function CityBlock({ city, position, isOrigin }: { city: City; position: THREE.V
         <cylinderGeometry args={[plazaRadius, plazaRadius, 0.02, 16]} />
         <meshStandardMaterial color={PLAZA_COLOR} roughness={0.95} metalness={0} />
       </mesh>
+      {isOrigin && (
+        <mesh position={[0, 0.021, 0]} rotation={[-Math.PI / 2, 0, 0]}>
+          <ringGeometry args={[plazaRadius * 0.76, plazaRadius * 0.9, 32]} />
+          <meshBasicMaterial color={ORIGIN_COLOR} transparent opacity={0.7} />
+        </mesh>
+      )}
       {buildings.map((b, i) => {
         const color = isOrigin ? ORIGIN_COLOR : b.color;
+        const roofY = b.h + 0.02;
         return (
-          <mesh key={i} position={[b.x, b.h / 2 + 0.02, b.z]} castShadow>
-            <boxGeometry args={[b.w, b.h, b.w]} />
-            <meshStandardMaterial
-              color={color}
-              emissive={color}
-              emissiveIntensity={isOrigin ? 0.5 : 0.2}
-              roughness={0.5}
-              metalness={0.15}
-            />
-          </mesh>
+          <group key={i} position={[b.x, 0, b.z]}>
+            <mesh position={[0, b.h / 2 + 0.02, 0]} castShadow>
+              <boxGeometry args={[b.w, b.h, b.w]} />
+              <meshStandardMaterial
+                color={color}
+                emissive={color}
+                emissiveIntensity={isOrigin ? 0.5 : 0.2}
+                roughness={0.5}
+                metalness={0.15}
+              />
+            </mesh>
+            {b.pitchedRoof && (
+              <mesh position={[0, roofY + 0.035, 0]} rotation={[0, Math.PI / 4, 0]} castShadow>
+                <coneGeometry args={[b.w * 0.72, 0.07, 4]} />
+                <meshStandardMaterial color={color} roughness={0.65} />
+              </mesh>
+            )}
+            {b.hasRoofDetail && (
+              <mesh position={[b.w * 0.22, roofY + 0.02, b.w * 0.22]}>
+                <boxGeometry args={[0.025, 0.04, 0.025]} />
+                <meshStandardMaterial color="#0d0f16" roughness={0.8} />
+              </mesh>
+            )}
+          </group>
         );
       })}
+      {trees.map((t, i) => (
+        <group key={i} position={[t.x, 0, t.z]}>
+          <mesh position={[0, 0.02 * t.scale, 0]}>
+            <cylinderGeometry args={[0.008, 0.01, 0.04 * t.scale, 6]} />
+            <meshStandardMaterial color="#3d2a1f" roughness={0.9} />
+          </mesh>
+          <mesh position={[0, 0.055 * t.scale, 0]} castShadow>
+            <sphereGeometry args={[0.035 * t.scale, 8, 8]} />
+            <meshStandardMaterial color={TREE_COLOR} roughness={0.8} emissive={TREE_COLOR} emissiveIntensity={0.12} />
+          </mesh>
+        </group>
+      ))}
       {isOrigin && (
         <mesh position={[0, tallest + 0.08, 0]}>
           <sphereGeometry args={[0.035, 10, 10]} />
@@ -132,10 +191,22 @@ function buildRoadGeometry(curve: THREE.CatmullRomCurve3, width: number, y: numb
   return geometry;
 }
 
-function Road({ curve, width, color, opacity }: { curve: THREE.CatmullRomCurve3; width: number; color: string; opacity: number }) {
-  const geometry = useMemo(() => buildRoadGeometry(curve, width, ROUTE_HEIGHT, Math.max(curve.points.length * 8, 48)), [curve, width]);
+function Road({
+  curve,
+  width,
+  color,
+  opacity,
+  y = ROUTE_HEIGHT,
+}: {
+  curve: THREE.CatmullRomCurve3;
+  width: number;
+  color: string;
+  opacity: number;
+  y?: number;
+}) {
+  const geometry = useMemo(() => buildRoadGeometry(curve, width, y, Math.max(curve.points.length * 8, 48)), [curve, width, y]);
   return (
-    <mesh geometry={geometry}>
+    <mesh geometry={geometry} receiveShadow>
       <meshStandardMaterial
         color={color}
         transparent={opacity < 1}
@@ -145,6 +216,54 @@ function Road({ curve, width, color, opacity }: { curve: THREE.CatmullRomCurve3;
         side={THREE.DoubleSide}
       />
     </mesh>
+  );
+}
+
+// How much wider the curb ribbon is than the asphalt on each side - rendered as a second, lighter,
+// slightly lower ribbon underneath the road so a thin strip peeks out on both edges.
+const CURB_EXTRA = 0.06;
+
+// World-space spacing (scene units) between streetlamps - same arc-length-based spacing idea as
+// DASH_SPACING below, offset to one side of the road rather than riding its centerline.
+const LAMP_SPACING = 1.3;
+
+/** Small glowing streetlamps along one side of the main road - poles are plain matte cylinders, the
+ *  glow is an unlit sphere (meshBasicMaterial) so it reads as a light source at a glance rather than
+ *  needing an actual point light per lamp, which would be far too many real lights at higher city
+ *  counts. */
+function RoadLamps({ curve, roadWidth }: { curve: THREE.CatmullRomCurve3; roadWidth: number }) {
+  const lamps = useMemo(() => {
+    const length = Math.max(curve.getLength(), 0.001);
+    const count = Math.max(4, Math.round(length / LAMP_SPACING));
+    const out: [number, number, number][] = [];
+    for (let i = 0; i < count; i++) {
+      const t = i / count;
+      const p = curve.getPointAt(t);
+      const tangent = curve.getTangentAt(t);
+      const flat = new THREE.Vector3(tangent.x, 0, tangent.z);
+      if (flat.lengthSq() < 1e-9) flat.set(1, 0, 0);
+      flat.normalize();
+      const side = new THREE.Vector3(-flat.z, 0, flat.x).multiplyScalar(roadWidth / 2 + CURB_EXTRA + 0.05);
+      out.push([p.x + side.x, 0, p.z + side.z]);
+    }
+    return out;
+  }, [curve, roadWidth]);
+
+  return (
+    <>
+      {lamps.map((pos, i) => (
+        <group key={i} position={pos}>
+          <mesh position={[0, 0.09, 0]} castShadow>
+            <cylinderGeometry args={[0.006, 0.009, 0.18, 6]} />
+            <meshStandardMaterial color="#1a1d27" roughness={0.7} metalness={0.2} />
+          </mesh>
+          <mesh position={[0, 0.185, 0]}>
+            <sphereGeometry args={[0.02, 8, 8]} />
+            <meshBasicMaterial color={LAMP_GLOW_COLOR} />
+          </mesh>
+        </group>
+      ))}
+    </>
   );
 }
 
@@ -216,6 +335,12 @@ function HighlightSegments({ cities, edges }: { cities: City[]; edges: [number, 
   );
 }
 
+// Suspension bob: a tiny sine wave driven by distance traveled (not elapsed time), so the bounce
+// rate scales with the car's own speed instead of ticking at a fixed rate regardless of motion -
+// same idea as Goose2D's RUN_BOB_UNITS gait bob.
+const BOUNCE_FREQUENCY = 14;
+const BOUNCE_AMPLITUDE = 0.006;
+
 /** The traveling salesman's car, continuously driving the current route - built from primitives
  *  (there's no premade vehicle sprite/model in this project's assets), oriented every frame via
  *  `lookAt` along the route curve's tangent rather than hand-derived trig, so it always faces the
@@ -223,15 +348,18 @@ function HighlightSegments({ cities, edges }: { cities: City[]; edges: [number, 
 function Car({ curve }: { curve: THREE.CatmullRomCurve3 | null }) {
   const groupRef = useRef<THREE.Group>(null);
   const progressRef = useRef(0);
+  const distanceRef = useRef(0);
   const lookTarget = useMemo(() => new THREE.Vector3(), []);
 
   useFrame((_, delta) => {
     if (!curve || !groupRef.current) return;
     const length = Math.max(curve.getLength(), 0.001);
     progressRef.current = (progressRef.current + (CAR_SPEED * delta) / length) % 1;
+    distanceRef.current += CAR_SPEED * delta;
     const pos = curve.getPointAt(progressRef.current);
     const tangent = curve.getTangentAt(progressRef.current);
-    groupRef.current.position.set(pos.x, CAR_Y, pos.z);
+    const bounce = Math.sin(distanceRef.current * BOUNCE_FREQUENCY) * BOUNCE_AMPLITUDE;
+    groupRef.current.position.set(pos.x, CAR_Y + bounce, pos.z);
     lookTarget.set(pos.x + tangent.x, CAR_Y, pos.z + tangent.z);
     groupRef.current.lookAt(lookTarget);
   });
@@ -255,6 +383,10 @@ function Car({ curve }: { curve: THREE.CatmullRomCurve3 | null }) {
         <boxGeometry args={[0.16, 0.09, 0.22]} />
         <meshStandardMaterial color="#11131a" roughness={0.3} metalness={0.3} />
       </mesh>
+      <mesh position={[0, 0.238, 0.06]}>
+        <boxGeometry args={[0.17, 0.014, 0.03]} />
+        <meshStandardMaterial color="#11131a" roughness={0.4} metalness={0.3} />
+      </mesh>
       {wheelPositions.map(([x, z], i) => (
         <mesh key={i} position={[x, 0.045, z]} rotation={[Math.PI / 2, 0, 0]}>
           <cylinderGeometry args={[0.045, 0.045, 0.05, 10]} />
@@ -265,6 +397,12 @@ function Car({ curve }: { curve: THREE.CatmullRomCurve3 | null }) {
         <mesh key={i} position={[x, 0.09, -0.22]}>
           <sphereGeometry args={[0.025, 8, 8]} />
           <meshBasicMaterial color="#ffffff" />
+        </mesh>
+      ))}
+      {[-0.07, 0.07].map((x, i) => (
+        <mesh key={i} position={[x, 0.09, 0.2]}>
+          <sphereGeometry args={[0.02, 8, 8]} />
+          <meshBasicMaterial color="#ff4d4d" />
         </mesh>
       ))}
     </group>
@@ -320,8 +458,10 @@ function Scene({
       <directionalLight position={[-6, 4, -6]} intensity={0.5} />
 
       {compareCurve && <Road curve={compareCurve} width={GHOST_ROAD_WIDTH} color={GHOST_COLOR} opacity={0.32} />}
+      {curve && <Road curve={curve} width={ROAD_WIDTH + CURB_EXTRA * 2} color={CURB_COLOR} opacity={1} y={ROUTE_HEIGHT - 0.008} />}
       {curve && <Road curve={curve} width={ROAD_WIDTH} color={ROAD_COLOR} opacity={1} />}
       {curve && <RoadDashes curve={curve} />}
+      {curve && <RoadLamps curve={curve} roadWidth={ROAD_WIDTH} />}
       {highlightEdges && highlightEdges.length > 0 && <HighlightSegments cities={cities} edges={highlightEdges} />}
       {cities.map((c, i) => (
         <CityBlock key={c.id} city={c} position={toScene(c)} isOrigin={i === 0} />
