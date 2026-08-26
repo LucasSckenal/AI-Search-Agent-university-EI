@@ -3,6 +3,7 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import { useRouter, usePathname } from "next/navigation";
 import { Icon } from "@/components/shared/Panel";
+import { NAV_PAGES } from "@/lib/nav";
 
 const OPEN_EVENT = "cmdk:open";
 
@@ -10,16 +11,6 @@ const OPEN_EVENT = "cmdk:open";
 export function openCommandPalette() {
   if (typeof window !== "undefined") window.dispatchEvent(new Event(OPEN_EVENT));
 }
-
-const PAGES = [
-  { href: "/", label: "Início", icon: "home" },
-  { href: "/tutorial", label: "Tutorial", icon: "school" },
-  { href: "/labirinto", label: "Labirinto", icon: "route" },
-  { href: "/cubo", label: "Cubo Mágico", icon: "grid_view" },
-  { href: "/jogo", label: "Jogo da Velha", icon: "sports_esports" },
-  { href: "/goose", label: "Goose (AG)", icon: "directions_run" },
-  { href: "/tsp", label: "Caixeiro Viajante", icon: "view_in_ar" },
-];
 
 /**
  * ⌘K / Ctrl+K command palette - a signature component the Obsidian Flux design system already
@@ -35,9 +26,13 @@ export function CommandPalette() {
   const router = useRouter();
   const pathname = usePathname();
 
+  // Flat and ungrouped on purpose: Sidebar now organizes pages by algorithm category (a page can
+  // belong to several categories at once), but ⌘K is a fast direct-search tool - duplicating a page
+  // under every category it qualifies for here would just be noise for something meant to be typed
+  // straight to.
   const results = useMemo(() => {
     const q = query.trim().toLowerCase();
-    return q ? PAGES.filter((p) => p.label.toLowerCase().includes(q)) : PAGES;
+    return q ? NAV_PAGES.filter((p) => p.label.toLowerCase().includes(q)) : NAV_PAGES;
   }, [query]);
 
   useEffect(() => {
@@ -113,7 +108,7 @@ export function CommandPalette() {
             className="w-full bg-transparent py-3.5 text-sm text-on-surface outline-none placeholder:text-on-surface-variant/70"
           />
         </div>
-        <div className="max-h-[300px] overflow-y-auto p-1.5">
+        <div className="max-h-[360px] overflow-y-auto p-1.5">
           {results.length === 0 && (
             <p className="px-3 py-4 text-center text-[12.5px] text-on-surface-variant">Nada encontrado.</p>
           )}

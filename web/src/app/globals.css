@@ -415,6 +415,36 @@ input[type="number"]:hover {
 .card.tsp {
   --accent: #6fd8c9;
 }
+.card.rainhas {
+  --accent: #d9a441;
+}
+.card.aprendizado {
+  --accent: #7ea8f5;
+}
+.card.g2048 {
+  --accent: #f26d5b;
+}
+.card.tetris {
+  --accent: #9b6bff;
+}
+.card.lig4 {
+  --accent: #f2c94c;
+}
+.card.sudoku {
+  --accent: #5b8def;
+}
+.card.snake {
+  --accent: #8bd450;
+}
+.card.campo-minado {
+  --accent: #e0555f;
+}
+.card.batalha-naval {
+  --accent: #345f8c;
+}
+.card.masmorra {
+  --accent: #c96a3d;
+}
 .card h3 .arrow {
   transition: transform 180ms ease;
 }
@@ -882,6 +912,490 @@ input[type="number"]:hover {
   animation: wpPulse 2.4s ease-in-out infinite;
 }
 
+/* rainhas preview: a mini checkerboard with a handful of statically-placed non-attacking queens
+   plus one queen animating down its column - a small nod to backtracking trying each row in turn
+   before settling, without needing the full offset-path machinery tsp-spark uses. */
+.rainhas-preview svg {
+  width: 100%;
+  height: 100%;
+}
+.rainhas-preview .rainhas-square.dark {
+  fill: color-mix(in srgb, var(--on-surface) 7%, transparent);
+}
+.rainhas-preview .rainhas-square.light {
+  fill: color-mix(in srgb, var(--on-surface) 2%, transparent);
+}
+.rainhas-preview .rainhas-queen {
+  fill: var(--accent, var(--primary));
+  filter: drop-shadow(0 0 3px color-mix(in srgb, var(--accent, var(--primary)) 60%, transparent));
+}
+.rainhas-preview .rainhas-scan {
+  fill: var(--accent, var(--primary));
+  filter: drop-shadow(0 0 3px color-mix(in srgb, var(--accent, var(--primary)) 60%, transparent));
+  animation: rainhasScan 2.4s ease-in-out infinite;
+}
+@keyframes rainhasScan {
+  0%, 6% {
+    transform: translateY(0);
+    opacity: 0.85;
+  }
+  22% {
+    transform: translateY(13.2px);
+  }
+  38% {
+    transform: translateY(26.4px);
+  }
+  54% {
+    transform: translateY(39.6px);
+  }
+  70%, 90% {
+    transform: translateY(52.8px);
+    opacity: 0.85;
+  }
+  94%, 100% {
+    transform: translateY(0);
+    opacity: 0;
+  }
+}
+
+/* sudoku preview: a 9x6-visible grid with thicker box-boundary lines (echoing the real page's
+   .sudoku-box-edge-*), a handful of static digits suggesting a partially-solved puzzle, and one
+   pulsing highlighted cell - a small nod to a solver's frontier landing somewhere new. */
+.sudoku-preview svg {
+  width: 100%;
+  height: 100%;
+}
+.sudoku-preview .sudoku-grid-line {
+  stroke: color-mix(in srgb, var(--on-surface) 10%, transparent);
+  stroke-width: 0.5;
+}
+.sudoku-preview .sudoku-grid-line.thick {
+  stroke: color-mix(in srgb, var(--on-surface) 22%, transparent);
+  stroke-width: 1;
+}
+.sudoku-preview .sudoku-digit-svg {
+  font-family: var(--font-jbmono);
+  font-size: 6px;
+  font-weight: 600;
+  fill: color-mix(in srgb, var(--on-surface) 55%, transparent);
+  text-anchor: middle;
+}
+.sudoku-preview .sudoku-scan {
+  fill: none;
+  stroke: var(--accent, var(--primary));
+  stroke-width: 1;
+  filter: drop-shadow(0 0 3px color-mix(in srgb, var(--accent, var(--primary)) 60%, transparent));
+  animation: sudokuScanPulse 2.4s ease-in-out infinite;
+}
+@keyframes sudokuScanPulse {
+  0%, 100% {
+    opacity: 0.4;
+  }
+  50% {
+    opacity: 1;
+  }
+}
+
+/* aprendizado preview: a small heatmap grid (warmer near the goal) with a wall block, a pit, a
+   goal marker, and one agent dot walking a fixed route around them via offset-path - the same
+   technique tsp-spark/maze-spark already use, echoing "the agent walks a learned route across a
+   value heatmap" without needing real Q-learning math in a server-rendered preview. */
+.aprendizado-preview svg {
+  width: 100%;
+  height: 100%;
+}
+.aprendizado-preview .aprendizado-cell {
+  fill: var(--accent, var(--primary));
+}
+.aprendizado-preview .aprendizado-cell.wall {
+  fill: color-mix(in srgb, var(--on-surface) 22%, transparent);
+  opacity: 1;
+}
+.aprendizado-preview .aprendizado-cell.pit {
+  fill: #ff5d5d;
+  opacity: 0.5;
+}
+.aprendizado-preview .aprendizado-cell.goal {
+  fill: #5be08a;
+  opacity: 0.55;
+}
+.aprendizado-preview .aprendizado-agent {
+  fill: var(--accent, var(--primary));
+  filter: drop-shadow(0 0 3px color-mix(in srgb, var(--accent, var(--primary)) 60%, transparent));
+  offset-path: path("M9.17,8.25 L9.17,24.75 L27.5,24.75 L45.83,24.75 L45.83,41.25 L64.17,41.25 L64.17,57.75 L82.5,57.75 L100.83,57.75");
+  offset-rotate: 0deg;
+  offset-distance: 0%;
+  animation: aprendizadoAgent 5s ease-in-out infinite;
+}
+@keyframes aprendizadoAgent {
+  0%, 6% {
+    offset-distance: 0%;
+    opacity: 0;
+  }
+  12% {
+    opacity: 1;
+  }
+  82%, 92% {
+    offset-distance: 100%;
+    opacity: 1;
+  }
+  98%, 100% {
+    offset-distance: 100%;
+    opacity: 0;
+  }
+}
+
+/* 2048 preview: a static 3x3 corner arrangement (2/4/8/16) with one tile fading in and out at
+   center on a loop, standing in for a fresh spawn without simulating a real game. */
+.g2048-preview .g2048-mini {
+  position: relative;
+  width: 78px;
+  height: 78px;
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  grid-template-rows: repeat(3, 1fr);
+  gap: 3px;
+}
+.g2048-preview .cell {
+  border-radius: 4px;
+  background: rgba(255, 255, 255, 0.05);
+}
+.g2048-preview .tile {
+  position: absolute;
+  width: 24px;
+  height: 24px;
+  border-radius: 4px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-family: var(--font-jbmono);
+  font-size: 10px;
+  font-weight: 700;
+  color: #fff8f0;
+}
+.g2048-preview .t-2 {
+  left: 0;
+  top: 0;
+  background: #f2b179;
+}
+.g2048-preview .t-4 {
+  left: 54px;
+  top: 0;
+  background: #f59563;
+}
+.g2048-preview .t-8 {
+  left: 0;
+  top: 54px;
+  background: #f67c5f;
+}
+.g2048-preview .t-16 {
+  left: 54px;
+  top: 54px;
+  background: #f65e3b;
+}
+.g2048-preview .t-spawn {
+  left: 27px;
+  top: 27px;
+  background: var(--accent, #f26d5b);
+  opacity: 0;
+  transform: scale(0.4);
+  animation: g2048PreviewSpawn 3s ease-in-out infinite;
+}
+@keyframes g2048PreviewSpawn {
+  0%,
+  15% {
+    opacity: 0;
+    transform: scale(0.4);
+  }
+  25%,
+  70% {
+    opacity: 1;
+    transform: scale(1);
+  }
+  85%,
+  100% {
+    opacity: 0;
+    transform: scale(0.4);
+  }
+}
+
+.tetris-home-preview .well {
+  position: relative;
+  width: 62px;
+  height: 78px;
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  grid-template-rows: repeat(6, 1fr);
+  gap: 2px;
+}
+.tetris-home-preview .cell {
+  border-radius: 2px;
+  background: rgba(255, 255, 255, 0.05);
+}
+.tetris-home-preview .block {
+  position: absolute;
+  width: 13px;
+  height: 13px;
+  border-radius: 2px;
+}
+/* A small uneven skyline sitting at the bottom of the well - just enough to read as "mid-game",
+   not a full board. */
+.tetris-home-preview .b-stack-1 {
+  left: 0;
+  top: 63px;
+  background: #ef4b4b;
+}
+.tetris-home-preview .b-stack-2 {
+  left: 15px;
+  top: 63px;
+  background: #f7d51d;
+}
+.tetris-home-preview .b-stack-3 {
+  left: 15px;
+  top: 48px;
+  background: #f7d51d;
+}
+.tetris-home-preview .b-stack-4 {
+  left: 30px;
+  top: 63px;
+  background: #46c25e;
+}
+.tetris-home-preview .b-stack-5 {
+  left: 45px;
+  top: 63px;
+  background: #4d7bf3;
+}
+.tetris-home-preview .b-falling {
+  left: 30px;
+  background: var(--accent, #9b6bff);
+  animation: tetrisPreviewFall 2.6s cubic-bezier(0.3, 0, 0.2, 1) infinite;
+}
+@keyframes tetrisPreviewFall {
+  0% {
+    top: -14px;
+    opacity: 0;
+  }
+  10% {
+    opacity: 1;
+  }
+  55%,
+  75% {
+    top: 48px;
+    opacity: 1;
+  }
+  90%,
+  100% {
+    top: 48px;
+    opacity: 0;
+  }
+}
+
+.lig4-home-preview .well {
+  position: relative;
+  width: 73px;
+  height: 58px;
+  display: grid;
+  grid-template-columns: repeat(5, 1fr);
+  grid-template-rows: repeat(4, 1fr);
+  gap: 2px;
+}
+.lig4-home-preview .cell {
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.05);
+}
+.lig4-home-preview .disc {
+  position: absolute;
+  width: 13px;
+  height: 13px;
+  border-radius: 50%;
+}
+.lig4-home-preview .d-red {
+  background: linear-gradient(160deg, #ff8a7a, #d6382a);
+}
+.lig4-home-preview .d-yellow {
+  background: linear-gradient(160deg, #ffe985, #f2c94c);
+}
+.lig4-home-preview .d-1 {
+  left: 0;
+  top: 45px;
+}
+.lig4-home-preview .d-2 {
+  left: 15px;
+  top: 45px;
+}
+.lig4-home-preview .d-3 {
+  left: 15px;
+  top: 30px;
+}
+.lig4-home-preview .d-4 {
+  left: 30px;
+  top: 45px;
+}
+.lig4-home-preview .d-falling {
+  left: 30px;
+  background: linear-gradient(160deg, #ff8a7a, #d6382a);
+  animation: lig4PreviewFall 2.4s cubic-bezier(0.3, 0, 0.2, 1) infinite;
+}
+@keyframes lig4PreviewFall {
+  0% {
+    top: -14px;
+    opacity: 0;
+  }
+  10% {
+    opacity: 1;
+  }
+  55%,
+  75% {
+    top: 30px;
+    opacity: 1;
+  }
+  90%,
+  100% {
+    top: 30px;
+    opacity: 0;
+  }
+}
+
+.snake-home-preview .well {
+  position: relative;
+  width: 88px;
+  height: 58px;
+  display: grid;
+  grid-template-columns: repeat(11, 1fr);
+  grid-template-rows: repeat(7, 1fr);
+  gap: 2px;
+}
+.snake-home-preview .cell {
+  border-radius: 2px;
+  background: rgba(255, 255, 255, 0.05);
+}
+.snake-home-preview .segment {
+  border-radius: 2px;
+  background: var(--accent, #8bd450);
+}
+.snake-home-preview .food {
+  border-radius: 50%;
+  background: #ff8a7a;
+  animation: snakePreviewPulse 1.6s ease-in-out infinite;
+}
+@keyframes snakePreviewPulse {
+  0%,
+  100% {
+    transform: scale(0.85);
+    opacity: 0.85;
+  }
+  50% {
+    transform: scale(1.1);
+    opacity: 1;
+  }
+}
+
+/* campo minado preview: a small revealed patch of numbers (colored like the real page's
+   .minesweeper-cell-nN), one flag, and one pulsing "?" cell standing in for the probability solver
+   weighing a guess. */
+.campo-minado-preview svg {
+  width: 100%;
+  height: 100%;
+}
+.campo-minado-preview .cm-grid-line {
+  stroke: color-mix(in srgb, var(--on-surface) 10%, transparent);
+  stroke-width: 0.5;
+}
+.campo-minado-preview .cm-cell-revealed {
+  fill: color-mix(in srgb, var(--on-surface) 5%, transparent);
+}
+.campo-minado-preview .cm-cell-hidden {
+  fill: color-mix(in srgb, var(--accent, var(--primary)) 20%, rgba(255, 255, 255, 0.08));
+}
+.campo-minado-preview .cm-digit {
+  font-family: var(--font-jbmono);
+  font-size: 6.5px;
+  font-weight: 700;
+  text-anchor: middle;
+}
+.campo-minado-preview .cm-flag {
+  fill: var(--error, #e05a4e);
+}
+.campo-minado-preview .cm-guess {
+  font-family: var(--font-jbmono);
+  font-size: 6px;
+  font-weight: 700;
+  text-anchor: middle;
+  fill: var(--accent, var(--primary));
+  animation: cmGuessPulse 1.6s ease-in-out infinite;
+}
+@keyframes cmGuessPulse {
+  0%,
+  100% {
+    opacity: 0.5;
+  }
+  50% {
+    opacity: 1;
+  }
+}
+
+/* batalha naval preview: a patch of water cells, a partly-revealed ship silhouette, a couple of
+   hit/miss marks, and one pulsing crosshair standing in for the density map's chosen target. */
+.batalha-naval-preview svg {
+  width: 100%;
+  height: 100%;
+}
+.batalha-naval-preview .bn-grid-line {
+  stroke: color-mix(in srgb, var(--on-surface) 10%, transparent);
+  stroke-width: 0.5;
+}
+.batalha-naval-preview .bn-cell-water {
+  fill: color-mix(in srgb, var(--on-surface) 5%, transparent);
+}
+.batalha-naval-preview .bn-cell-ship {
+  fill: color-mix(in srgb, var(--accent, var(--primary)) 28%, rgba(255, 255, 255, 0.08));
+}
+.batalha-naval-preview .bn-hit {
+  fill: var(--error, #e05a4e);
+}
+.batalha-naval-preview .bn-miss {
+  fill: color-mix(in srgb, var(--on-surface) 30%, transparent);
+}
+.batalha-naval-preview .bn-crosshair {
+  stroke: var(--accent, var(--primary));
+  stroke-width: 0.9;
+  fill: none;
+  animation: cmGuessPulse 1.6s ease-in-out infinite;
+}
+
+/* dungeon (masmorra) preview: a tiny row of real Tiny Dungeon sprites - floor tiles, the hero, and a
+   couple of monsters bobbing in place - a small nod to the live chase without animating a full maze. */
+.dungeon-preview {
+  display: flex;
+  align-items: flex-end;
+  justify-content: center;
+  gap: 6%;
+  width: 100%;
+  height: 100%;
+  padding-bottom: 14%;
+}
+.dungeon-preview img {
+  width: 22%;
+  height: auto;
+  image-rendering: pixelated;
+  filter: drop-shadow(0 3px 4px rgba(0, 0, 0, 0.35));
+}
+.dungeon-preview .dp-hero {
+  animation: dpPreviewBob 1.4s ease-in-out infinite;
+}
+.dungeon-preview .dp-monster {
+  animation: dpPreviewBob 1.3s ease-in-out infinite;
+}
+@keyframes dpPreviewBob {
+  0%,
+  100% {
+    transform: translateY(0);
+  }
+  50% {
+    transform: translateY(-3px);
+  }
+}
+
 /* ---------- about section ---------- */
 .flow-num {
   background: color-mix(in srgb, var(--primary) 16%, transparent);
@@ -1192,6 +1706,36 @@ input[type="number"]:hover {
   font-size: 12px;
   color: var(--on-surface-variant);
 }
+/* Forward Checking's pruned cells (screen "restrições e poda") - a small dim "x" fades in and out
+   instead of the wave-lit glow, reading as "eliminated without ever being visited". */
+.tut-gdot.pruned {
+  position: relative;
+  animation: tutPruneFade 2.6s ease-in-out infinite;
+}
+.tut-gdot.pruned::after {
+  content: "×";
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 9px;
+  color: #c25a55;
+  opacity: 0;
+  animation: tutPruneX 2.6s ease-in-out infinite;
+}
+@keyframes tutPruneFade {
+  0% { background: rgba(255, 255, 255, 0.08); }
+  14% { background: rgba(194, 90, 85, 0.18); }
+  55% { background: rgba(194, 90, 85, 0.18); }
+  100% { background: rgba(255, 255, 255, 0.08); }
+}
+@keyframes tutPruneX {
+  0%, 10% { opacity: 0; }
+  20% { opacity: 1; }
+  55% { opacity: 1; }
+  70%, 100% { opacity: 0; }
+}
 @media (prefers-reduced-motion: reduce) {
   .tut-gdot.lit {
     animation: none;
@@ -1342,7 +1886,80 @@ input[type="number"]:hover {
   }
 }
 
-/* metrics (screen 7) */
+/* genetic algorithm: population fitness bars, generation 0 vs a late generation */
+.tut-bars {
+  display: flex;
+  align-items: flex-end;
+  gap: 7px;
+  height: 90px;
+  margin-top: 4px;
+}
+.tut-bar {
+  width: 10px;
+  border-radius: 3px 3px 1px 1px;
+  height: 4%;
+  animation: tutBarGrow 2.6s ease-in-out infinite;
+}
+.tut-bar.start {
+  background: color-mix(in srgb, var(--on-surface-variant) 55%, transparent);
+}
+.tut-bar.converged {
+  background: #7ee0a8;
+  box-shadow: 0 0 8px rgba(126, 224, 168, 0.45);
+}
+@keyframes tutBarGrow {
+  0% { height: 4%; }
+  30%, 70% { height: var(--bar-h); }
+  100% { height: 4%; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .tut-bar {
+    animation: none;
+    height: var(--bar-h);
+  }
+}
+
+/* reinforcement learning hero (screen 9) - same "blow up the card preview" approach as
+   .tut-maze-hero, with a heatmap gradient instead of a single route color */
+.tut-rl-hero {
+  width: min(600px, 82vw);
+  margin-top: 40px;
+  filter: drop-shadow(0 20px 60px rgba(126, 168, 245, 0.1));
+}
+.tut-rl-hero svg {
+  width: 100%;
+  height: auto;
+  display: block;
+}
+.tut-rl-cell {
+  fill: #7ea8f5;
+}
+.tut-rl-cell.wall {
+  fill: color-mix(in srgb, var(--on-surface) 20%, transparent);
+  opacity: 1;
+}
+.tut-rl-cell.pit {
+  fill: #ff5d5d;
+  opacity: 0.5;
+}
+.tut-rl-cell.goal {
+  fill: #5be08a;
+  opacity: 0.55;
+}
+.tut-rl-agent {
+  fill: #7ea8f5;
+  filter: drop-shadow(0 0 4px rgba(126, 168, 245, 0.7));
+  offset-distance: 0%;
+  animation: tutRlAgent 6s ease-in-out infinite;
+}
+@keyframes tutRlAgent {
+  0%, 6% { offset-distance: 0%; opacity: 0; }
+  12% { opacity: 1; }
+  82%, 92% { offset-distance: 100%; opacity: 1; }
+  98%, 100% { offset-distance: 100%; opacity: 0; }
+}
+
+/* metrics (screen 10) */
 .tut-metrics {
   display: flex;
   gap: 56px;
@@ -1461,7 +2078,7 @@ input[type="number"]:hover {
   display: flex;
   align-items: center;
   gap: 8px;
-  margin: 0 12px 16px;
+  margin: 0 12px 10px;
   padding: 8px 12px;
   border-radius: 8px;
   background: var(--background);
@@ -1476,23 +2093,52 @@ input[type="number"]:hover {
   padding: 8px;
 }
 
+/* flex:1 + min-height:0 lets this be the one scrolling region in the sidebar's column, instead of
+   the flat list overflowing past the viewport with no way to reach the last few items (what
+   happened once the site passed ~14 pages - .sidebar-footer and the last couple of nav items were
+   pushed below the fold with no scrollbar to recover them). */
 .sidebar-nav {
   display: flex;
+  min-height: 0;
+  flex: 1;
   flex-direction: column;
-  gap: 4px;
+  gap: 2px;
   padding: 0 12px;
+  overflow-y: auto;
+}
+.sidebar-group + .sidebar-group {
+  margin-top: 4px;
+}
+.sidebar-group-title {
+  padding: 8px 14px 4px;
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: color-mix(in srgb, var(--on-surface-variant) 70%, transparent);
+}
+/* Collapsed: the text label hides (same .sidebar-label rule every other label uses) but a group
+   still needs *some* visual break between its icons and the next group's, so add spacing directly
+   on the group wrapper instead of relying on the (now invisible) header's own padding. */
+.sidebar-collapsed .sidebar-group {
+  margin-top: 10px;
 }
 .sidebar-navitem {
   display: flex;
+  width: 100%;
   align-items: center;
   gap: 12px;
-  padding: 12px 14px;
+  padding: 9px 14px;
   border-radius: 12px;
+  border: none;
+  background: none;
   font-size: 13.5px;
   font-weight: 600;
   color: var(--on-surface-variant);
   white-space: nowrap;
   overflow: hidden;
+  text-align: left;
+  cursor: pointer;
   transition: background-color 150ms ease, color 150ms ease;
 }
 .sidebar-navitem:hover {
@@ -1506,7 +2152,7 @@ input[type="number"]:hover {
 }
 .sidebar-collapsed .sidebar-navitem {
   justify-content: center;
-  padding: 12px;
+  padding: 10px;
 }
 
 .sidebar-footer {
@@ -1598,38 +2244,130 @@ input[type="number"]:hover {
   background: rgba(255, 255, 255, 0.32);
 }
 
-.mobile-dock {
+/* Mobile nav: a center FAB that opens a bottom sheet mirroring Sidebar's own grouped list, instead
+   of the semicircular icon fan this used to be - a flat fan of icons stopped being viable once the
+   site passed ~11 pages (icons started overlapping at a tappable size), and a scrollable sheet
+   with text labels + section headers scales to any page count the same way Sidebar's own scrolling
+   nav does. The sheet is always mounted (not conditionally rendered) so it can transition in/out
+   via `transform`/`opacity` instead of popping. */
+.mobile-dock-fab {
   display: none;
 }
 @media (max-width: 1023px) {
-  .mobile-dock {
+  .mobile-dock-fab {
     position: fixed;
     left: 50%;
     bottom: 16px;
-    z-index: 150;
+    z-index: 160;
     display: flex;
-    transform: translateX(-50%);
+    height: 56px;
+    width: 56px;
     align-items: center;
-    gap: 4px;
-    padding: 8px;
-    border-radius: 24px;
+    justify-content: center;
+    border-radius: 999px;
+    color: var(--on-surface);
     background: color-mix(in srgb, var(--background) 85%, transparent);
-    border: 1px solid rgba(255, 255, 255, 0.08);
+    border: 1px solid rgba(255, 255, 255, 0.1);
     backdrop-filter: blur(20px);
     -webkit-backdrop-filter: blur(20px);
     box-shadow: 0 20px 40px rgba(0, 0, 0, 0.5);
+    transform: translateX(-50%);
+    transition: transform 200ms cubic-bezier(0.34, 1.56, 0.64, 1), color 150ms ease, background 150ms ease;
   }
-  .mobile-dock-item {
+  .mobile-dock-fab-open {
+    color: var(--primary);
+    background: color-mix(in srgb, var(--primary) 18%, var(--background) 82%);
+    transform: translateX(-50%) rotate(90deg);
+  }
+  .mobile-sheet-backdrop {
+    position: fixed;
+    inset: 0;
+    z-index: 140;
+    border: none;
+    background: rgba(0, 0, 0, 0.5);
+    -webkit-backdrop-filter: blur(2px);
+    backdrop-filter: blur(2px);
+  }
+  .mobile-sheet {
+    position: fixed;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    z-index: 150;
     display: flex;
-    height: 44px;
-    width: 44px;
+    max-height: min(72vh, 560px);
+    flex-direction: column;
+    padding: 10px 12px calc(88px + env(safe-area-inset-bottom, 0px));
+    border-radius: 28px 28px 0 0;
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    border-bottom: none;
+    background: color-mix(in srgb, var(--background) 96%, transparent);
+    box-shadow: 0 -20px 50px rgba(0, 0, 0, 0.55);
+    backdrop-filter: blur(20px);
+    -webkit-backdrop-filter: blur(20px);
+    opacity: 0;
+    transform: translateY(100%);
+    pointer-events: none;
+    transition: transform 260ms cubic-bezier(0.34, 1.2, 0.64, 1), opacity 200ms ease;
+  }
+  .mobile-sheet-open {
+    opacity: 1;
+    transform: translateY(0);
+    pointer-events: auto;
+  }
+  .mobile-sheet-handle {
+    flex-shrink: 0;
+    width: 36px;
+    height: 4px;
+    margin: 2px auto 10px;
+    border-radius: 999px;
+    background: rgba(255, 255, 255, 0.18);
+  }
+  .mobile-sheet-search {
+    display: flex;
+    flex-shrink: 0;
     align-items: center;
-    justify-content: center;
-    border-radius: 16px;
+    gap: 8px;
+    margin-bottom: 6px;
+    padding: 10px 14px;
+    border-radius: 12px;
+    background: rgba(255, 255, 255, 0.05);
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    color: var(--on-surface-variant);
+    font-size: 13px;
+  }
+  .mobile-sheet-nav {
+    display: flex;
+    min-height: 0;
+    flex-direction: column;
+    gap: 2px;
+    overflow-y: auto;
+  }
+  .mobile-sheet-group {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+  }
+  .mobile-sheet-group-title {
+    padding: 14px 12px 4px;
+    font-size: 10px;
+    font-weight: 700;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: color-mix(in srgb, var(--on-surface-variant) 70%, transparent);
+  }
+  .mobile-sheet-item {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 11px 12px;
+    border-radius: 12px;
+    font-size: 14px;
+    font-weight: 600;
     color: var(--on-surface-variant);
   }
-  .mobile-dock-item-active {
-    background: color-mix(in srgb, var(--primary) 15%, transparent);
+  .mobile-sheet-item-active {
+    background: color-mix(in srgb, var(--primary) 14%, transparent);
     color: var(--primary);
   }
 }
@@ -1805,4 +2543,1029 @@ input[type="number"]:hover {
   align-items: center;
   justify-content: center;
   overflow: hidden;
+}
+
+/* 2048 board: plain DOM/CSS dropped straight into canvas-stage - no WebGL, unlike the other pages'
+   3D scenes. Cells/tiles are positioned with plain percentage left/top/width/height (computed
+   inline in Game2048Grid), not CSS Grid placement - grid-column/grid-row aren't smoothly
+   animatable in browsers, while left/top interpolate fine, which is what makes the slide animation
+   possible. Each cell/tile is a positioning wrapper (.g2048-cell-outer, sized to its board cell
+   with no visual of its own) around the actual visual box (.g2048-cell-bg / .g2048-tile, inset by
+   a fixed 5px to form the gap) - splitting position from appearance means the slide's left/top
+   transition and the pop/spawn scale/opacity keyframes never fight over the same CSS property. */
+.g2048-grid {
+  position: relative;
+  padding: 12px;
+  box-sizing: border-box;
+  width: min(60vh, 480px, 90%);
+  aspect-ratio: 1;
+  border-radius: 18px;
+  background: color-mix(in srgb, var(--surface-container-lowest) 92%, var(--accent, var(--primary)) 6%);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  box-shadow: 0 30px 60px -30px rgba(0, 0, 0, 0.5);
+}
+/* IA vs Você: two boards share the stage side by side, so each gets a smaller cap than the
+   single-board default above. */
+.g2048-grid.g2048-grid--vs {
+  width: min(36vh, 300px, 42vw);
+}
+/* Dimmed "game over" banner shown over a board once manual play truly has no useful move left -
+   shared by 2048 (no legal slide), Tetris (no room to spawn), and N-Rainhas (board full but still
+   conflicted). Each caller positions its own containing box as `position: relative`; this fills it. */
+.board-overlay {
+  position: absolute;
+  inset: 0;
+  z-index: 5;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  border-radius: 18px;
+  background: color-mix(in srgb, var(--surface-container-lowest) 80%, transparent);
+  backdrop-filter: blur(3px);
+  -webkit-backdrop-filter: blur(3px);
+  text-align: center;
+  animation: board-overlay-in 220ms ease-out;
+}
+.board-overlay-title {
+  font-family: var(--font-jbmono);
+  font-weight: 700;
+  font-size: clamp(18px, 5.5vw, 28px);
+  color: var(--on-surface);
+}
+.board-overlay-subtitle {
+  font-family: var(--font-jbmono);
+  font-size: 11px;
+  letter-spacing: 0.02em;
+  color: var(--on-surface-variant);
+}
+@keyframes board-overlay-in {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+.g2048-cell-outer {
+  position: absolute;
+}
+.g2048-cell-outer.g2048-sliding {
+  transition: left 130ms cubic-bezier(0.22, 1, 0.36, 1), top 130ms cubic-bezier(0.22, 1, 0.36, 1);
+  z-index: 2;
+}
+.g2048-cell-bg {
+  position: absolute;
+  inset: 5px;
+  border-radius: 8px;
+  background: rgba(255, 255, 255, 0.04);
+}
+.g2048-tile {
+  position: absolute;
+  inset: 5px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 8px;
+  font-family: var(--font-jbmono);
+  font-weight: 700;
+  font-size: clamp(13px, 3.4vw, 30px);
+  color: var(--tile-fg, #776e65);
+  background: var(--tile-bg, #eee4da);
+}
+.g2048-tile.tile-2 {
+  --tile-bg: #eee4da;
+  --tile-fg: #776e65;
+}
+.g2048-tile.tile-4 {
+  --tile-bg: #ede0c8;
+  --tile-fg: #776e65;
+}
+.g2048-tile.tile-8 {
+  --tile-bg: #f2b179;
+  --tile-fg: #fff8f0;
+}
+.g2048-tile.tile-16 {
+  --tile-bg: #f59563;
+  --tile-fg: #fff8f0;
+}
+.g2048-tile.tile-32 {
+  --tile-bg: #f67c5f;
+  --tile-fg: #fff8f0;
+}
+.g2048-tile.tile-64 {
+  --tile-bg: #f65e3b;
+  --tile-fg: #fff8f0;
+}
+.g2048-tile.tile-128 {
+  --tile-bg: #edcf72;
+  --tile-fg: #fff8f0;
+  font-size: clamp(12px, 3vw, 26px);
+  box-shadow: 0 0 14px rgba(237, 207, 114, 0.45);
+}
+.g2048-tile.tile-256 {
+  --tile-bg: #edcc61;
+  --tile-fg: #fff8f0;
+  font-size: clamp(12px, 3vw, 26px);
+  box-shadow: 0 0 16px rgba(237, 204, 97, 0.5);
+}
+.g2048-tile.tile-512 {
+  --tile-bg: #edc850;
+  --tile-fg: #fff8f0;
+  font-size: clamp(12px, 3vw, 26px);
+  box-shadow: 0 0 18px rgba(237, 200, 80, 0.55);
+}
+.g2048-tile.tile-1024 {
+  --tile-bg: #edc53f;
+  --tile-fg: #fff8f0;
+  font-size: clamp(11px, 2.6vw, 22px);
+  box-shadow: 0 0 20px rgba(237, 197, 63, 0.6);
+}
+.g2048-tile.tile-2048 {
+  --tile-bg: #edc22e;
+  --tile-fg: #fff8f0;
+  font-size: clamp(11px, 2.6vw, 22px);
+  box-shadow: 0 0 26px rgba(237, 194, 46, 0.75);
+}
+.g2048-tile.tile-super {
+  --tile-bg: #3c3a32;
+  --tile-fg: #f2e6ce;
+  font-size: clamp(10px, 2.3vw, 19px);
+  box-shadow: 0 0 26px rgba(255, 215, 120, 0.4);
+}
+.g2048-tile.spawn {
+  animation: g2048Spawn 320ms cubic-bezier(0.22, 1, 0.36, 1);
+}
+.g2048-tile.pop {
+  animation: g2048Pop 320ms cubic-bezier(0.22, 1, 0.36, 1);
+}
+@keyframes g2048Spawn {
+  from {
+    transform: scale(0.4);
+    opacity: 0;
+  }
+  60% {
+    transform: scale(1.08);
+    opacity: 1;
+  }
+  to {
+    transform: scale(1);
+    opacity: 1;
+  }
+}
+@keyframes g2048Pop {
+  0% {
+    transform: scale(1);
+  }
+  40% {
+    transform: scale(1.18);
+  }
+  100% {
+    transform: scale(1);
+  }
+}
+
+/* Touch d-pad for manual play, overlaid in the stage's bottom-right corner - keyboard is primary,
+   this is the touch-friendly fallback for devices without one. */
+.g2048-dpad-btn {
+  display: flex;
+  height: 34px;
+  width: 34px;
+  align-items: center;
+  justify-content: center;
+  border-radius: 8px;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  background: rgba(255, 255, 255, 0.06);
+  color: var(--on-surface);
+  backdrop-filter: blur(6px);
+  transition: background-color 120ms ease;
+}
+.g2048-dpad-btn:hover {
+  background: rgba(255, 255, 255, 0.12);
+}
+.g2048-dpad-btn:active {
+  background: color-mix(in srgb, var(--accent, var(--primary)) 30%, rgba(255, 255, 255, 0.12));
+}
+
+/* On-screen digit pad for Sudoku's manual play (mode="play") - a row of 10 targets (1-9 + clear).
+   Unlike a dedicated flex row, this is an absolute overlay pinned to the bottom of canvas-stage (same
+   idea as the d-pad above): a real sibling row here would eat into canvas-body's height budget on
+   short viewports and force the (necessarily square) board to overflow non-square, since nothing lets
+   a vh-based width see how much height a sibling row already claimed. */
+.sudoku-padpad {
+  position: absolute;
+  left: 50%;
+  bottom: 10px;
+  transform: translateX(-50%);
+  display: flex;
+  justify-content: center;
+  gap: 4px;
+  padding: 6px 10px;
+  border-radius: 12px;
+  background: color-mix(in srgb, var(--surface-container-lowest) 85%, transparent);
+  backdrop-filter: blur(6px);
+  -webkit-backdrop-filter: blur(6px);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+}
+.sudoku-padpad-btn {
+  display: flex;
+  height: 28px;
+  width: 28px;
+  align-items: center;
+  justify-content: center;
+  border-radius: 7px;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  background: rgba(255, 255, 255, 0.06);
+  color: var(--on-surface);
+  font-family: var(--font-jbmono);
+  font-size: 12px;
+  font-weight: 600;
+  transition: background-color 120ms ease;
+}
+.sudoku-padpad-btn:hover:not(:disabled) {
+  background: rgba(255, 255, 255, 0.12);
+}
+.sudoku-padpad-btn:active:not(:disabled) {
+  background: color-mix(in srgb, var(--accent, var(--primary)) 30%, rgba(255, 255, 255, 0.12));
+}
+.sudoku-padpad-btn:disabled {
+  opacity: 0.3;
+}
+.sudoku-padpad-btn-clear {
+  color: var(--on-surface-variant);
+}
+
+/* ---------- Tetris: DOM/CSS grid like 2048 (not WebGL) - a 10x20 well is a plain 2D board with no
+   benefit to a 3D scene, and it keeps the block colors crisp instead of lit/shaded. Unlike 2048's
+   grid, there's no slide animation to build here (a falling piece moves in whole-cell steps every
+   tick, which is the authentic look), so this is plain CSS Grid placement, not absolute
+   positioning. */
+.tetris-grid {
+  position: relative;
+  display: grid;
+  grid-template-columns: repeat(10, 1fr);
+  grid-template-rows: repeat(20, 1fr);
+  gap: 1px;
+  width: min(38vh, 320px, 90%);
+  /* The board is a tall 10x20 rectangle, so bounding only the width by vh (as if it were square,
+     like 2048's grid) let the derived height - width*2 - run past canvas-stage's actual height on
+     shorter viewports, clipping the bottom rows under canvas-stage's overflow:hidden. max-height
+     ties it to the real container instead of a viewport guess; the browser reflows width to match
+     via aspect-ratio whenever max-height is the binding constraint. */
+  max-height: 100%;
+  aspect-ratio: 10 / 20;
+  padding: 6px;
+  box-sizing: border-box;
+  border-radius: 12px;
+  background: color-mix(in srgb, var(--surface-container-lowest) 92%, var(--accent, var(--primary)) 6%);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  box-shadow: 0 30px 60px -30px rgba(0, 0, 0, 0.5);
+}
+.tetris-grid.tetris-grid--vs {
+  width: min(30vh, 260px, 42vw);
+}
+
+/* AI-mode falling piece: absolutely positioned (percentage top/left, like 2048's tiles) instead of
+   CSS Grid placement, specifically so `top` can transition smoothly frame to frame - grid-row
+   changes don't animate. Already rendered in its final rotation (the placement search decides that
+   up front, it never rotates live), so only the vertical fall needs to move. */
+.tetris-falling-piece {
+  position: absolute;
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  grid-template-rows: repeat(4, 1fr);
+  transition: top 220ms linear;
+  pointer-events: none;
+}
+.tetris-cell {
+  border-radius: 2px;
+}
+.tetris-cell-empty {
+  background: rgba(255, 255, 255, 0.04);
+}
+.tetris-cell-ghost {
+  background: rgba(255, 255, 255, 0.1);
+  border: 1px dashed rgba(255, 255, 255, 0.25);
+}
+.tetris-cell-I {
+  background: #34d5ee;
+}
+.tetris-cell-O {
+  background: #f7d51d;
+}
+.tetris-cell-T {
+  background: #b34dd6;
+}
+.tetris-cell-S {
+  background: #46c25e;
+}
+.tetris-cell-Z {
+  background: #ef4b4b;
+}
+.tetris-cell-J {
+  background: #4d7bf3;
+}
+.tetris-cell-L {
+  background: #f5a134;
+}
+
+.tetris-preview {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  grid-template-rows: repeat(4, 1fr);
+  gap: 1px;
+  width: 56px;
+  aspect-ratio: 1;
+  padding: 4px;
+  box-sizing: border-box;
+  border-radius: 8px;
+  background: color-mix(in srgb, var(--surface-container-lowest) 92%, var(--accent, var(--primary)) 6%);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+}
+.tetris-preview .tetris-cell {
+  border-radius: 1px;
+}
+
+/* ---------- Lig 4: DOM/CSS grid like Tetris/2048 (not WebGL) - a flat 7x6 board of discs has no
+   benefit from a 3D scene. Cells are CSS Grid items (columns don't move, unlike 2048's tiles), each
+   holding a circular ".lig4-disc" inset from the cell edges. The falling disc is the one exception -
+   absolutely positioned in percentage left/top so `top` can be CSS-transitioned into a smooth drop,
+   same approach as Tetris's `.tetris-falling-piece`. */
+.lig4-grid {
+  position: relative;
+  display: grid;
+  grid-template-columns: repeat(7, 1fr);
+  grid-template-rows: repeat(6, 1fr);
+  gap: 2px;
+  width: min(58vh, 480px, 90%);
+  /* Same non-square max-height fix documented on .tetris-grid: bounding only width by vh can let
+     the derived height (width * 6/7) run past the container's real height on short viewports. */
+  max-height: 100%;
+  aspect-ratio: 7 / 6;
+  padding: 8px;
+  box-sizing: border-box;
+  border-radius: 14px;
+  background: color-mix(in srgb, var(--surface-container-lowest) 88%, var(--accent, var(--primary)) 10%);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  box-shadow: 0 30px 60px -30px rgba(0, 0, 0, 0.5);
+}
+.lig4-grid.lig4-grid--vs {
+  width: min(34vh, 280px, 42vw);
+}
+.lig4-cell {
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: default;
+}
+.lig4-grid[data-interactive="true"] .lig4-cell {
+  cursor: pointer;
+}
+.lig4-disc {
+  width: 80%;
+  aspect-ratio: 1;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.04);
+  box-shadow: inset 0 2px 5px rgba(0, 0, 0, 0.4);
+  transition: background 120ms ease, box-shadow 120ms ease;
+}
+.lig4-cell-red .lig4-disc {
+  background: linear-gradient(160deg, #ff8a7a 0%, #e0392a 60%, #ad2015 100%);
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.35);
+}
+.lig4-cell-yellow .lig4-disc {
+  background: linear-gradient(160deg, #ffe985 0%, #f2c94c 55%, #d69e0a 100%);
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.35);
+}
+.lig4-cell-ghost .lig4-disc {
+  background: transparent;
+  box-shadow: none;
+}
+.lig4-cell-ghost-red .lig4-disc {
+  border: 2px dashed rgba(224, 57, 42, 0.55);
+}
+.lig4-cell-ghost-yellow .lig4-disc {
+  border: 2px dashed rgba(242, 201, 76, 0.55);
+}
+.lig4-cell-win .lig4-disc {
+  outline: 2px solid var(--tertiary);
+  outline-offset: 2px;
+  animation: lig4-win-pulse 900ms ease-in-out infinite;
+}
+.lig4-col-focused {
+  background: rgba(255, 255, 255, 0.06);
+  border-radius: 4px;
+}
+@keyframes lig4-win-pulse {
+  0%, 100% {
+    filter: brightness(1);
+  }
+  50% {
+    filter: brightness(1.35);
+  }
+}
+.lig4-falling-disc {
+  position: absolute;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: top 220ms linear;
+  pointer-events: none;
+}
+
+/* ---------- Sudoku: DOM/CSS grid like 2048/Tetris/Lig4 - a flat 9x9 board gets nothing from a 3D
+   scene. Unlike Tetris/Lig4's rectangular wells, Sudoku is a true square grid, so this follows
+   .g2048-grid's simpler `aspect-ratio: 1` template instead of their max-height-clamped one. Cells
+   render in natural row-major DOM order (no explicit gridColumn/gridRow needed - there's no moving
+   overlay here forcing an out-of-order layer like Lig4's falling disc). */
+.sudoku-grid {
+  position: relative;
+  display: grid;
+  grid-template-columns: repeat(9, 1fr);
+  grid-template-rows: repeat(9, 1fr);
+  width: min(60vh, 480px, 90%);
+  /* Same defensive clamp every other board on the site carries (.tetris-grid/.lig4-grid): a vh-only
+     width can't see how much height content-head/workspace-head already claimed above canvas-stage,
+     so on a short viewport this can still exceed the real available height - better to go very
+     slightly non-square here than to have canvas-stage's overflow:hidden clip off a row of cells. */
+  max-height: 100%;
+  aspect-ratio: 1;
+  padding: 10px;
+  box-sizing: border-box;
+  border-radius: 18px;
+  background: color-mix(in srgb, var(--surface-container-lowest) 92%, var(--accent, var(--primary)) 6%);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  box-shadow: 0 30px 60px -30px rgba(0, 0, 0, 0.5);
+}
+.sudoku-cell {
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-right: 1px solid rgba(255, 255, 255, 0.06);
+  border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+}
+/* Thicker lines on the 3x3 box boundaries - the one visual requirement no other grid on the site needs. */
+.sudoku-box-edge-right {
+  border-right: 2px solid rgba(255, 255, 255, 0.22);
+}
+.sudoku-box-edge-bottom {
+  border-bottom: 2px solid rgba(255, 255, 255, 0.22);
+}
+.sudoku-grid[data-interactive="true"] .sudoku-cell-editable,
+.sudoku-cell-editable {
+  cursor: pointer;
+}
+.sudoku-digit {
+  font-family: var(--font-jbmono);
+  font-size: clamp(13px, 3.2vh, 20px);
+  line-height: 1;
+}
+.sudoku-cell-given .sudoku-digit {
+  font-weight: 700;
+  color: var(--on-surface);
+}
+.sudoku-cell-filled .sudoku-digit {
+  font-weight: 500;
+  color: var(--accent, var(--primary));
+}
+.sudoku-cell-conflict {
+  background: color-mix(in srgb, var(--error, #e05a4e) 20%, transparent);
+}
+.sudoku-cell-conflict .sudoku-digit {
+  color: var(--error, #e05a4e);
+}
+.sudoku-cell-focused {
+  box-shadow: inset 0 0 0 2px var(--accent, var(--primary));
+  background: color-mix(in srgb, var(--accent, var(--primary)) 10%, transparent);
+}
+/* Distinct from -focused ("you'll type here") - this is "the algorithm just touched this cell",
+   a different concept even though both render as a ring, so they get their own class/color. */
+.sudoku-cell-frontier {
+  box-shadow: inset 0 0 0 2px var(--tertiary);
+  animation: sudoku-frontier-pulse 900ms ease-in-out infinite;
+}
+@keyframes sudoku-frontier-pulse {
+  0%, 100% {
+    background: transparent;
+  }
+  50% {
+    background: color-mix(in srgb, var(--tertiary) 14%, transparent);
+  }
+}
+/* Pencil marks: a dim 3x3 mini-grid of remaining candidates inside an empty cell, shown during
+   Forward Checking/AC-3 playback - the Sudoku-native way to visualize exactly what got pruned. */
+.sudoku-pencil {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  grid-template-rows: repeat(3, 1fr);
+  width: 78%;
+  height: 78%;
+}
+.sudoku-pencil-digit {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-family: var(--font-jbmono);
+  font-size: clamp(6px, 1.1vh, 8px);
+  color: var(--on-surface-variant);
+  opacity: 0.75;
+}
+.sudoku-pencil-digit-hidden {
+  visibility: hidden;
+}
+
+/* ---------- Cobrinha (Snake): DOM/CSS grid like Tetris/Sudoku - a flat 20x20 board gets nothing
+   from a 3D scene. True square grid like Sudoku's, so it follows that same template (`aspect-ratio: 1`
+   plus a defensive `max-height: 100%`, applied from the very start here - Sudoku only grew that clamp
+   after its own board overflowed a short viewport once a sibling control row ate into canvas-stage's
+   height budget, and that lesson is baked in from day one instead of being rediscovered). */
+.snake-grid {
+  position: relative;
+  display: grid;
+  width: min(60vh, 480px, 90%);
+  max-height: 100%;
+  aspect-ratio: 1;
+  gap: 1px;
+  padding: 6px;
+  box-sizing: border-box;
+  border-radius: 14px;
+  background: color-mix(in srgb, var(--surface-container-lowest) 92%, var(--accent, var(--primary)) 6%);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  box-shadow: 0 30px 60px -30px rgba(0, 0, 0, 0.5);
+}
+/* IA vs IA: two boards share the stage side by side, so each gets a smaller cap than the
+   single-board default above - same idea as .tetris-grid--vs/.g2048-grid--vs. */
+.snake-grid.snake-grid--vs {
+  width: min(38vh, 320px, 42vw);
+}
+.snake-cell {
+  position: relative;
+  border-radius: 2px;
+  /* segmentRadius() in SnakeGrid.tsx overrides this per-cell to render body/head/tail as a
+     continuous tube instead of disconnected squares - transitioning it smoothly makes turns and
+     growth read as the shape reflowing rather than snapping. */
+  transition: border-radius 90ms ease-out;
+}
+.snake-cell-empty {
+  background: rgba(255, 255, 255, 0.04);
+}
+/* Head/body/tail share one gradient-and-inset-shadow "gummy" look (same visual family as Lig 4's
+   shaded discs), each a little darker than the last, so the whole snake reads as one continuous
+   body with the head naturally brightest and the tail naturally dimmest - not three flat colors. */
+.snake-cell-head,
+.snake-cell-body,
+.snake-cell-tail {
+  box-shadow:
+    inset 0 -2px 3px rgba(0, 0, 0, 0.28),
+    inset 0 1px 1px rgba(255, 255, 255, 0.28);
+}
+.snake-cell-head {
+  background: linear-gradient(
+    155deg,
+    color-mix(in srgb, var(--accent, #8bd450) 88%, white 15%),
+    color-mix(in srgb, var(--accent, #8bd450) 72%, black 15%)
+  );
+  box-shadow:
+    inset 0 -2px 3px rgba(0, 0, 0, 0.28),
+    inset 0 1px 1px rgba(255, 255, 255, 0.28),
+    0 0 10px color-mix(in srgb, var(--accent, #8bd450) 55%, transparent);
+  z-index: 2;
+}
+.snake-cell-body {
+  background: linear-gradient(
+    155deg,
+    color-mix(in srgb, var(--accent, #8bd450) 78%, white 6%),
+    color-mix(in srgb, var(--accent, #8bd450) 62%, black 26%)
+  );
+}
+.snake-cell-tail {
+  background: linear-gradient(
+    155deg,
+    color-mix(in srgb, var(--accent, #8bd450) 62%, black 8%),
+    color-mix(in srgb, var(--accent, #8bd450) 46%, black 38%)
+  );
+  /* Tapers the very tip of the tail down slightly instead of ending abruptly at full segment size. */
+  transform: scale(0.86);
+}
+/* Two small eyes on the head, positioned toward whichever edge faces the direction of travel -
+   replaces a plain directional arrow with something that reads as a face. */
+.snake-cell-head::before,
+.snake-cell-head::after {
+  content: "";
+  position: absolute;
+  width: 15%;
+  height: 15%;
+  border-radius: 50%;
+  background: #0e1a10;
+  box-shadow: 0 0 0 1.5px rgba(255, 255, 255, 0.85);
+}
+.snake-head-up::before {
+  top: 20%;
+  left: 24%;
+}
+.snake-head-up::after {
+  top: 20%;
+  left: 61%;
+}
+.snake-head-down::before {
+  bottom: 20%;
+  left: 24%;
+}
+.snake-head-down::after {
+  bottom: 20%;
+  left: 61%;
+}
+.snake-head-left::before {
+  left: 20%;
+  top: 24%;
+}
+.snake-head-left::after {
+  left: 20%;
+  top: 61%;
+}
+.snake-head-right::before {
+  right: 20%;
+  top: 24%;
+}
+.snake-head-right::after {
+  right: 20%;
+  top: 61%;
+}
+/* Food renders as a small apple (round body + stem + leaf) instead of a plain dot - a nod to the
+   classic Snake food sprite. */
+.snake-cell-food {
+  border-radius: 50%;
+  background: radial-gradient(circle at 34% 28%, #ffb199, #ff6a5a 55%, #d33f34 100%);
+  box-shadow: 0 0 8px rgba(255, 106, 90, 0.5);
+  animation: snakeFoodPulse 1.4s ease-in-out infinite;
+}
+.snake-cell-food::before {
+  content: "";
+  position: absolute;
+  top: -10%;
+  left: 46%;
+  width: 9%;
+  height: 24%;
+  background: #6b4a2b;
+  border-radius: 2px;
+  transform: rotate(-14deg);
+}
+.snake-cell-food::after {
+  content: "";
+  position: absolute;
+  top: -13%;
+  left: 53%;
+  width: 20%;
+  height: 13%;
+  background: #6fbf5e;
+  border-radius: 60% 8% 60% 8%;
+  transform: rotate(18deg);
+}
+@keyframes snakeFoodPulse {
+  0%,
+  100% {
+    transform: scale(0.92);
+  }
+  50% {
+    transform: scale(1.06);
+  }
+}
+
+/* ---------- Campo Minado: DOM/CSS grid like Sudoku/Tetris - a flat board gets nothing from a 3D
+   scene. Unlike every other board on the site, width/height vary by difficulty (9x9/16x16/30x16), so
+   grid-template-columns/rows and aspect-ratio are computed inline from the board config in
+   MinesweeperGrid.tsx; this class carries only the cosmetic properties, plus the same defensive
+   max-height clamp every other board carries (learned once, from Sudoku's own overflow bug, applied
+   from day one here). */
+.minesweeper-grid {
+  position: relative;
+  display: grid;
+  width: min(60vh, 620px, 92%);
+  max-height: 100%;
+  gap: 1px;
+  padding: 6px;
+  box-sizing: border-box;
+  border-radius: 14px;
+  background: color-mix(in srgb, var(--surface-container-lowest) 92%, var(--accent, var(--primary)) 6%);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  box-shadow: 0 30px 60px -30px rgba(0, 0, 0, 0.5);
+}
+.minesweeper-cell {
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 2px;
+  font-family: var(--font-jbmono);
+  font-weight: 700;
+  font-size: clamp(9px, 2.4vh, 15px);
+  user-select: none;
+}
+.minesweeper-cell-hidden {
+  background: color-mix(in srgb, var(--accent, var(--primary)) 20%, rgba(255, 255, 255, 0.09));
+  box-shadow: inset 0 -2px 0 rgba(0, 0, 0, 0.22), inset 0 1px 0 rgba(255, 255, 255, 0.15);
+  cursor: pointer;
+}
+.minesweeper-cell-hidden:hover {
+  background: color-mix(in srgb, var(--accent, var(--primary)) 30%, rgba(255, 255, 255, 0.12));
+}
+.minesweeper-cell-revealed {
+  background: rgba(255, 255, 255, 0.03);
+}
+.minesweeper-cell-mine {
+  background: color-mix(in srgb, var(--error, #e05a4e) 30%, rgba(255, 255, 255, 0.05));
+}
+.minesweeper-cell-exploded {
+  background: var(--error, #e05a4e);
+}
+.minesweeper-cell-focused {
+  box-shadow: inset 0 0 0 2px var(--accent, var(--primary));
+}
+.minesweeper-mine {
+  font-size: clamp(11px, 2.6vh, 17px);
+  color: #1a0e0e;
+}
+.minesweeper-mine-dim {
+  opacity: 0.55;
+}
+.minesweeper-flag {
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+.minesweeper-flag .material-symbols-outlined {
+  font-size: clamp(11px, 2.6vh, 17px);
+  color: var(--error, #e05a4e);
+}
+.minesweeper-wrong-flag {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--on-surface);
+  font-size: 1.3em;
+  font-weight: 900;
+}
+.minesweeper-probability {
+  font-family: var(--font-jbmono);
+  font-size: clamp(7px, 1.6vh, 10px);
+  font-weight: 500;
+  color: var(--on-surface-variant);
+  opacity: 0.85;
+}
+/* Classic Minesweeper number color coding. */
+.minesweeper-cell-n1 .minesweeper-number {
+  color: #4d7bf3;
+}
+.minesweeper-cell-n2 .minesweeper-number {
+  color: #46c25e;
+}
+.minesweeper-cell-n3 .minesweeper-number {
+  color: #ef4b4b;
+}
+.minesweeper-cell-n4 .minesweeper-number {
+  color: #7b5bd6;
+}
+.minesweeper-cell-n5 .minesweeper-number {
+  color: #a1462f;
+}
+.minesweeper-cell-n6 .minesweeper-number {
+  color: #34d5ee;
+}
+.minesweeper-cell-n7 .minesweeper-number {
+  color: var(--on-surface);
+}
+.minesweeper-cell-n8 .minesweeper-number {
+  color: var(--on-surface-variant);
+}
+/* Mobile flag-mode toggle: no right-click on touch, so tapping either reveals or flags depending on
+   this pill's active state - desktop keeps onContextMenu (plus the F key) as the primary flag input. */
+.minesweeper-flagmode-toggle {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  border-radius: 999px;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  background: rgba(255, 255, 255, 0.05);
+  padding: 6px 12px;
+  font-family: var(--font-jbmono);
+  font-size: 11px;
+  color: var(--on-surface-variant);
+  transition: background-color 120ms ease, color 120ms ease, border-color 120ms ease;
+}
+.minesweeper-flagmode-toggle.active {
+  background: color-mix(in srgb, var(--accent, var(--primary)) 22%, transparent);
+  border-color: color-mix(in srgb, var(--accent, var(--primary)) 45%, transparent);
+  color: var(--accent, var(--primary));
+}
+
+/* ---------- Batalha Naval: tabuleiro sempre fixo 10x10 (diferente do Campo Minado), então
+   grid-template-columns/rows e aspect-ratio vão direto aqui em vez de inline style - mas com o mesmo
+   max-height defensivo desde o início (lição do bug de overflow do Sudoku). */
+.battleship-grid {
+  position: relative;
+  display: grid;
+  grid-template-columns: repeat(10, 1fr);
+  grid-template-rows: repeat(10, 1fr);
+  aspect-ratio: 1 / 1;
+  width: min(60vh, 620px, 92%);
+  max-height: 100%;
+  gap: 1px;
+  padding: 6px;
+  box-sizing: border-box;
+  border-radius: 14px;
+  background: color-mix(in srgb, var(--surface-container-lowest) 92%, var(--accent, var(--primary)) 6%);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  box-shadow: 0 30px 60px -30px rgba(0, 0, 0, 0.5);
+}
+.battleship-cell {
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 2px;
+  font-family: var(--font-jbmono);
+  font-weight: 700;
+  font-size: clamp(9px, 2.4vh, 15px);
+  user-select: none;
+  transition: background-color 120ms ease;
+}
+.battleship-cell-hidden {
+  background: color-mix(in srgb, var(--accent, var(--primary)) 16%, rgba(255, 255, 255, 0.06));
+  box-shadow: inset 0 -2px 0 rgba(0, 0, 0, 0.22), inset 0 1px 0 rgba(255, 255, 255, 0.12);
+  cursor: pointer;
+}
+.battleship-cell-hidden:hover {
+  background: color-mix(in srgb, var(--accent, var(--primary)) 26%, rgba(255, 255, 255, 0.1));
+}
+.battleship-cell-hit {
+  background: color-mix(in srgb, var(--error, #e05a4e) 35%, rgba(255, 255, 255, 0.05));
+}
+.battleship-cell-sunk {
+  background: color-mix(in srgb, var(--error, #e05a4e) 65%, rgba(0, 0, 0, 0.2));
+}
+.battleship-cell-miss {
+  background: rgba(255, 255, 255, 0.03);
+}
+.battleship-cell-focused {
+  box-shadow: inset 0 0 0 2px var(--accent, var(--primary));
+}
+.battleship-cell-lastshot {
+  box-shadow: inset 0 0 0 2px var(--on-surface);
+}
+.battleship-hit-icon {
+  font-size: clamp(11px, 2.6vh, 17px);
+  color: #fff;
+}
+.battleship-miss-dot {
+  width: 22%;
+  height: 22%;
+  border-radius: 50%;
+  background: color-mix(in srgb, var(--on-surface) 35%, transparent);
+}
+.battleship-heat-value {
+  font-family: var(--font-jbmono);
+  font-size: clamp(7px, 1.6vh, 10px);
+  font-weight: 500;
+  color: var(--on-surface-variant);
+  opacity: 0.85;
+}
+.battleship-cell-hidden[style*="--heat"] {
+  background: color-mix(in srgb, var(--accent, var(--primary)) calc(16% + var(--heat) * 40%), rgba(255, 255, 255, 0.06));
+}
+.battleship-crosshair::before {
+  content: "";
+  position: absolute;
+  inset: 8%;
+  border-radius: 3px;
+  border: 2px solid var(--accent, var(--primary));
+  animation: cmGuessPulse 1.1s ease-in-out infinite;
+  pointer-events: none;
+}
+
+/* ---------- Masmorra: o labirinto é sempre 21x21 (gerado por algoritmo a cada partida), então
+   grid-template-columns/rows e aspect-ratio vão direto aqui, com o mesmo max-height defensivo desde
+   o início (lição do bug de overflow do Sudoku, aplicada a todo tabuleiro do site desde então). */
+.pacman-grid {
+  position: relative;
+  display: grid;
+  grid-template-columns: repeat(21, 1fr);
+  grid-template-rows: repeat(21, 1fr);
+  aspect-ratio: 1 / 1;
+  width: min(64vh, 520px, 92%);
+  max-height: 100%;
+  gap: 0;
+  padding: 4px;
+  box-sizing: border-box;
+  border-radius: 14px;
+  background: #14100c;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  box-shadow: 0 30px 60px -30px rgba(0, 0, 0, 0.5);
+}
+.pacman-grid.pacman-grid--vs {
+  width: min(40vh, 340px, 42vw);
+}
+.pacman-cell {
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+.pacman-cell-wall {
+  background-image: url("/sprites/dungeon/wall.png");
+  background-size: 100% 100%;
+  image-rendering: pixelated;
+}
+.pacman-cell-floor {
+  background-image: url("/sprites/dungeon/floor.png");
+  background-size: 100% 100%;
+  image-rendering: pixelated;
+}
+.pacman-pellet {
+  width: 18%;
+  height: 18%;
+  border-radius: 50%;
+  background: #ffd9a0;
+  box-shadow: 0 0 3px rgba(255, 217, 160, 0.6);
+}
+.pacman-potion {
+  position: absolute;
+  width: 62%;
+  height: 62%;
+  image-rendering: pixelated;
+  animation: pacmanPotionPulse 0.9s ease-in-out infinite;
+  filter: drop-shadow(0 0 3px rgba(255, 90, 60, 0.55));
+}
+@keyframes pacmanPotionPulse {
+  0%,
+  100% {
+    transform: scale(0.9);
+    opacity: 0.9;
+  }
+  50% {
+    transform: scale(1.08);
+    opacity: 1;
+  }
+}
+
+/* Herói e monstros são sprites reais do pacote Tiny Dungeon (CC0), não formas desenhadas em CSS - só
+   posicionamento, espelhamento horizontal (esquerda/direita, já que o pacote não tem sprites
+   direcionais) e uma leve animação de "respiração" continuam sendo CSS puro. */
+/* --flip carrega o espelhamento esquerda/direita (setado inline pelo componente); a animação de
+   "respiração" abaixo também mexe em transform, então precisa reaplicar var(--flip) em todo keyframe -
+   senão a animação sobrescreveria o scaleX inline a cada frame e o espelhamento nunca apareceria. */
+.pacman-hero,
+.pacman-monster {
+  position: absolute;
+  inset: 6%;
+  width: 88%;
+  height: 88%;
+  image-rendering: pixelated;
+  z-index: 3;
+  --flip: 1;
+}
+.pacman-hero {
+  animation: pacmanBob 0.6s ease-in-out infinite;
+  filter: drop-shadow(0 0 4px color-mix(in srgb, var(--accent, #c96a3d) 55%, transparent));
+}
+.pacman-hero-paused {
+  animation-play-state: paused;
+}
+.pacman-monster {
+  z-index: 2;
+  animation: pacmanBob 0.7s ease-in-out infinite;
+}
+@keyframes pacmanBob {
+  0%,
+  100% {
+    transform: scaleX(var(--flip)) translateY(0);
+  }
+  50% {
+    transform: scaleX(var(--flip)) translateY(-4%);
+  }
+}
+/* Tingimento azulado via filter (sem precisar de um sprite "assustado" separado) - qualquer monstro
+   fica com essa cor enquanto o herói pode comê-lo. */
+.pacman-monster-frightened {
+  filter: brightness(0.7) sepia(1) hue-rotate(180deg) saturate(3);
+  animation: pacmanBob 0.7s ease-in-out infinite, pacmanFrightenedBlink 0.5s ease-in-out infinite;
+}
+@keyframes pacmanFrightenedBlink {
+  0%,
+  100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.55;
+  }
+}
+/* "Comido": caminha de volta pro covil, semitransparente e ainda tingido de azul. */
+.pacman-monster-eaten {
+  opacity: 0.55;
+  filter: brightness(0.7) sepia(1) hue-rotate(180deg) saturate(3);
 }

@@ -1,8 +1,16 @@
 import Link from "next/link";
 import { FrontierShader } from "@/components/home/FrontierShader";
-import { MazePreview, CubePreview, TttPreview } from "@/components/home/ModulePreviews";
+import { MazePreview, CubePreview, TttPreview, GoosePreview, TspPreview, QueensPreview, RLPreview } from "@/components/home/ModulePreviews";
 import { TutorialScroller, Reveal } from "@/components/tutorial/TutorialScroller";
-import { WaveGrid, PathGrid, MinimaxTree, TutorialMazeHero } from "@/components/tutorial/TutorialVisuals";
+import {
+  WaveGrid,
+  PathGrid,
+  MinimaxTree,
+  TutorialMazeHero,
+  GenerationBars,
+  QueensPruneGrid,
+  TutorialRLHero,
+} from "@/components/tutorial/TutorialVisuals";
 
 export const metadata = {
   title: "Tutorial — Agentes de Busca",
@@ -33,14 +41,15 @@ export default function TutorialPage() {
         </Reveal>
       </>
 
-      {/* 2. The three modules */}
+      {/* 2. The seven modules */}
       <>
-        <Reveal className="tut-kicker">Três problemas</Reveal>
+        <Reveal className="tut-kicker">Sete problemas</Reveal>
         <Reveal delay={1}>
-          <h1 className="tut-h1">O mesmo agente, três desafios.</h1>
+          <h1 className="tut-h1">Três famílias de algoritmos, sete desafios.</h1>
         </Reveal>
         <Reveal delay={2} className="tut-sub">
-          Labirinto, Cubo Mágico e Jogo da Velha testam formas diferentes de busca.
+          Busca clássica, evolução genética e aprendizado por reforço — cada família pensa de um
+          jeito diferente diante do mesmo tipo de problema.
         </Reveal>
         <Reveal delay={3} className="tut-trio">
           <div className="tut-trio-item">
@@ -54,6 +63,22 @@ export default function TutorialPage() {
           <div className="tut-trio-item">
             <TttPreview />
             <span className="tut-trio-name text-secondary">Jogo da Velha</span>
+          </div>
+          <div className="tut-trio-item">
+            <GoosePreview />
+            <span className="tut-trio-name" style={{ color: "#7ee0a8" }}>Goose</span>
+          </div>
+          <div className="tut-trio-item">
+            <TspPreview />
+            <span className="tut-trio-name" style={{ color: "#6fd8c9" }}>Caixeiro Viajante</span>
+          </div>
+          <div className="tut-trio-item">
+            <QueensPreview />
+            <span className="tut-trio-name" style={{ color: "#d9a441" }}>N-Rainhas</span>
+          </div>
+          <div className="tut-trio-item">
+            <RLPreview />
+            <span className="tut-trio-name" style={{ color: "#7ea8f5" }}>Aprendizado por Reforço</span>
           </div>
         </Reveal>
       </>
@@ -128,7 +153,72 @@ export default function TutorialPage() {
         </Reveal>
       </>
 
-      {/* 7. Compare */}
+      {/* 7. Genetic optimization */}
+      <>
+        <Reveal className="tut-kicker">Otimização por evolução</Reveal>
+        <Reveal delay={1}>
+          <h1 className="tut-h1">Sem regra alguma, só sobrevivência do mais apto.</h1>
+        </Reveal>
+        <Reveal delay={2} className="tut-sub">
+          Um Algoritmo Genético evolui uma população de soluções por seleção, cruzamento e mutação —
+          o mesmo motor reaproveitado no Labirinto, no Goose, no Caixeiro Viajante e nas N-Rainhas.
+        </Reveal>
+        <Reveal delay={3} className="tut-dual-grids">
+          <div className="tut-grid-demo">
+            <div className="tut-glabel" style={{ color: "#7ee0a8" }}>
+              Geração 0
+            </div>
+            <GenerationBars variant="start" />
+          </div>
+          <div className="tut-grid-demo">
+            <div className="tut-glabel" style={{ color: "#7ee0a8" }}>
+              Geração 40
+            </div>
+            <GenerationBars variant="converged" />
+          </div>
+        </Reveal>
+      </>
+
+      {/* 8. Constraint satisfaction */}
+      <>
+        <Reveal className="tut-kicker">Restrições e poda</Reveal>
+        <Reveal delay={1}>
+          <h1 className="tut-h1">Prever um conflito é mais barato do que descobri-lo depois.</h1>
+        </Reveal>
+        <Reveal delay={2} className="tut-sub">
+          Nas N-Rainhas, Forward Checking elimina candidatos inválidos assim que uma rainha é
+          colocada, em vez de só descobrir o conflito ao tentar cada um.
+        </Reveal>
+        <Reveal delay={3} className="tut-dual-grids">
+          <div className="tut-grid-demo acc-secondary">
+            <div className="tut-glabel">Backtracking</div>
+            <QueensPruneGrid variant="backtracking" />
+            <div className="tut-gcount">20 células exploradas</div>
+          </div>
+          <div className="tut-grid-demo acc-primary">
+            <div className="tut-glabel">Forward Checking</div>
+            <QueensPruneGrid variant="forwardchecking" />
+            <div className="tut-gcount">5 exploradas, 9 podadas sem visitar</div>
+          </div>
+        </Reveal>
+      </>
+
+      {/* 9. Reinforcement learning */}
+      <>
+        <Reveal className="tut-kicker">Tentativa e erro</Reveal>
+        <Reveal delay={1}>
+          <h1 className="tut-h1">Ninguém entrega o mapa — o agente aprende andando.</h1>
+        </Reveal>
+        <Reveal delay={2} className="tut-sub">
+          Q-learning não conhece as recompensas nem as transições de antemão: aprende só observando
+          o que aconteceu depois de cada tentativa, até o caminho até o objetivo ficar claro.
+        </Reveal>
+        <Reveal delay={3}>
+          <TutorialRLHero />
+        </Reveal>
+      </>
+
+      {/* 10. Compare */}
       <>
         <Reveal className="tut-kicker">Compare</Reveal>
         <Reveal delay={1}>
@@ -153,14 +243,15 @@ export default function TutorialPage() {
         </Reveal>
       </>
 
-      {/* 8. CTA */}
+      {/* 11. CTA */}
       <>
         <Reveal className="tut-kicker">Pronto</Reveal>
         <Reveal delay={1}>
           <h1 className="tut-h1">Agora é sua vez.</h1>
         </Reveal>
         <Reveal delay={2} className="tut-sub">
-          Escolha um problema e veja o agente pensar, do jeito que você quiser.
+          Sete problemas, três famílias de algoritmos — escolha um e veja o agente pensar, do jeito
+          que você quiser.
         </Reveal>
         <Reveal delay={3}>
           <Link href="/labirinto" className="btn btn-primary btn-hero-glow !mt-10 !rounded-xl !px-7 !py-4 !text-[15px]">

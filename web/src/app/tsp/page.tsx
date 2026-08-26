@@ -182,7 +182,9 @@ export default function TspPage() {
           setGaElapsedMs(performance.now() - startTime);
           setGaProgressGen(finalResult.generations.length);
           setGaRunning(false);
-          setSelectedGeneration(finalResult.generations.length - 1);
+          // Land on generation 0, not the final one - pressing play should replay the whole run
+          // from scratch, not require rewinding through the picker first.
+          setSelectedGeneration(0);
           return;
         }
         collected.push(next.value);

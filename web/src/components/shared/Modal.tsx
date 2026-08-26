@@ -30,7 +30,7 @@ export function Modal({
   if (!open) return null;
 
   return (
-    <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/70" onClick={onClose}>
+    <div className="fixed inset-0 z-[180] flex items-center justify-center bg-black/70" onClick={onClose}>
       <div
         className={`panel-flat flex max-h-[80vh] flex-col overflow-hidden rounded-3xl shadow-2xl ${
           wide ? "w-[min(960px,94vw)]" : "w-[440px]"

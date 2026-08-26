@@ -21,6 +21,10 @@ const GHOST_COLOR = "#cebdff";
 const HIGHLIGHT_COLOR = "#ffb77b";
 const CAR_COLOR = "#ffb77b";
 const TREE_COLOR = "#4f8f5b";
+// A muted steel-blue "landing pad" ring for every ordinary city, distinct from ORIGIN_COLOR's vivid
+// periwinkle - gives every city a legible, ring-marked "defined point" reading from a near-top-down
+// angle without diluting the origin's own visual distinction.
+const WAYPOINT_RING_COLOR = "#7c86a8";
 
 // World coordinates (0..TSP_WORLD_SIZE) shrink into scene units by this factor, centered on the
 // origin - same centering convention Maze3D uses for its grid (subtract half the extent).
@@ -190,12 +194,10 @@ function CityBlock({ city, position, isOrigin }: { city: City; position: THREE.V
         <cylinderGeometry args={[plazaRadius, plazaRadius, 0.02, 16]} />
         <meshStandardMaterial color={PLAZA_COLOR} roughness={0.95} metalness={0} />
       </mesh>
-      {isOrigin && (
-        <mesh position={[0, 0.021, 0]} rotation={[-Math.PI / 2, 0, 0]}>
-          <ringGeometry args={[plazaRadius * 0.76, plazaRadius * 0.9, 32]} />
-          <meshBasicMaterial color={ORIGIN_COLOR} transparent opacity={0.7} />
-        </mesh>
-      )}
+      <mesh position={[0, 0.021, 0]} rotation={[-Math.PI / 2, 0, 0]}>
+        <ringGeometry args={[plazaRadius * 0.76, plazaRadius * 0.9, 32]} />
+        <meshBasicMaterial color={isOrigin ? ORIGIN_COLOR : WAYPOINT_RING_COLOR} transparent opacity={isOrigin ? 0.7 : 0.5} />
+      </mesh>
       {buildings.map((b, i) => {
         const color = isOrigin ? ORIGIN_COLOR : b.color;
         const roofY = b.h + 0.02;
@@ -238,10 +240,17 @@ function CityBlock({ city, position, isOrigin }: { city: City; position: THREE.V
           </mesh>
         </group>
       ))}
-      {isOrigin && (
-        <mesh position={[0, tallest + 0.12, 0]}>
-          <sphereGeometry args={[0.055, 10, 10]} />
-          <meshBasicMaterial color={ORIGIN_COLOR} />
+      {/* A small glowing beacon floats above every city (bigger and brighter for the origin) so each
+          waypoint stays instantly readable as a "defined point" even at the near-top-down default
+          camera angle, where a city's own buildings can otherwise shrink to indistinct silhouettes. */}
+      <mesh position={[0, tallest + (isOrigin ? 0.12 : 0.08), 0]}>
+        <sphereGeometry args={[isOrigin ? 0.055 : 0.03, 10, 10]} />
+        <meshBasicMaterial color={isOrigin ? ORIGIN_COLOR : WAYPOINT_RING_COLOR} />
+      </mesh>
+      {!isOrigin && (
+        <mesh scale={2.4} position={[0, tallest + 0.08, 0]}>
+          <sphereGeometry args={[0.03, 10, 10]} />
+          <meshBasicMaterial color={WAYPOINT_RING_COLOR} transparent opacity={0.25} blending={THREE.AdditiveBlending} depthWrite={false} />
         </mesh>
       )}
     </group>
@@ -394,10 +403,23 @@ function RoadDashes({ curve }: { curve: THREE.CatmullRomCurve3 }) {
       {dashes.map((d, i) => (
         <mesh key={i} position={d.position} quaternion={d.quaternion}>
           <boxGeometry args={[0.035, 0.008, 0.16]} />
-          <meshStandardMaterial color={ROAD_LINE_COLOR} emissive={ROAD_LINE_COLOR} emissiveIntensity={0.45} roughness={0.5} />
+          <meshStandardMaterial color={ROAD_LINE_COLOR} emissive={ROAD_LINE_COLOR} emissiveIntensity={0.85} roughness={0.5} />
         </mesh>
       ))}
     </>
+  );
+}
+
+/** A thin, unlit, additively-blended ribbon riding just above the dashed centerline - unlike the
+ *  dashes (a lit, physical lane marking that goes dark in shadow) this always reads as a bright,
+ *  continuous glow trace, closing the gaps between dashes so the route stays legible as one sharp
+ *  line at a glance instead of a series of separate marks. */
+function RouteGlowLine({ curve }: { curve: THREE.CatmullRomCurve3 }) {
+  const geometry = useMemo(() => buildRoadGeometry(curve, 0.025, ROUTE_HEIGHT + 0.016, Math.max(curve.points.length * 8, 48)), [curve]);
+  return (
+    <mesh geometry={geometry}>
+      <meshBasicMaterial color={ROAD_LINE_COLOR} transparent opacity={0.55} blending={THREE.AdditiveBlending} depthWrite={false} side={THREE.DoubleSide} />
+    </mesh>
   );
 }
 
@@ -590,7 +612,10 @@ function Scene({
 
   return (
     <>
-      <fog attach="fog" args={[BACKDROP_COLOR, groundSize * 0.8, groundSize * 2.4]} />
+      {/* Pushed further out than a typical hero shot's fog - the goal here is a legible tactical
+          map, not an atmospheric vignette, so haze should only ever soften the far horizon, never
+          the city itself. */}
+      <fog attach="fog" args={[BACKDROP_COLOR, groundSize * 1.3, groundSize * 3.6]} />
       <mesh position={[0, -0.02, 0]} rotation={[-Math.PI / 2, 0, 0]} receiveShadow>
         <planeGeometry args={[groundSize, groundSize]} />
         <meshStandardMaterial color={GROUND_COLOR} roughness={1} metalness={0} />
@@ -618,6 +643,7 @@ function Scene({
       {curve && <Road curve={curve} width={ROAD_WIDTH + CURB_EXTRA * 2} color={CURB_COLOR} opacity={1} y={ROUTE_HEIGHT - 0.008} />}
       {curve && <Road curve={curve} width={ROAD_WIDTH} color={ROAD_COLOR} opacity={1} />}
       {curve && <RoadDashes curve={curve} />}
+      {curve && <RouteGlowLine curve={curve} />}
       {curve && <RoadLamps curve={curve} roadWidth={ROAD_WIDTH} />}
       {highlightEdges && highlightEdges.length > 0 && <HighlightSegments cities={cities} edges={highlightEdges} />}
       {cities.map((c, i) => (
@@ -644,11 +670,14 @@ interface TspCanvasProps {
 export function TspCanvas({ cities, tour, compareTour, highlightEdges, carColor, speedMultiplier }: TspCanvasProps) {
   const groundSize = Math.max(TSP_WORLD_SIZE * SCENE_SCALE, 4);
   const dist = groundSize * 0.95 + 2;
-  // A more oblique 3/4 angle (not a mathematically perfect 90° top-down), tilted enough to read
-  // building heights and road elevation at a glance while still showing the whole route layout -
-  // the requested default. x stays off exactly 0 to dodge OrbitControls' gimbal-lock singularity
-  // (a camera looking straight down its own up vector has an indeterminate azimuth).
-  const cameraPosition: [number, number, number] = [0.01, dist * 0.95, dist * 0.95];
+  // Near-top-down by default (~25° off vertical, down from the previous 45°) so the route and city
+  // layout read as a legible map at a glance, while still oblique enough to see building heights and
+  // keep the "standing inside the city" feel - a true 90° top-down would flatten everything into
+  // silhouettes. Total camera distance is kept close to the old 45° framing (same magnitude, just
+  // redistributed toward y) so this reads as a steeper angle, not a zoomed-out one. x stays off
+  // exactly 0 to dodge OrbitControls' gimbal-lock singularity (a camera looking straight down its own
+  // up vector has an indeterminate azimuth).
+  const cameraPosition: [number, number, number] = [0.01, dist * 1.22, dist * 0.57];
 
   return (
     <Canvas

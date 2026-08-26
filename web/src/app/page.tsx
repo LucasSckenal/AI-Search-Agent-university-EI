@@ -2,7 +2,7 @@ import Link from "next/link";
 import { Icon } from "@/components/shared/Panel";
 import { FrontierShader } from "@/components/home/FrontierShader";
 import { HeroTicker } from "@/components/home/HeroTicker";
-import { MazePreview, CubePreview, TttPreview, GoosePreview, TspPreview } from "@/components/home/ModulePreviews";
+import { MazePreview, CubePreview, TttPreview, GoosePreview, TspPreview, QueensPreview, RLPreview, Game2048Preview, TetrisPreview, Lig4Preview, SudokuPreview, SnakePreview, MinesweeperPreview, BattleshipPreview, DungeonPreview } from "@/components/home/ModulePreviews";
 
 const MODULES = [
   {
@@ -50,13 +50,103 @@ const MODULES = [
     algos: ["Vizinho Mais Próximo", "2-opt", "AG", "Held-Karp"],
     statLine: "4 algoritmos · solução exata até 12 cidades",
   },
+  {
+    href: "/rainhas",
+    title: "N-Rainhas",
+    accent: "rainhas",
+    preview: QueensPreview,
+    desc: "Posicione N rainhas num tabuleiro sem que nenhuma ataque outra. Compare backtracking puro, forward checking com propagação de restrições, busca local por reparo de conflitos e um algoritmo genético.",
+    algos: ["Backtracking", "Forward Checking", "Min-Conflitos", "AG"],
+    statLine: "4 algoritmos · tabuleiro até 16×16",
+  },
+  {
+    href: "/aprendizado",
+    title: "Aprendizado por Reforço",
+    accent: "aprendizado",
+    preview: RLPreview,
+    desc: "Um agente aprende a chegar ao objetivo por tentativa e erro num mundo de grade com buracos e paredes. Compare Q-learning, que não conhece o modelo, com Iteração de Valor, que conhece e converge para a política ótima.",
+    algos: ["Q-Learning", "Iteração de Valor"],
+    statLine: "2 algoritmos · grade até 12×12",
+  },
+  {
+    href: "/2048",
+    title: "2048",
+    accent: "g2048",
+    preview: Game2048Preview,
+    desc: "Deslize e combine blocos iguais até chegar a 2048. Compare uma heurística gulosa, um Algoritmo Genético que evolui os pesos dessa heurística, e Expectimax — a variante estocástica do Minimax que olha turnos à frente — ou jogue você mesmo.",
+    algos: ["Heurística Gulosa", "Algoritmo Genético", "Expectimax"],
+    statLine: "3 algoritmos · tabuleiro até 6×6",
+  },
+  {
+    href: "/tetris",
+    title: "Tetris",
+    accent: "tetris",
+    preview: TetrisPreview,
+    desc: "Encaixe as peças que caem e limpe linhas o quanto der. Compare uma heurística gulosa que avalia cada posição de queda com um Algoritmo Genético que evolui os pesos dela, ou jogue você mesmo.",
+    algos: ["Heurística Gulosa", "Algoritmo Genético"],
+    statLine: "2 algoritmos · tabuleiro 10×20",
+  },
+  {
+    href: "/lig4",
+    title: "Lig 4",
+    accent: "lig4",
+    preview: Lig4Preview,
+    desc: "Solte peças numa coluna e alinhe quatro antes do adversário. Estende a busca adversária do Jogo da Velha para um tabuleiro bem maior e apresenta a Busca em Árvore de Monte Carlo (MCTS), que simula partidas aleatórias em vez de explorar a árvore por completo.",
+    algos: ["Minimax", "Alfa-Beta", "MCTS"],
+    statLine: "3 algoritmos · tabuleiro 7×6",
+  },
+  {
+    href: "/sudoku",
+    title: "Sudoku",
+    accent: "sudoku",
+    preview: SudokuPreview,
+    desc: "Preencha a grade 9×9 sem repetir dígitos em linha, coluna ou bloco. Compare backtracking puro, forward checking e AC-3 — consistência de arco por propagação de restrições —, ou jogue você mesmo.",
+    algos: ["Backtracking", "Forward Checking", "AC-3"],
+    statLine: "3 algoritmos · grade 9×9",
+  },
+  {
+    href: "/snake",
+    title: "Cobrinha",
+    accent: "snake",
+    preview: SnakePreview,
+    desc: "Guie a cobra até a comida sem colidir. Compare A*, que replaneja o caminho mais curto a cada passo mas pode se prender sozinho conforme cresce, com um Ciclo Hamiltoniano que percorre uma rota fixa e nunca colide, ou jogue você mesmo.",
+    algos: ["A*", "Ciclo Hamiltoniano"],
+    statLine: "2 algoritmos · tabuleiro 20×20",
+  },
+  {
+    href: "/campo-minado",
+    title: "Campo Minado",
+    accent: "campo-minado",
+    preview: MinesweeperPreview,
+    desc: "Revele todas as células sem mina. Compare Dedução Lógica — que só age com certeza absoluta e às vezes trava — com Inferência Probabilística, que calcula a chance exata de cada célula ser mina e arrisca o palpite mais seguro quando a lógica pura não basta.",
+    algos: ["Dedução Lógica", "Inferência Probabilística"],
+    statLine: "2 algoritmos · tabuleiro até 30×16",
+  },
+  {
+    href: "/batalha-naval",
+    title: "Batalha Naval",
+    accent: "batalha-naval",
+    preview: BattleshipPreview,
+    desc: "Afunde toda a frota inimiga disparando num tabuleiro 10×10. Compare Caça e Alvo — que varre em paridade de tabuleiro de xadrez e depois isola a linha de um navio atingido — com Mapa de Densidade, que enumera todos os posicionamentos válidos da frota restante e sempre dispara na célula mais coberta, ou jogue você mesmo.",
+    algos: ["Caça e Alvo", "Mapa de Densidade"],
+    statLine: "2 algoritmos · tabuleiro 10×10, frota clássica de 5 navios",
+  },
+  {
+    href: "/pacman",
+    title: "Masmorra",
+    accent: "masmorra",
+    preview: DungeonPreview,
+    desc: "Fuja dos monstros e colete todos os itens de um labirinto gerado por algoritmo a cada partida. Compare o conjunto de monstros especializados — cada um com uma regra de alvo própria (perseguição direta, emboscada, flanco e recuo) — com monstros gulosos que perseguem todos a mesma posição atual do herói, ou jogue você mesmo.",
+    algos: ["Perseguição Especializada", "Perseguição Gulosa"],
+    statLine: "2 algoritmos · labirinto procedural 21×21, 4 monstros",
+  },
 ] as const;
 
 const STATS = [
   {
-    num: "11",
+    num: "33",
     label:
-      "Algoritmos implementados — BFS, DFS, UCS, Gulosa, A*, Minimax, Alfa-Beta, Genético, Vizinho Mais Próximo, 2-opt, Held-Karp",
+      "Algoritmos implementados — BFS, DFS, UCS, Gulosa, A*, Minimax, Alfa-Beta, Genético, Vizinho Mais Próximo, 2-opt, Held-Karp, Backtracking, Forward Checking, Min-Conflitos, Q-Learning, Iteração de Valor, Heurística Gulosa (2048), Expectimax, Heurística Gulosa (Tetris), Genético (Tetris), Minimax (Lig 4), Alfa-Beta (Lig 4), MCTS, Backtracking (Sudoku), Forward Checking (Sudoku), AC-3, Ciclo Hamiltoniano, Dedução Lógica, Inferência Probabilística, Caça e Alvo, Mapa de Densidade, IA de Perseguição Especializada por Papel, Perseguição Gulosa Uniforme",
   },
   { num: "3.674.160", label: "Estados possíveis do Cubo Mágico 2×2, verificados por BFS exaustiva" },
   { num: "100%", label: "Execução local no navegador — nenhuma chamada a servidor" },
@@ -69,8 +159,8 @@ const FLOW = [
 ] as const;
 
 const ABOUT_STATS = [
-  { k: "Problemas", v: "5", icon: "apps", accent: "primary", live: false },
-  { k: "Algoritmos", v: "11", icon: "account_tree", accent: "primary", live: false },
+  { k: "Problemas", v: "15", icon: "apps", accent: "primary", live: false },
+  { k: "Algoritmos", v: "33", icon: "account_tree", accent: "primary", live: false },
   { k: "Estados do cubo", v: "3.674.160", icon: "view_in_ar", accent: "tertiary", live: false },
   { k: "Execução", v: "100% local", icon: "bolt", accent: "secondary", live: true },
 ] as const;
@@ -143,15 +233,23 @@ export default function Home() {
       <section className="px-6 py-24">
         <div className="mx-auto mb-10 max-w-7xl">
           <div className="mb-2.5 text-[11px] font-semibold uppercase tracking-[0.1em] text-on-surface-variant">
-            Cinco problemas, duas famílias de algoritmos
+            Quinze problemas, quatro famílias de algoritmos
           </div>
           <h2 className="mb-2.5 text-[28px] font-semibold tracking-[-0.015em]">Escolha um módulo para explorar</h2>
           <p className="max-w-xl text-[14.5px] text-on-surface-variant">
             Labirinto, Cubo Mágico e Jogo da Velha compartilham um motor de busca clássico
-            (cega, informada e adversária); Goose e Caixeiro Viajante evoluem soluções com um
-            Algoritmo Genético, e o Caixeiro Viajante ainda compara isso a uma heurística
-            construtiva, busca local e a solução exata. Cada problema expõe os parâmetros do agente
-            e executa com estatísticas reais.
+            (cega, informada e adversária); Goose, Caixeiro Viajante e Tetris evoluem soluções com
+            um Algoritmo Genético, e o Caixeiro Viajante ainda compara isso a uma heurística
+            construtiva, busca local e a solução exata; 2048 estreia a busca adversária estocástica
+            com Expectimax. Batalha Naval contrasta uma heurística de caça-e-alvo com um mapa de
+            densidade probabilística que dispara sempre na célula mais coberta pelos posicionamentos
+            possíveis da frota. Masmorra encerra o roteiro com perseguição multiagente num labirinto
+            gerado por algoritmo a cada partida: quatro monstros com regras de alvo especializadas —
+            perseguição direta, emboscada à frente, flanco via a posição do fantasma e recuo por
+            proximidade — contra uma perseguição gulosa uniforme em que todos perseguem a posição
+            atual do herói, que por sua vez segue um piloto automático fixo de busca em largura até o
+            item mais próximo. Cada problema expõe os parâmetros do agente e executa com
+            estatísticas reais.
           </p>
         </div>
 
@@ -203,10 +301,26 @@ export default function Home() {
           <div className="rounded-2xl border border-white/[0.07] bg-surface-container p-9">
             <p className="mb-8 text-sm leading-relaxed text-on-surface-variant">
               Aplicação educacional para aplicar algoritmos clássicos de busca (BFS, DFS, UCS,
-              Gulosa, A*, Minimax e Alfa-Beta), um Algoritmo Genético e, no Caixeiro Viajante,
-              heurísticas de otimização (Vizinho Mais Próximo, 2-opt e Held-Karp), na resolução de
-              cinco problemas computacionais. Cada módulo expõe os parâmetros do problema e do
-              algoritmo, executa a busca com estatísticas reais e permite comparar resultados.
+              Gulosa, A*, Minimax e Alfa-Beta — estes dois últimos reaproveitados num tabuleiro bem
+              maior no Lig 4, ao lado da Busca em Árvore de Monte Carlo, MCTS), um Algoritmo
+              Genético reutilizado em cinco módulos, heurísticas de otimização no Caixeiro Viajante
+              (Vizinho Mais Próximo, 2-opt e Held-Karp), satisfação de restrições nas N-Rainhas
+              (Backtracking, Forward Checking e Min-Conflitos) e no Sudoku (Backtracking, Forward
+              Checking e AC-3), aprendizado por reforço (Q-Learning e Iteração de Valor), busca
+              adversária estocástica no 2048 (Heurística Gulosa e Expectimax), na Cobrinha, A*
+              replanejado em tempo real contra um Ciclo Hamiltoniano, no Campo Minado, dedução
+              lógica por restrições de contagem contra inferência probabilística exata por
+              enumeração combinatória, e em Batalha Naval, Caça e Alvo — que dispara em paridade
+              de tabuleiro de xadrez e isola a linha do navio atingido — contra Mapa de Densidade
+              — que enumera todos os posicionamentos válidos da frota restante e sempre dispara na
+              célula coberta por mais deles —, e em Masmorra, perseguição multiagente num labirinto
+              gerado por algoritmo a cada partida — quatro monstros, cada um com uma regra de alvo
+              própria (perseguição direta, emboscada, flanco e recuo) — contra uma perseguição gulosa
+              uniforme em que os quatro monstros perseguem a mesma posição atual do herói, na
+              resolução de quinze problemas computacionais.
+              Cada módulo expõe os
+              parâmetros do problema e do algoritmo, executa a busca com estatísticas reais e
+              permite comparar resultados.
             </p>
             <div className="grid grid-cols-1 gap-7 sm:grid-cols-3 sm:gap-4">
               {FLOW.map((step, i) => (
@@ -254,7 +368,10 @@ export default function Home() {
             Trabalho de Inteligência Artificial — busca não-informada, informada e adversária.
           </p>
         </div>
-        <div className="flex gap-8">
+        {/* flex-wrap is load-bearing here: 15 modules in one unbroken row (the original flex gap-8,
+            no wrap) forced this div past its container's width, which is what put the whole page
+            into horizontal scroll - wrapping keeps every screen width self-contained instead. */}
+        <div className="flex max-w-2xl flex-wrap justify-center gap-x-6 gap-y-2 md:justify-end">
           {MODULES.map((m) => (
             <Link
               key={m.href}
