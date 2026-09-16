@@ -2,7 +2,8 @@ import Link from "next/link";
 import { Icon } from "@/components/shared/Panel";
 import { FrontierShader } from "@/components/home/FrontierShader";
 import { HeroTicker } from "@/components/home/HeroTicker";
-import { MazePreview, CubePreview, TttPreview, GoosePreview, TspPreview, QueensPreview, RLPreview, Game2048Preview, TetrisPreview, Lig4Preview, SudokuPreview, SnakePreview, MinesweeperPreview, BattleshipPreview, DungeonPreview } from "@/components/home/ModulePreviews";
+import { HomeDemoCarousel } from "@/components/home/HomeDemoCarousel";
+import { MazePreview, CubePreview, TttPreview, GoosePreview, TspPreview, QueensPreview, RLPreview, Game2048Preview, TetrisPreview, Lig4Preview, SudokuPreview, SnakePreview, MinesweeperPreview, BattleshipPreview, DungeonPreview, PenduloPreview, AstarPreview, MinimaxPreview, AlgoritmoGeneticoPreview, PerceptronPreview, HopfieldPreview, DigitosPreview, GatosCachorrosPreview } from "@/components/home/ModulePreviews";
 
 const MODULES = [
   {
@@ -140,13 +141,85 @@ const MODULES = [
     algos: ["Perseguição Especializada", "Perseguição Gulosa"],
     statLine: "2 algoritmos · labirinto procedural 21×21, 4 monstros",
   },
+  {
+    href: "/pendulo",
+    title: "Pêndulo Invertido",
+    accent: "pendulo",
+    preview: PenduloPreview,
+    desc: "Equilibre um pêndulo sobre um carrinho, o clássico problema de controle usado desde os anos 80 para testar aprendizado de máquina. Compare uma rede neural de duas camadas ocultas — visível ao vivo, neurônio por neurônio — cujos pesos evoluem por Algoritmo Genético com um controlador PD escrito à mão, que reage ao ângulo e à posição sem aprender nada, ou jogue você mesmo.",
+    algos: ["Neuroevolução", "Controlador PD"],
+    statLine: "2 algoritmos · física contínua, controle bang-bang",
+  },
+  {
+    href: "/astar",
+    title: "Busca A*",
+    accent: "astar",
+    preview: AstarPreview,
+    desc: "Aula interativa focada só no A*: veja a fila de prioridade (fronteira) ordenada por f = g + h ao vivo, nó a nó, decidindo qual expandir a seguir, com garantia de caminho ótimo sob heurística admissível.",
+    algos: ["A* (Explicação Interativa)"],
+    statLine: "1 algoritmo · fronteira ao vivo, passo a passo",
+  },
+  {
+    href: "/minimax",
+    title: "Minimax",
+    accent: "minimax",
+    preview: MinimaxPreview,
+    desc: "Aula interativa focada só no Minimax: veja a árvore de um fim de jogo do velha crescer nó a nó, os valores subindo das folhas até a raiz, e compare com poda Alfa-Beta ligada e desligada — mesma resposta, bem menos nós visitados.",
+    algos: ["Minimax (Explicação Interativa)", "Alfa-Beta (Explicação Interativa)"],
+    statLine: "2 algoritmos · árvore de busca real, nó a nó",
+  },
+  {
+    href: "/algoritmo-genetico",
+    title: "Algoritmo Genético",
+    accent: "algoritmo-genetico",
+    preview: AlgoritmoGeneticoPreview,
+    desc: "Aula interativa focada só no Algoritmo Genético: uma população inteira de sequências de movimento evolui por seleção, cruzamento (de ponto único, sobre um genoma sequencial) e mutação, e você vê o enxame inteiro — não só o melhor indivíduo — convergindo para o alvo, geração a geração.",
+    algos: ["Genético (Explicação Interativa)"],
+    statLine: "1 algoritmo · população inteira visível, geração a geração",
+  },
+  {
+    href: "/perceptron",
+    title: "Classificador Linear",
+    accent: "perceptron",
+    preview: PerceptronPreview,
+    desc: "Aula interativa focada só em redes neurais treinadas de verdade: uma rede pequena aprende a separar pontos de duas classes por gradiente descendente, sem nenhum algoritmo genético. Desligue a camada oculta e veja o perceptron clássico falhar em XOR e num círculo — a limitação que Minsky e Papert apontaram em 1969 — e ligue de novo pra ver a fronteira curvar e resolver os dois.",
+    algos: ["Gradiente Descendente (Backpropagation)"],
+    statLine: "1 algoritmo · fronteira de decisão ao vivo, época a época",
+  },
+  {
+    href: "/hopfield",
+    title: "Hopfield",
+    accent: "hopfield",
+    preview: HopfieldPreview,
+    desc: "Memória associativa de verdade: sem gradiente, sem época de treino. Aprendizado de Hebb guarda padrões numa grade 10×10 numa única passada, e a recuperação corrige ruído por minimização de energia - até um certo limite de padrões guardados, depois do qual o recall começa a falhar.",
+    algos: ["Aprendizado de Hebb"],
+    statLine: "1 algoritmo · grade 10×10, recall por minimização de energia",
+  },
+  {
+    href: "/digitos",
+    title: "Dígitos Manuscritos",
+    accent: "digitos",
+    preview: DigitosPreview,
+    desc: "O mesmo gradiente descendente do Classificador Linear, generalizado de duas classes num plano 2D pra dez classes numa imagem 8×8 desenhada à mão - softmax e entropia cruzada no lugar de sigmoid e entropia binária. Desenhe seu próprio dígito e veja a rede reconhecer ao vivo, traço a traço.",
+    algos: ["Backpropagation Multi-Classe (Softmax)"],
+    statLine: "1 algoritmo · reconhecimento ao vivo enquanto você desenha",
+  },
+  {
+    href: "/gatos-cachorros",
+    title: "Gatos vs Cachorros",
+    accent: "gatos-cachorros",
+    preview: GatosCachorrosPreview,
+    desc: "O primeiro módulo do site com convolução de verdade: filtros 3×3 aprendidos, ReLU, max-pool e duas camadas densas, forward e backward de cada camada escritos à mão. Treinado com 30 fotos reais de gatos e cachorros (licença aberta, Wikimedia Commons) - poucas fotos de verdade pra uma rede com milhares de pesos, uma lição bem mais honesta que dado sintético perfeito.",
+    algos: ["Rede Convolucional (Conv + Max-Pool)"],
+    statLine: "1 algoritmo · 30 fotos reais, mapas de ativação ao vivo",
+  },
 ] as const;
 
 const STATS = [
   {
-    num: "33",
+    num: "43",
     label:
-      "Algoritmos implementados — BFS, DFS, UCS, Gulosa, A*, Minimax, Alfa-Beta, Genético, Vizinho Mais Próximo, 2-opt, Held-Karp, Backtracking, Forward Checking, Min-Conflitos, Q-Learning, Iteração de Valor, Heurística Gulosa (2048), Expectimax, Heurística Gulosa (Tetris), Genético (Tetris), Minimax (Lig 4), Alfa-Beta (Lig 4), MCTS, Backtracking (Sudoku), Forward Checking (Sudoku), AC-3, Ciclo Hamiltoniano, Dedução Lógica, Inferência Probabilística, Caça e Alvo, Mapa de Densidade, IA de Perseguição Especializada por Papel, Perseguição Gulosa Uniforme",
+      "Algoritmos implementados — BFS, DFS, UCS, Gulosa, A*, Minimax, Alfa-Beta, Genético, Vizinho Mais Próximo, 2-opt, Held-Karp, Backtracking, Forward Checking, Min-Conflitos, Q-Learning, Iteração de Valor, Heurística Gulosa (2048), Expectimax, Heurística Gulosa (Tetris), Genético (Tetris), Minimax (Lig 4), Alfa-Beta (Lig 4), MCTS, Backtracking (Sudoku), Forward Checking (Sudoku), AC-3, Ciclo Hamiltoniano, Dedução Lógica, Inferência Probabilística, Caça e Alvo, Mapa de Densidade, IA de Perseguição Especializada por Papel, Perseguição Gulosa Uniforme, Neuroevolução (Rede Neural evoluída por Algoritmo Genético), Controlador Heurístico Realimentado (PD), A* (Explicação Interativa), Minimax (Explicação Interativa), Alfa-Beta (Explicação Interativa), Genético (Explicação Interativa), Gradiente Descendente (Backpropagation), Aprendizado de Hebb (Hopfield), Backpropagation Multi-Classe (Softmax), Rede Convolucional (Conv + Max-Pool)",
   },
   { num: "3.674.160", label: "Estados possíveis do Cubo Mágico 2×2, verificados por BFS exaustiva" },
   { num: "100%", label: "Execução local no navegador — nenhuma chamada a servidor" },
@@ -159,8 +232,8 @@ const FLOW = [
 ] as const;
 
 const ABOUT_STATS = [
-  { k: "Problemas", v: "15", icon: "apps", accent: "primary", live: false },
-  { k: "Algoritmos", v: "33", icon: "account_tree", accent: "primary", live: false },
+  { k: "Problemas", v: "23", icon: "apps", accent: "primary", live: false },
+  { k: "Algoritmos", v: "43", icon: "account_tree", accent: "primary", live: false },
   { k: "Estados do cubo", v: "3.674.160", icon: "view_in_ar", accent: "tertiary", live: false },
   { k: "Execução", v: "100% local", icon: "bolt", accent: "secondary", live: true },
 ] as const;
@@ -212,6 +285,11 @@ export default function Home() {
         </div>
       </section>
 
+      {/* Live demo carousel: six modules auto-cycling, right after the pitch and before any stats */}
+      <div className="relative z-[1] pb-16">
+        <HomeDemoCarousel />
+      </div>
+
       {/* Stats strip */}
       <div className="stats-strip relative z-[1] border-b border-white/[0.07] bg-surface-container-lowest/70">
         <div className="mx-auto grid max-w-7xl grid-cols-1 sm:grid-cols-3">
@@ -233,23 +311,13 @@ export default function Home() {
       <section className="px-6 py-24">
         <div className="mx-auto mb-10 max-w-7xl">
           <div className="mb-2.5 text-[11px] font-semibold uppercase tracking-[0.1em] text-on-surface-variant">
-            Quinze problemas, quatro famílias de algoritmos
+            Vinte e três problemas, cinco famílias de algoritmos
           </div>
           <h2 className="mb-2.5 text-[28px] font-semibold tracking-[-0.015em]">Escolha um módulo para explorar</h2>
           <p className="max-w-xl text-[14.5px] text-on-surface-variant">
-            Labirinto, Cubo Mágico e Jogo da Velha compartilham um motor de busca clássico
-            (cega, informada e adversária); Goose, Caixeiro Viajante e Tetris evoluem soluções com
-            um Algoritmo Genético, e o Caixeiro Viajante ainda compara isso a uma heurística
-            construtiva, busca local e a solução exata; 2048 estreia a busca adversária estocástica
-            com Expectimax. Batalha Naval contrasta uma heurística de caça-e-alvo com um mapa de
-            densidade probabilística que dispara sempre na célula mais coberta pelos posicionamentos
-            possíveis da frota. Masmorra encerra o roteiro com perseguição multiagente num labirinto
-            gerado por algoritmo a cada partida: quatro monstros com regras de alvo especializadas —
-            perseguição direta, emboscada à frente, flanco via a posição do fantasma e recuo por
-            proximidade — contra uma perseguição gulosa uniforme em que todos perseguem a posição
-            atual do herói, que por sua vez segue um piloto automático fixo de busca em largura até o
-            item mais próximo. Cada problema expõe os parâmetros do agente e executa com
-            estatísticas reais.
+            Busca clássica, algoritmos genéticos, satisfação de restrições, aprendizado por reforço
+            e redes neurais — de BFS até convolução escrita à mão, cada módulo executa de verdade,
+            com estatísticas reais e parâmetros ajustáveis.
           </p>
         </div>
 
@@ -300,27 +368,12 @@ export default function Home() {
         <div className="mx-auto grid max-w-7xl grid-cols-1 gap-6 lg:grid-cols-[1.3fr_1fr]">
           <div className="rounded-2xl border border-white/[0.07] bg-surface-container p-9">
             <p className="mb-8 text-sm leading-relaxed text-on-surface-variant">
-              Aplicação educacional para aplicar algoritmos clássicos de busca (BFS, DFS, UCS,
-              Gulosa, A*, Minimax e Alfa-Beta — estes dois últimos reaproveitados num tabuleiro bem
-              maior no Lig 4, ao lado da Busca em Árvore de Monte Carlo, MCTS), um Algoritmo
-              Genético reutilizado em cinco módulos, heurísticas de otimização no Caixeiro Viajante
-              (Vizinho Mais Próximo, 2-opt e Held-Karp), satisfação de restrições nas N-Rainhas
-              (Backtracking, Forward Checking e Min-Conflitos) e no Sudoku (Backtracking, Forward
-              Checking e AC-3), aprendizado por reforço (Q-Learning e Iteração de Valor), busca
-              adversária estocástica no 2048 (Heurística Gulosa e Expectimax), na Cobrinha, A*
-              replanejado em tempo real contra um Ciclo Hamiltoniano, no Campo Minado, dedução
-              lógica por restrições de contagem contra inferência probabilística exata por
-              enumeração combinatória, e em Batalha Naval, Caça e Alvo — que dispara em paridade
-              de tabuleiro de xadrez e isola a linha do navio atingido — contra Mapa de Densidade
-              — que enumera todos os posicionamentos válidos da frota restante e sempre dispara na
-              célula coberta por mais deles —, e em Masmorra, perseguição multiagente num labirinto
-              gerado por algoritmo a cada partida — quatro monstros, cada um com uma regra de alvo
-              própria (perseguição direta, emboscada, flanco e recuo) — contra uma perseguição gulosa
-              uniforme em que os quatro monstros perseguem a mesma posição atual do herói, na
-              resolução de quinze problemas computacionais.
-              Cada módulo expõe os
-              parâmetros do problema e do algoritmo, executa a busca com estatísticas reais e
-              permite comparar resultados.
+              Aplicação educacional com cinco famílias de algoritmos: busca clássica (BFS, DFS, UCS,
+              Gulosa, A*), busca adversária (Minimax, Alfa-Beta, MCTS), Algoritmos Genéticos,
+              satisfação de restrições e busca local, aprendizado por reforço, e redes neurais — de
+              Hebb e backpropagation até convolução, tudo implementado à mão. Cada módulo expõe os
+              parâmetros do problema e do algoritmo, executa com estatísticas reais e permite
+              comparar resultados.
             </p>
             <div className="grid grid-cols-1 gap-7 sm:grid-cols-3 sm:gap-4">
               {FLOW.map((step, i) => (

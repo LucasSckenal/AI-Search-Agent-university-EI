@@ -85,8 +85,10 @@ export function getWinningLine(board: Board, size: number, winLength: number): n
   return null;
 }
 
-/** All winLength-cell windows still open for `player` (no opposing mark inside), weighted by fill count. */
-function heuristicScore(board: Board, size: number, winLength: number): number {
+/** All winLength-cell windows still open for `player` (no opposing mark inside), weighted by fill count.
+ *  Exported so the Minimax explainer page (`lib/minimax/trace.ts`) can score its own depth-limited
+ *  leaves identically to real gameplay, instead of duplicating this scan. */
+export function heuristicScore(board: Board, size: number, winLength: number): number {
   let score = 0;
   const scanWindow = (cells: Cell[]) => {
     const x = cells.filter((c) => c === 1).length;
@@ -122,7 +124,9 @@ export interface MinimaxResult {
   truncated: boolean;
 }
 
-function orderedMoves(board: Board, size: number): number[] {
+/** Exported for the same reason as `heuristicScore` above - the Minimax explainer needs to expand
+ *  moves in the identical order so its trace matches what real gameplay actually explores/prunes. */
+export function orderedMoves(board: Board, size: number): number[] {
   const center = (size - 1) / 2;
   return availableMoves(board).sort((a, b) => {
     const ar = Math.floor(a / size) - center;

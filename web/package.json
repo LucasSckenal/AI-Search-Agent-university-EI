@@ -10,7 +10,7 @@
     "build": "next build",
     "start": "next start",
     "lint": "eslint",
-    "test": "tsx test/core.test.ts && tsx test/maze.test.ts && tsx test/game.test.ts && tsx test/cube-fast.test.ts && tsx test/metrics.test.ts && tsx test/batch.test.ts && tsx test/tsp.test.ts && tsx test/queens.test.ts && tsx test/rl.test.ts && tsx test/2048.test.ts && tsx test/tetris.test.ts && tsx test/lig4.test.ts && tsx test/sudoku.test.ts && tsx test/snake.test.ts && tsx test/campo-minado.test.ts && tsx test/batalha-naval.test.ts && tsx test/pacman.test.ts",
+    "test": "tsx test/core.test.ts && tsx test/maze.test.ts && tsx test/game.test.ts && tsx test/cube-fast.test.ts && tsx test/metrics.test.ts && tsx test/batch.test.ts && tsx test/tsp.test.ts && tsx test/queens.test.ts && tsx test/rl.test.ts && tsx test/2048.test.ts && tsx test/tetris.test.ts && tsx test/lig4.test.ts && tsx test/sudoku.test.ts && tsx test/snake.test.ts && tsx test/campo-minado.test.ts && tsx test/batalha-naval.test.ts && tsx test/pacman.test.ts && tsx test/pendulo.test.ts && tsx test/perceptron.test.ts && tsx test/hopfield.test.ts && tsx test/digitos.test.ts && tsx test/gatos-cachorros.test.ts && tsx test/search-trace.test.ts",
     "test:cube": "cross-env NODE_OPTIONS=--max-old-space-size=6144 tsx test/cube.test.ts",
     "test:all": "npm run test && npm run test:cube"
   },

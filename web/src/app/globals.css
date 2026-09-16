@@ -342,6 +342,153 @@ input[type="number"]:hover {
   }
 }
 
+/* ---------- live demo carousel ---------- */
+/* Reuses the same .card-preview animations as the module grid below, just blown up much bigger and
+   auto-cycling - the "proof" beat right after the hero's pitch, before any stats or explanation. */
+.demo-carousel {
+  min-height: 360px;
+  cursor: default;
+}
+.demo-carousel-badge {
+  position: absolute;
+  left: 20px;
+  top: 20px;
+  z-index: 2;
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  padding: 6px 12px 6px 10px;
+  border-radius: 999px;
+  background: rgba(9, 11, 17, 0.55);
+  backdrop-filter: blur(6px);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  font-size: 10.5px;
+  font-weight: 700;
+  letter-spacing: 0.09em;
+  color: var(--accent, var(--primary));
+}
+.demo-carousel-badge .dot {
+  width: 6px;
+  height: 6px;
+  border-radius: 999px;
+  background: var(--accent, var(--primary));
+  box-shadow: 0 0 8px var(--accent, var(--primary));
+  animation: blipPulse 1.8s ease-in-out infinite;
+}
+.demo-carousel-stage {
+  position: relative;
+  min-height: 300px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  overflow: hidden;
+  background:
+    radial-gradient(ellipse 70% 60% at 50% 42%, color-mix(in srgb, var(--accent, var(--primary)) 12%, transparent), transparent 70%),
+    var(--surface-container-lowest);
+}
+.demo-carousel-slide {
+  position: absolute;
+  inset: 0;
+  transition: opacity 500ms ease;
+}
+/* The reused .card-preview normally ships its own small rounded box + corner badge icon; inside the
+   carousel it should fill the whole stage borderlessly instead, and the corner badge/photo-class chip
+   would just read as visual noise at 3-4x scale next to the real title below. */
+.demo-carousel-stage .card-preview {
+  height: 100%;
+  width: 100%;
+  border: none;
+  border-radius: 0;
+  background: transparent;
+}
+/* Extra .card-preview ancestor bumps specificity above the base .card-preview .badge / .gc-chip
+   rules (both 2 classes, same as a plain .demo-carousel-stage .badge would be) - without it, the tie
+   is broken by source order and the base rule (defined later, under "card mini previews") wins. */
+.demo-carousel-stage .card-preview .badge,
+.demo-carousel-stage .card-preview .gc-chip {
+  display: none;
+}
+.demo-carousel-info {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  gap: 11px;
+  padding: 32px 32px 52px;
+}
+.demo-carousel-info h3 {
+  font-size: 21px;
+  font-weight: 700;
+  letter-spacing: -0.01em;
+  color: var(--on-surface);
+}
+.demo-carousel-info p {
+  font-size: 13.5px;
+  line-height: 1.55;
+  color: var(--on-surface-variant);
+}
+.demo-carousel-info .btn-pill {
+  color: var(--accent, var(--primary));
+  border-color: color-mix(in srgb, var(--accent, var(--primary)) 40%, transparent);
+}
+.demo-carousel-dots {
+  position: absolute;
+  left: 20px;
+  right: 20px;
+  bottom: 16px;
+  z-index: 2;
+  display: flex;
+  gap: 6px;
+}
+.demo-dot {
+  position: relative;
+  flex: 1;
+  height: 3px;
+  border: none;
+  padding: 0;
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.14);
+  cursor: pointer;
+  overflow: hidden;
+}
+.demo-dot.active {
+  background: rgba(255, 255, 255, 0.22);
+}
+.demo-dot-progress {
+  position: absolute;
+  inset: 0;
+  transform: scaleX(0);
+  transform-origin: left;
+  background: var(--accent, var(--primary));
+  animation-name: demoDotFill;
+  animation-timing-function: linear;
+  animation-fill-mode: forwards;
+}
+@keyframes demoDotFill {
+  from {
+    transform: scaleX(0);
+  }
+  to {
+    transform: scaleX(1);
+  }
+}
+@media (max-width: 860px) {
+  .demo-carousel-dots {
+    position: static;
+    padding: 14px 20px 20px;
+  }
+  .demo-carousel-info {
+    padding: 28px 24px;
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .demo-carousel-badge .dot {
+    animation: none;
+  }
+  .demo-carousel-slide {
+    transition: none;
+  }
+}
+
 /* ---------- stats strip ---------- */
 .stats-strip::before {
   content: "";
@@ -444,6 +591,30 @@ input[type="number"]:hover {
 }
 .card.masmorra {
   --accent: #c96a3d;
+}
+.card.pendulo {
+  --accent: #ff6bd6;
+}
+.card.astar {
+  --accent: #7ea8f5;
+}
+.card.minimax {
+  --accent: #ffb77b;
+}
+.card.algoritmo-genetico {
+  --accent: #c4d94a;
+}
+.card.perceptron {
+  --accent: #22d3ee;
+}
+.card.hopfield {
+  --accent: #8b5cf6;
+}
+.card.digitos {
+  --accent: #fb7185;
+}
+.card.gatos-cachorros {
+  --accent: #fbbf24;
 }
 .card h3 .arrow {
   transition: transform 180ms ease;
@@ -1045,6 +1216,234 @@ input[type="number"]:hover {
   }
 }
 
+/* pendulo preview: a cart drifts slightly left/right along the track while the pole rocks the
+   opposite way, echoing the real page's balancing act without simulating any actual physics here -
+   just two out-of-phase loops long enough to read as "actively correcting" rather than idle. */
+.pendulo-preview svg {
+  width: 100%;
+  height: 100%;
+}
+.pendulo-preview .pendulo-track {
+  stroke: rgba(255, 255, 255, 0.14);
+  stroke-width: 1.6;
+}
+.pendulo-preview .pendulo-rig {
+  transform: translate(55px, 50px);
+  animation: penduloRig 4.5s ease-in-out infinite;
+}
+.pendulo-preview .pendulo-cart {
+  fill: var(--accent, var(--primary));
+}
+.pendulo-preview .pendulo-rod {
+  stroke: #e8c25a;
+  stroke-width: 2.4;
+  stroke-linecap: round;
+}
+.pendulo-preview .pendulo-bob {
+  fill: var(--accent, var(--primary));
+  filter: drop-shadow(0 0 3px color-mix(in srgb, var(--accent, var(--primary)) 60%, transparent));
+}
+.pendulo-preview .pendulo-pole {
+  transform-origin: 0px -8px;
+  transform-box: fill-box;
+  animation: penduloPole 4.5s ease-in-out infinite;
+}
+.astar-preview svg {
+  width: 100%;
+  height: 100%;
+}
+.astar-preview .astar-edge {
+  stroke: var(--accent, var(--primary));
+  stroke-width: 1.6;
+  stroke-linecap: round;
+  opacity: 0.5;
+}
+.astar-preview .astar-edge-dim {
+  stroke: rgba(255, 255, 255, 0.16);
+  opacity: 1;
+}
+.astar-preview .astar-node {
+  fill: rgba(255, 255, 255, 0.35);
+}
+.astar-preview .astar-node-start {
+  fill: #afc6ff;
+}
+.astar-preview .astar-node-goal {
+  fill: #ffb77b;
+}
+.astar-preview .astar-node-current {
+  fill: var(--accent, var(--primary));
+  filter: drop-shadow(0 0 3px color-mix(in srgb, var(--accent, var(--primary)) 70%, transparent));
+  animation: astarPulse 1.6s ease-in-out infinite;
+  transform-box: fill-box;
+  transform-origin: center;
+}
+@keyframes astarPulse {
+  0%, 100% {
+    transform: scale(1);
+    opacity: 1;
+  }
+  50% {
+    transform: scale(1.4);
+    opacity: 0.7;
+  }
+}
+
+/* minimax preview: nodes light up depth-first (root, then its 3 children, then their 6 children),
+   pausing on the fully-lit tree, then the two right-branch stubs reveal as pruned before the whole
+   thing resets - one loop reads as "watch the search happen, then see alpha-beta cut a branch". */
+.minimax-preview svg {
+  width: 100%;
+  height: 100%;
+}
+.minimax-preview .mm-edge {
+  stroke: rgba(255, 255, 255, 0.16);
+  stroke-width: 1.3;
+  opacity: 0;
+  animation: mmReveal 5s ease-in-out infinite;
+}
+.minimax-preview .mm-node {
+  fill: var(--accent, var(--primary));
+  opacity: 0;
+  animation: mmReveal 5s ease-in-out infinite;
+}
+.minimax-preview .mm-pruned {
+  fill: rgba(255, 255, 255, 0.22);
+  stroke: rgba(255, 255, 255, 0.22);
+}
+.minimax-preview .mm-n1 {
+  animation-delay: 0s;
+}
+.minimax-preview .mm-e1, .minimax-preview .mm-e2, .minimax-preview .mm-e3 {
+  animation-delay: 0.15s;
+}
+.minimax-preview .mm-n2, .minimax-preview .mm-n3, .minimax-preview .mm-n4 {
+  animation-delay: 0.3s;
+}
+.minimax-preview .mm-e4, .minimax-preview .mm-e5, .minimax-preview .mm-e6, .minimax-preview .mm-e7 {
+  animation-delay: 0.5s;
+}
+.minimax-preview .mm-n5, .minimax-preview .mm-n6, .minimax-preview .mm-n7, .minimax-preview .mm-n8 {
+  animation-delay: 0.7s;
+}
+.minimax-preview .mm-e8, .minimax-preview .mm-e9 {
+  animation-delay: 1.6s;
+}
+.minimax-preview .mm-n9, .minimax-preview .mm-n10 {
+  animation-delay: 1.75s;
+}
+@keyframes mmReveal {
+  0%, 4% {
+    opacity: 0;
+  }
+  10%, 85% {
+    opacity: 1;
+  }
+  95%, 100% {
+    opacity: 0;
+  }
+}
+
+/* algoritmo-genetico preview: six dots scatter near the start, then drift and converge on the
+   target over the loop - not perfectly, on purpose (a population, not a single solved path). */
+.ag-preview svg {
+  width: 100%;
+  height: 100%;
+}
+.ag-preview .ag-target {
+  fill: #ffb77b;
+  filter: drop-shadow(0 0 3px rgba(255, 183, 123, 0.6));
+}
+.ag-preview .ag-dot {
+  fill: var(--accent, var(--primary));
+  animation-duration: 4s;
+  animation-timing-function: ease-in-out;
+  animation-iteration-count: infinite;
+}
+.ag-preview .ag-d1 { animation-name: agD1; animation-delay: 0s; }
+.ag-preview .ag-d2 { animation-name: agD2; animation-delay: 0.1s; }
+.ag-preview .ag-d3 { animation-name: agD3; animation-delay: 0.2s; }
+.ag-preview .ag-d4 { animation-name: agD4; animation-delay: 0.05s; }
+.ag-preview .ag-d5 { animation-name: agD5; animation-delay: 0.25s; }
+.ag-preview .ag-d6 { animation-name: agD6; animation-delay: 0.15s; }
+@keyframes agD1 {
+  0%, 8% { cx: 10px; cy: 58px; }
+  70%, 100% { cx: 88px; cy: 12px; }
+}
+@keyframes agD2 {
+  0%, 8% { cx: 16px; cy: 44px; }
+  70%, 100% { cx: 98px; cy: 20px; }
+}
+@keyframes agD3 {
+  0%, 8% { cx: 8px; cy: 30px; }
+  70%, 100% { cx: 90px; cy: 22px; }
+}
+@keyframes agD4 {
+  0%, 8% { cx: 22px; cy: 58px; }
+  70%, 100% { cx: 96px; cy: 10px; }
+}
+@keyframes agD5 {
+  0%, 8% { cx: 14px; cy: 50px; }
+  70%, 100% { cx: 92px; cy: 18px; }
+}
+@keyframes agD6 {
+  0%, 8% { cx: 20px; cy: 36px; }
+  70%, 100% { cx: 100px; cy: 15px; }
+}
+
+/* perceptron preview: a decision boundary line starts at the wrong angle, rotates into the
+   correct split between the two dot colors, holds there, then resets - "learning" as one motion. */
+.perceptron-preview svg {
+  width: 100%;
+  height: 100%;
+}
+.perceptron-preview .lc-dot-0 {
+  fill: #7ea8f5;
+}
+.perceptron-preview .lc-dot-1 {
+  fill: #f2c94c;
+}
+.perceptron-preview .lc-boundary {
+  stroke: var(--accent, var(--primary));
+  stroke-width: 2;
+  stroke-linecap: round;
+  transform-box: fill-box;
+  transform-origin: center;
+  animation: lcSettle 4s ease-in-out infinite;
+  filter: drop-shadow(0 0 3px color-mix(in srgb, var(--accent, var(--primary)) 60%, transparent));
+}
+@keyframes lcSettle {
+  0%, 8% {
+    transform: rotate(-38deg);
+    opacity: 0.35;
+  }
+  55%, 85% {
+    transform: rotate(0deg);
+    opacity: 0.9;
+  }
+  100% {
+    transform: rotate(-38deg);
+    opacity: 0.35;
+  }
+}
+
+@keyframes penduloRig {
+  0%, 100% {
+    transform: translate(38px, 50px);
+  }
+  50% {
+    transform: translate(72px, 50px);
+  }
+}
+@keyframes penduloPole {
+  0%, 100% {
+    transform: rotate(9deg);
+  }
+  50% {
+    transform: rotate(-9deg);
+  }
+}
+
 /* 2048 preview: a static 3x3 corner arrangement (2/4/8/16) with one tile fading in and out at
    center on a loop, standing in for a fresh spawn without simulating a real game. */
 .g2048-preview .g2048-mini {
@@ -1396,6 +1795,184 @@ input[type="number"]:hover {
   }
 }
 
+/* hopfield preview: a stored "X" pattern with two extra cells flickering in as noise, then fading
+   back out - recall settling to the clean stored pattern, on a loop. */
+.hopfield-preview svg {
+  width: 100%;
+  height: 100%;
+}
+.hopfield-preview .hf-on {
+  fill: var(--accent, var(--primary));
+}
+.hopfield-preview .hf-off {
+  fill: color-mix(in srgb, var(--surface-container-lowest) 80%, white 4%);
+}
+.hopfield-preview .hf-noise {
+  fill: var(--accent, var(--primary));
+  animation: hfFlicker 3.2s ease-in-out infinite;
+}
+.hopfield-preview .hf-noise-b {
+  animation-delay: -1.6s;
+}
+@keyframes hfFlicker {
+  0%,
+  18% {
+    opacity: 0.85;
+  }
+  38%,
+  100% {
+    opacity: 0;
+  }
+}
+
+/* digitos preview: the module's own "2" template lighting up cell by cell as a scan line sweeps
+   down over it, standing in for live recognition as you draw. */
+.digitos-preview svg {
+  width: 100%;
+  height: 100%;
+}
+.digitos-preview .dg-cell {
+  fill: var(--accent, var(--primary));
+  opacity: 0.85;
+}
+.digitos-preview .dg-scan {
+  fill: color-mix(in srgb, var(--accent, var(--primary)) 55%, transparent);
+  animation: dgScan 2.6s ease-in-out infinite;
+}
+@keyframes dgScan {
+  0% {
+    transform: translateY(0);
+  }
+  100% {
+    transform: translateY(86px);
+  }
+}
+
+/* gatos vs cachorros preview: two real training photos (see public/gatos-cachorros/ATTRIBUTIONS.md)
+   crossfading, each with its predicted-class chip - the one home preview built from actual
+   photographs instead of a procedural/CSS illustration. */
+.gc-preview {
+  position: relative;
+  overflow: hidden;
+}
+.gc-preview .gc-photo {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  opacity: 0;
+  animation: gcCrossfade 5s ease-in-out infinite;
+}
+.gc-preview .gc-photo-b {
+  animation-delay: -2.5s;
+}
+@keyframes gcCrossfade {
+  0%,
+  6% {
+    opacity: 1;
+  }
+  44%,
+  100% {
+    opacity: 0;
+  }
+}
+.gc-preview .gc-chip {
+  position: absolute;
+  left: 8px;
+  bottom: 8px;
+  z-index: 1;
+  padding: 2px 8px;
+  border-radius: 999px;
+  font-size: 10px;
+  font-weight: 600;
+  letter-spacing: 0.02em;
+  color: #1a1206;
+  background: var(--accent, var(--primary));
+  opacity: 0;
+  animation: gcChipShow 5s ease-in-out infinite;
+}
+.gc-preview .gc-chip-b {
+  animation-delay: -2.5s;
+}
+@keyframes gcChipShow {
+  0%,
+  6% {
+    opacity: 1;
+  }
+  44%,
+  100% {
+    opacity: 0;
+  }
+}
+
+/* gatos vs cachorros CnnNetworkFlow: each layer group (filters, then their edges, then the hidden
+   layer, then its edges, then the output) fades/slides in with a staggered animation-delay set
+   inline per <g>, so a fresh prediction reads as data moving left to right through the network
+   rather than four panels appearing at once. */
+@keyframes nnStagePop {
+  from {
+    opacity: 0;
+    transform: translateX(-6px);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(0);
+  }
+}
+
+.flow-stage {
+  opacity: 0;
+  animation: nnStagePop 0.5s ease forwards;
+}
+
+/* Continuous "current flowing through the wire" effect on every edge - a dash pattern marching
+   along the line forever, not just a one-shot entrance. This is the part that reads as an actual
+   animation even to someone who glances at the page well after it first rendered, since nnStagePop
+   above finishes in ~1.5s and then sits still. */
+@keyframes nnDashFlow {
+  to {
+    stroke-dashoffset: -16;
+  }
+}
+
+.flow-edge {
+  stroke-dasharray: 3 5;
+  animation: nnDashFlow 1.2s linear infinite;
+}
+
+/* A slow, gentle breathing pulse on the decision node - the endpoint of the flow, so it keeps
+   feeling "alive" even once the wires' motion has faded into the background. */
+@keyframes nnDecisionPulse {
+  0%,
+  100% {
+    transform: scale(1);
+  }
+  50% {
+    transform: scale(1.08);
+  }
+}
+
+.flow-decision-pulse {
+  transform-origin: center;
+  transform-box: fill-box;
+  animation: nnDecisionPulse 2.4s ease-in-out infinite;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .flow-stage {
+    animation: none;
+    opacity: 1;
+  }
+  .flow-edge {
+    animation: none;
+    stroke-dasharray: none;
+  }
+  .flow-decision-pulse {
+    animation: none;
+  }
+}
+
 /* ---------- about section ---------- */
 .flow-num {
   background: color-mix(in srgb, var(--primary) 16%, transparent);
@@ -1424,577 +2001,493 @@ input[type="number"]:hover {
 }
 
 /* ================================================================================
-   /tutorial - a scroll-snap, one-idea-per-screen walkthrough of how the search
-   algorithms actually differ. Deliberately more spacious/typographic than the rest
-   of the app (which stays dense/functional) - this page's whole job is to teach one
-   concept at a time, not host controls.
+   /tutorial/busca - the interactive Busca em Grafo lab. Reuses the app's existing
+   structural classes (content-head/workspace-card/canvas-body/glass/btn-pill) almost
+   everywhere; this block only covers the pieces genuinely new to the lab: the stage
+   stepper, the algorithm picker pills, the live formula breakdown, the lightweight
+   2D grid (WebGL is reserved for the real-execution stage), prediction cards, the
+   decision timeline, the tech datasheet, the comparison bar chart, and the family
+   selector cards on /tutorial itself.
    ================================================================================ */
 
-.tut-scroller {
-  height: 100%;
-  overflow-y: auto;
-  scroll-snap-type: y mandatory;
-  scroll-behavior: smooth;
-}
-@media (prefers-reduced-motion: reduce) {
-  .tut-scroller {
-    scroll-snap-type: none;
-  }
-}
-
-.tut-progress {
-  position: fixed;
-  right: 24px;
-  top: 50%;
-  transform: translateY(-50%);
-  z-index: 20;
+/* ---------- stage stepper: 01 Conceito -> 05 Desafio, free navigation ---------- */
+.lab-stepper {
   display: flex;
-  flex-direction: column;
-  gap: 12px;
-}
-.tut-dot {
-  width: 6px;
-  height: 6px;
-  border-radius: 50%;
-  background: rgba(255, 255, 255, 0.18);
-  transition: background 300ms ease, transform 300ms ease;
-}
-.tut-dot.active {
-  background: var(--primary);
-  transform: scale(1.6);
-}
-@media (max-width: 700px) {
-  .tut-progress {
-    display: none;
-  }
-}
-
-.tut-screen {
-  scroll-snap-align: start;
-  min-height: 100%;
-  display: flex;
-  flex-direction: column;
   align-items: center;
-  justify-content: center;
-  text-align: center;
-  padding: 56px 28px;
-  position: relative;
-  overflow: hidden;
+  gap: 4px;
+  overflow-x: auto;
+  padding-bottom: 2px;
 }
-/* .tut-scroller (this screen's ancestor) has its own overflow-y:auto, and Firefox doesn't carry
-   main-shell's rounded-corner clip through into a nested scroll container - it only clips to a
-   plain rectangle there, so a full-bleed background (the hero shader/fade) shows square corners
-   at the very top/bottom of the scrolled area. Only the first/last screen actually touch
-   main-shell's real edge, so only they need their own matching radius (:first-of-type/
-   :last-of-type key off the <section> tag, skipping the preceding .tut-progress dots div). */
-.tut-screen:first-of-type {
-  border-top-left-radius: 32px;
-  border-top-right-radius: 32px;
-}
-.tut-screen:last-of-type {
-  border-bottom-left-radius: 32px;
-  border-bottom-right-radius: 32px;
-}
-@media (min-width: 1024px) {
-  .tut-screen:first-of-type {
-    border-top-left-radius: 40px;
-    border-top-right-radius: 40px;
-  }
-  .tut-screen:last-of-type {
-    border-bottom-left-radius: 40px;
-    border-bottom-right-radius: 40px;
-  }
-}
-
-.tut-reveal {
-  opacity: 0;
-  transform: translateY(26px);
-  transition: opacity 900ms cubic-bezier(0.2, 0.7, 0.2, 1), transform 900ms cubic-bezier(0.2, 0.7, 0.2, 1);
-}
-.tut-screen[data-revealed="true"] .tut-reveal {
-  opacity: 1;
-  transform: translateY(0);
-}
-.tut-d1 {
-  transition-delay: 80ms;
-}
-.tut-d2 {
-  transition-delay: 200ms;
-}
-.tut-d3 {
-  transition-delay: 340ms;
-}
-@media (prefers-reduced-motion: reduce) {
-  .tut-reveal {
-    opacity: 1;
-    transform: none;
-    transition: none;
-  }
-}
-
-.tut-kicker {
-  font-size: 12px;
-  font-weight: 600;
-  letter-spacing: 0.16em;
-  text-transform: uppercase;
-  color: var(--on-surface-variant);
-  margin-bottom: 20px;
-  text-align: center;
-}
-.tut-h1 {
-  font-size: clamp(32px, 5.4vw, 72px);
-  font-weight: 700;
-  letter-spacing: -0.035em;
-  line-height: 1.05;
-  max-width: 17ch;
-  margin-left: auto;
-  margin-right: auto;
-  text-align: center;
-  text-wrap: balance;
-}
-.tut-sub {
-  margin-top: 20px;
-  margin-left: auto;
-  margin-right: auto;
-  font-size: clamp(14.5px, 1.4vw, 18px);
-  color: var(--on-surface-variant);
-  max-width: 42ch;
-  line-height: 1.55;
-  text-align: center;
-  text-wrap: balance;
-}
-
-.tut-scrolldown {
-  position: absolute;
-  bottom: 32px;
-  left: 50%;
-  transform: translateX(-50%);
+.lab-stepper-item {
   display: flex;
-  flex-direction: column;
   align-items: center;
   gap: 8px;
-  color: var(--on-surface-variant);
+  flex-shrink: 0;
+  padding: 8px 14px;
+  border-radius: 999px;
   font-size: 11px;
-  letter-spacing: 0.08em;
-  text-transform: uppercase;
-}
-.tut-scrolldown .chevron {
-  width: 12px;
-  height: 12px;
-  border-right: 1.5px solid currentColor;
-  border-bottom: 1.5px solid currentColor;
-  transform: rotate(45deg);
-  animation: tutBob 1.8s ease-in-out infinite;
-}
-@keyframes tutBob {
-  0%, 100% { transform: rotate(45deg) translateY(0); }
-  50% { transform: rotate(45deg) translateY(5px); }
-}
-
-/* hero shader backdrop (screen 1) */
-.tut-hero-backdrop {
-  position: absolute;
-  inset: 0;
-  z-index: 0;
-  overflow: hidden;
-}
-.tut-hero-backdrop canvas {
-  display: block;
-  width: 100%;
-  height: 100%;
-}
-.tut-hero-fade {
-  position: absolute;
-  inset: 0;
-  z-index: 1;
-  background: radial-gradient(ellipse 60% 50% at 50% 45%, rgba(9, 11, 17, 0.55), transparent 70%);
-}
-.tut-hero-content {
-  position: relative;
-  z-index: 2;
-}
-@media (prefers-reduced-motion: reduce) {
-  .tut-hero-backdrop {
-    display: none;
-  }
-}
-
-/* three-module row (screen 2) - reuses the same card previews as the home page. Their
-   .card-preview only fills the available width when its content asks to (the maze's SVG has
-   width:100%; the cube/ttt boards don't) - without forcing width:100% here, align-items:center
-   lets flexbox shrink each one to its own content size instead of the shared column width, which
-   also visibly broke the cube's 3D-transform clipping in the narrower box it shrank to. */
-.tut-trio {
-  display: flex;
-  flex-wrap: wrap;
-  justify-content: center;
-  gap: 28px;
-  margin-top: 44px;
-}
-.tut-trio-item {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: 12px;
-  width: 176px;
-}
-.tut-trio-item .card-preview {
-  width: 100%;
-}
-.tut-trio-item .tut-trio-name {
-  font-size: 13px;
-  font-weight: 600;
-}
-
-/* blind/informed search: grid-of-dots demos */
-.tut-dual-grids {
-  display: flex;
-  gap: 52px;
-  margin-top: 44px;
-  flex-wrap: wrap;
-  justify-content: center;
-}
-.tut-grid-demo {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: 12px;
-}
-.tut-glabel {
-  font-size: 12px;
   font-weight: 700;
-  letter-spacing: 0.08em;
-  text-transform: uppercase;
-}
-.tut-grid-demo.acc-primary .tut-glabel {
-  color: var(--primary);
-}
-.tut-grid-demo.acc-secondary .tut-glabel {
-  color: var(--secondary);
-}
-.tut-gwrap {
-  display: grid;
-  gap: 6px;
-}
-.tut-gdot {
-  width: 12px;
-  height: 12px;
-  border-radius: 3px;
-  background: rgba(255, 255, 255, 0.08);
-}
-.tut-gdot.lit.acc-primary {
-  animation: tutGdotWaveP 2.6s ease-in-out infinite;
-}
-.tut-gdot.lit.acc-secondary {
-  animation: tutGdotWaveS 2.6s ease-in-out infinite;
-}
-@keyframes tutGdotWaveP {
-  0% { background: rgba(255, 255, 255, 0.08); box-shadow: none; }
-  14% { background: var(--primary); box-shadow: 0 0 8px var(--primary); }
-  55% { background: var(--primary); box-shadow: 0 0 8px var(--primary); }
-  100% { background: rgba(255, 255, 255, 0.08); box-shadow: none; }
-}
-@keyframes tutGdotWaveS {
-  0% { background: rgba(255, 255, 255, 0.08); box-shadow: none; }
-  14% { background: var(--secondary); box-shadow: 0 0 8px var(--secondary); }
-  55% { background: var(--secondary); box-shadow: 0 0 8px var(--secondary); }
-  100% { background: rgba(255, 255, 255, 0.08); box-shadow: none; }
-}
-.tut-gcount {
-  margin-top: 2px;
-  font-family: var(--font-jbmono);
-  font-size: 12px;
+  letter-spacing: 0.04em;
   color: var(--on-surface-variant);
+  border: 1px solid transparent;
+  transition: background-color 150ms ease, color 150ms ease, border-color 150ms ease;
 }
-/* Forward Checking's pruned cells (screen "restrições e poda") - a small dim "x" fades in and out
-   instead of the wave-lit glow, reading as "eliminated without ever being visited". */
-.tut-gdot.pruned {
-  position: relative;
-  animation: tutPruneFade 2.6s ease-in-out infinite;
+.lab-stepper-item:hover {
+  color: var(--on-surface);
+  background: rgba(255, 255, 255, 0.04);
 }
-.tut-gdot.pruned::after {
-  content: "×";
-  position: absolute;
-  inset: 0;
+.lab-stepper-num {
   display: flex;
   align-items: center;
   justify-content: center;
-  font-size: 9px;
-  color: #c25a55;
-  opacity: 0;
-  animation: tutPruneX 2.6s ease-in-out infinite;
-}
-@keyframes tutPruneFade {
-  0% { background: rgba(255, 255, 255, 0.08); }
-  14% { background: rgba(194, 90, 85, 0.18); }
-  55% { background: rgba(194, 90, 85, 0.18); }
-  100% { background: rgba(255, 255, 255, 0.08); }
-}
-@keyframes tutPruneX {
-  0%, 10% { opacity: 0; }
-  20% { opacity: 1; }
-  55% { opacity: 1; }
-  70%, 100% { opacity: 0; }
-}
-@media (prefers-reduced-motion: reduce) {
-  .tut-gdot.lit {
-    animation: none;
-    background: var(--primary);
-  }
-}
-
-/* live maze (screen 5) - same visual language as ModulePreviews' MazePreview, blown up */
-.tut-maze-hero {
-  width: min(600px, 82vw);
-  margin-top: 40px;
-  filter: drop-shadow(0 20px 60px rgba(175, 198, 255, 0.08));
-}
-.tut-maze-hero svg {
-  width: 100%;
-  height: auto;
-  display: block;
-}
-.tut-maze-dot {
-  fill: rgba(255, 255, 255, 0.06);
-}
-.tut-maze-wall {
-  fill: color-mix(in srgb, var(--on-surface) 8%, transparent);
-}
-.tut-maze-dead {
-  fill: none;
-  stroke: #c25a55;
-  stroke-width: 1.6;
-  stroke-linecap: round;
-  stroke-linejoin: round;
-}
-.tut-maze-dead.d1 {
-  stroke-dasharray: 48;
-  stroke-dashoffset: 48;
-  animation: tutMazeDead1 6s ease-in-out infinite;
-}
-.tut-maze-dead.d2 {
-  stroke-dasharray: 38;
-  stroke-dashoffset: 38;
-  animation: tutMazeDead2 6s ease-in-out infinite;
-}
-@keyframes tutMazeDead1 {
-  0%, 6% { stroke-dashoffset: 48; opacity: 0.85; }
-  18% { stroke-dashoffset: 0; opacity: 0.85; }
-  26%, 100% { stroke-dashoffset: 0; opacity: 0; }
-}
-@keyframes tutMazeDead2 {
-  0%, 13% { stroke-dashoffset: 38; opacity: 0.85; }
-  26% { stroke-dashoffset: 0; opacity: 0.85; }
-  34%, 100% { stroke-dashoffset: 0; opacity: 0; }
-}
-.tut-maze-route {
-  fill: none;
-  stroke: var(--primary);
-  stroke-width: 2.2;
-  stroke-linecap: round;
-  stroke-linejoin: round;
-  stroke-dasharray: 210;
-  stroke-dashoffset: 210;
-  filter: drop-shadow(0 0 5px color-mix(in srgb, var(--primary) 70%, transparent));
-  animation: tutMazeDraw 6s ease-in-out infinite;
-}
-@keyframes tutMazeDraw {
-  0%, 36% { stroke-dashoffset: 210; }
-  76%, 92% { stroke-dashoffset: 0; }
-  100% { stroke-dashoffset: 210; }
-}
-.tut-maze-spark {
-  fill: var(--primary);
-  offset-path: path("M10,58 L10,38 L38,38 L38,16 L70,16 L70,46 L100,46 L100,10");
-  offset-distance: 0%;
-  animation: tutMazeSpark 6s ease-in-out infinite;
-}
-@keyframes tutMazeSpark {
-  0%, 38% { offset-distance: 0%; opacity: 0; }
-  42% { opacity: 1; }
-  76%, 92% { offset-distance: 100%; opacity: 1; }
-  97%, 100% { offset-distance: 100%; opacity: 0; }
-}
-.tut-maze-wp {
-  filter: drop-shadow(0 0 4px currentColor);
-}
-.tut-maze-wp.start {
-  fill: var(--primary);
-  color: var(--primary);
-  animation: tutWpPulse 2.4s ease-in-out infinite;
-}
-.tut-maze-wp.goal {
-  fill: var(--tertiary);
-  color: var(--tertiary);
-  animation: tutWpPulse 2.4s ease-in-out infinite 0.5s;
-}
-@keyframes tutWpPulse {
-  0%, 100% { opacity: 0.65; r: 2.4; }
-  50% { opacity: 1; r: 3.2; }
-}
-
-/* adversarial search: minimax / alpha-beta pruning tree (screen 6) */
-.tut-tree-svg {
-  width: min(440px, 85vw);
-  height: auto;
-  display: block;
-  margin: 40px auto 0;
-}
-.tut-tnode, .tut-tedge, .tut-prune-label {
-  animation-duration: 7s;
-  animation-iteration-count: infinite;
-  animation-timing-function: ease-out;
-  opacity: 0;
-}
-.tut-tnode {
-  fill: var(--secondary);
-}
-.tut-tedge {
-  stroke: rgba(255, 255, 255, 0.28);
-  stroke-width: 1.4;
-  fill: none;
-}
-.tut-tnode.n-root { animation-name: tutNodeRoot; }
-.tut-tedge.e-root { animation-name: tutEdgeRoot; }
-.tut-tnode.n-child { animation-name: tutNodeChild; }
-.tut-tedge.e-child { animation-name: tutEdgeChild; }
-.tut-tnode.n-grand { animation-name: tutNodeGrand; }
-.tut-tnode.n-grand.pruned { animation-name: tutNodeGrandPruned; }
-.tut-tedge.e-child.pruned { animation-name: tutEdgeChildPruned; }
-.tut-prune-label {
+  width: 18px;
+  height: 18px;
+  border-radius: 50%;
   font-family: var(--font-jbmono);
-  font-size: 8.5px;
-  fill: var(--on-surface-variant);
-  letter-spacing: 0.04em;
-  animation-name: tutPruneLabel;
+  font-size: 9.5px;
+  background: rgba(255, 255, 255, 0.06);
 }
-@keyframes tutNodeRoot { 0%,10% {opacity:0;} 16%,88% {opacity:1;} 94%,100% {opacity:0;} }
-@keyframes tutEdgeRoot { 0%,14% {opacity:0;} 20%,88% {opacity:1;} 94%,100% {opacity:0;} }
-@keyframes tutNodeChild { 0%,22% {opacity:0;} 28%,88% {opacity:1;} 94%,100% {opacity:0;} }
-@keyframes tutEdgeChild { 0%,26% {opacity:0;} 32%,88% {opacity:1;} 94%,100% {opacity:0;} }
-@keyframes tutNodeGrand { 0%,34% {opacity:0;} 40%,88% {opacity:1;} 94%,100% {opacity:0;} }
-@keyframes tutNodeGrandPruned { 0%,34% {opacity:0;} 40%,56% {opacity:1;} 62%,88% {opacity:.16;} 94%,100% {opacity:0;} }
-@keyframes tutEdgeChildPruned { 0%,26% {opacity:0;} 32%,56% {opacity:1;} 62%,88% {opacity:.14;} 94%,100% {opacity:0;} }
-@keyframes tutPruneLabel { 0%,58% {opacity:0;} 64%,88% {opacity:1;} 94%,100% {opacity:0;} }
-@media (prefers-reduced-motion: reduce) {
-  .tut-tnode, .tut-tedge, .tut-prune-label {
-    animation: none;
-    opacity: 1;
-  }
-  .tut-tnode.n-grand.pruned {
-    opacity: 0.3;
-  }
+.lab-stepper-item.done .lab-stepper-num {
+  background: color-mix(in srgb, var(--primary) 28%, transparent);
+  color: var(--primary);
+}
+.lab-stepper-item.active {
+  color: var(--on-surface);
+  background: color-mix(in srgb, var(--primary) 12%, transparent);
+  border-color: color-mix(in srgb, var(--primary) 30%, transparent);
+}
+.lab-stepper-item.active .lab-stepper-num {
+  background: var(--primary);
+  color: var(--on-primary);
+}
+.lab-stepper-arrow {
+  flex-shrink: 0;
+  color: var(--on-surface-variant);
+  opacity: 0.4;
+  font-size: 14px;
 }
 
-/* genetic algorithm: population fitness bars, generation 0 vs a late generation */
-.tut-bars {
+/* ---------- algorithm picker pills ---------- */
+.lab-algo-picker {
   display: flex;
-  align-items: flex-end;
-  gap: 7px;
-  height: 90px;
-  margin-top: 4px;
-}
-.tut-bar {
-  width: 10px;
-  border-radius: 3px 3px 1px 1px;
-  height: 4%;
-  animation: tutBarGrow 2.6s ease-in-out infinite;
-}
-.tut-bar.start {
-  background: color-mix(in srgb, var(--on-surface-variant) 55%, transparent);
-}
-.tut-bar.converged {
-  background: #7ee0a8;
-  box-shadow: 0 0 8px rgba(126, 224, 168, 0.45);
-}
-@keyframes tutBarGrow {
-  0% { height: 4%; }
-  30%, 70% { height: var(--bar-h); }
-  100% { height: 4%; }
-}
-@media (prefers-reduced-motion: reduce) {
-  .tut-bar {
-    animation: none;
-    height: var(--bar-h);
-  }
-}
-
-/* reinforcement learning hero (screen 9) - same "blow up the card preview" approach as
-   .tut-maze-hero, with a heatmap gradient instead of a single route color */
-.tut-rl-hero {
-  width: min(600px, 82vw);
-  margin-top: 40px;
-  filter: drop-shadow(0 20px 60px rgba(126, 168, 245, 0.1));
-}
-.tut-rl-hero svg {
-  width: 100%;
-  height: auto;
-  display: block;
-}
-.tut-rl-cell {
-  fill: #7ea8f5;
-}
-.tut-rl-cell.wall {
-  fill: color-mix(in srgb, var(--on-surface) 20%, transparent);
-  opacity: 1;
-}
-.tut-rl-cell.pit {
-  fill: #ff5d5d;
-  opacity: 0.5;
-}
-.tut-rl-cell.goal {
-  fill: #5be08a;
-  opacity: 0.55;
-}
-.tut-rl-agent {
-  fill: #7ea8f5;
-  filter: drop-shadow(0 0 4px rgba(126, 168, 245, 0.7));
-  offset-distance: 0%;
-  animation: tutRlAgent 6s ease-in-out infinite;
-}
-@keyframes tutRlAgent {
-  0%, 6% { offset-distance: 0%; opacity: 0; }
-  12% { opacity: 1; }
-  82%, 92% { offset-distance: 100%; opacity: 1; }
-  98%, 100% { offset-distance: 100%; opacity: 0; }
-}
-
-/* metrics (screen 10) */
-.tut-metrics {
-  display: flex;
-  gap: 56px;
-  margin-top: 44px;
   flex-wrap: wrap;
-  justify-content: center;
-}
-.tut-metric {
-  display: flex;
-  flex-direction: column;
   gap: 8px;
 }
-.tut-metric .tut-metric-num {
-  font-family: var(--font-jbmono);
-  font-size: clamp(30px, 3.8vw, 48px);
-  font-weight: 600;
-  letter-spacing: -0.01em;
-}
-.tut-metric .tut-metric-lbl {
-  font-size: 12px;
+.lab-algo-pill {
+  --accent: var(--primary);
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 10px 16px;
+  border-radius: 14px;
+  font-size: 12.5px;
+  font-weight: 700;
+  background: rgba(255, 255, 255, 0.03);
+  border: 1px solid rgba(255, 255, 255, 0.08);
   color: var(--on-surface-variant);
+  transition: background-color 150ms ease, border-color 150ms ease, color 150ms ease;
+}
+.lab-algo-pill:hover:not(:disabled) {
+  background: rgba(255, 255, 255, 0.06);
+  color: var(--on-surface);
+}
+.lab-algo-pill:disabled {
+  opacity: 0.3;
+  cursor: not-allowed;
+}
+.lab-algo-pill.active {
+  color: var(--accent);
+  background: color-mix(in srgb, var(--accent) 14%, transparent);
+  border-color: color-mix(in srgb, var(--accent) 40%, transparent);
+  box-shadow: 0 0 0 1px color-mix(in srgb, var(--accent) 20%, transparent) inset;
+}
+.lab-algo-pill-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: var(--accent);
+}
+.lab-algo-pill.active .lab-algo-pill-dot {
+  box-shadow: 0 0 8px var(--accent);
+}
+
+/* ---------- formula breakdown: g(n) + h(n) = f(n), clickable pieces ---------- */
+.lab-formula {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 10px;
+}
+.lab-formula-piece {
+  --accent: var(--primary);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 2px;
+  min-width: 84px;
+  padding: 12px 14px;
+  border-radius: 16px;
+  background: rgba(255, 255, 255, 0.03);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  transition: background-color 150ms ease, border-color 150ms ease, transform 150ms ease;
+}
+button.lab-formula-piece:hover {
+  background: color-mix(in srgb, var(--accent) 10%, transparent);
+  border-color: color-mix(in srgb, var(--accent) 30%, transparent);
+  transform: translateY(-1px);
+}
+.lab-formula-piece.active {
+  background: color-mix(in srgb, var(--accent) 16%, transparent);
+  border-color: color-mix(in srgb, var(--accent) 45%, transparent);
+}
+.lab-formula-piece-label {
+  font-size: 10px;
+  font-weight: 700;
   text-transform: uppercase;
   letter-spacing: 0.06em;
+  color: var(--on-surface-variant);
 }
-.tut-metric.acc-primary .tut-metric-num {
-  color: var(--primary);
-  text-shadow: 0 0 32px color-mix(in srgb, var(--primary) 50%, transparent);
+.lab-formula-piece.active .lab-formula-piece-label {
+  color: var(--accent);
 }
-.tut-metric.acc-secondary .tut-metric-num {
-  color: var(--secondary);
-  text-shadow: 0 0 32px color-mix(in srgb, var(--secondary) 50%, transparent);
+.lab-formula-piece-value {
+  font-family: var(--font-jbmono);
+  font-size: 20px;
+  font-weight: 600;
+  color: var(--on-surface);
 }
-.tut-metric.acc-tertiary .tut-metric-num {
+.lab-formula-op {
+  font-family: var(--font-jbmono);
+  font-size: 18px;
+  color: var(--on-surface-variant);
+  opacity: 0.6;
+}
+.lab-formula-explain {
+  flex-basis: 100%;
+  margin-top: 4px;
+  font-size: 12px;
+  line-height: 1.6;
+  color: var(--on-surface-variant);
+}
+
+/* ---------- lightweight 2D grid (steps 01/03/04 - the 3D canvas is reserved for
+   the real-execution stage in step 05/08) ---------- */
+.lab-grid2d {
+  display: grid;
+  gap: 2px;
+  padding: 10px;
+  border-radius: 18px;
+  background: var(--surface-container-lowest);
+  border: 1px solid rgba(255, 255, 255, 0.06);
+}
+.lab-grid2d-cell {
+  border-radius: 3px;
+  background: rgba(255, 255, 255, 0.05);
+  transition: background-color 200ms ease;
+}
+.lab-grid2d-cell.wall {
+  background: color-mix(in srgb, var(--on-surface) 16%, transparent);
+}
+.lab-grid2d-cell.mud {
+  background: color-mix(in srgb, #8a5a2e 55%, transparent);
+}
+.lab-grid2d-cell.visited {
+  background: color-mix(in srgb, var(--secondary) 30%, transparent);
+}
+.lab-grid2d-cell.frontier {
+  background: color-mix(in srgb, var(--primary) 45%, transparent);
+  box-shadow: 0 0 6px color-mix(in srgb, var(--primary) 60%, transparent);
+}
+.lab-grid2d-cell.current {
+  background: var(--primary);
+  box-shadow: 0 0 10px color-mix(in srgb, var(--primary) 80%, transparent);
+}
+.lab-grid2d-cell.path {
+  background: #f5f6fa;
+  box-shadow: 0 0 8px rgba(245, 246, 250, 0.5);
+}
+.lab-grid2d-cell.start {
+  background: var(--secondary);
+}
+.lab-grid2d-cell.goal {
+  background: var(--tertiary);
+}
+
+/* ---------- narration side panel ---------- */
+.lab-narration-step {
+  font-family: var(--font-jbmono);
+  font-size: 10.5px;
+  letter-spacing: 0.05em;
+  color: var(--on-surface-variant);
+  text-transform: uppercase;
+}
+.lab-narration-title {
+  margin-top: 6px;
+  font-size: 15px;
+  font-weight: 700;
+  color: var(--on-surface);
+}
+.lab-narration-reason {
+  margin-top: 6px;
+  font-size: 12.5px;
+  line-height: 1.65;
+  color: var(--on-surface-variant);
+}
+
+/* ---------- prediction cards (step 03) ---------- */
+.lab-prediction-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: 12px;
+}
+.lab-prediction-card {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  padding: 16px;
+  border-radius: 18px;
+  text-align: left;
+  background: rgba(255, 255, 255, 0.03);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  transition: background-color 150ms ease, border-color 150ms ease, transform 150ms ease;
+}
+.lab-prediction-card:hover:not(:disabled) {
+  background: rgba(255, 255, 255, 0.06);
+  transform: translateY(-2px);
+}
+.lab-prediction-card:disabled {
+  cursor: default;
+}
+.lab-prediction-card.selected {
+  border-color: color-mix(in srgb, var(--primary) 50%, transparent);
+  background: color-mix(in srgb, var(--primary) 10%, transparent);
+}
+.lab-prediction-card.correct {
+  border-color: color-mix(in srgb, #7ee0a8 55%, transparent);
+  background: color-mix(in srgb, #7ee0a8 12%, transparent);
+}
+.lab-prediction-card.wrong {
+  border-color: color-mix(in srgb, #c25a55 50%, transparent);
+  background: color-mix(in srgb, #c25a55 10%, transparent);
+}
+.lab-prediction-label {
+  font-size: 12.5px;
+  font-weight: 700;
+  color: var(--on-surface);
+}
+.lab-prediction-meta {
+  display: flex;
+  gap: 10px;
+  font-family: var(--font-jbmono);
+  font-size: 11px;
+  color: var(--on-surface-variant);
+}
+
+/* ---------- decision timeline (step 06) ---------- */
+.lab-timeline-strip {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  overflow-x: auto;
+  padding: 4px 2px 10px;
+}
+.lab-timeline-node {
+  display: flex;
+  flex-shrink: 0;
+  align-items: center;
+  justify-content: center;
+  width: 34px;
+  height: 34px;
+  border-radius: 50%;
+  font-family: var(--font-jbmono);
+  font-size: 10px;
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  color: var(--on-surface-variant);
+  transition: background-color 150ms ease, border-color 150ms ease, transform 150ms ease;
+}
+.lab-timeline-node:hover {
+  transform: scale(1.08);
+}
+.lab-timeline-node.active {
+  background: var(--primary);
+  border-color: var(--primary);
+  color: var(--on-primary);
+  box-shadow: 0 0 10px color-mix(in srgb, var(--primary) 60%, transparent);
+}
+.lab-timeline-node.goal {
+  border-color: var(--tertiary);
   color: var(--tertiary);
-  text-shadow: 0 0 32px color-mix(in srgb, var(--tertiary) 50%, transparent);
+}
+.lab-timeline-node.goal.active {
+  background: var(--tertiary);
+  color: var(--on-primary);
+  box-shadow: 0 0 10px color-mix(in srgb, var(--tertiary) 60%, transparent);
+}
+.lab-timeline-connector {
+  flex-shrink: 0;
+  width: 14px;
+  height: 1px;
+  background: rgba(255, 255, 255, 0.12);
+}
+
+/* ---------- tech datasheet (step 02) ---------- */
+.lab-datasheet {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+  gap: 1px;
+  background: rgba(255, 255, 255, 0.06);
+  border-radius: 18px;
+  overflow: hidden;
+  border: 1px solid rgba(255, 255, 255, 0.06);
+}
+.lab-datasheet-row {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  padding: 14px 16px;
+  background: var(--surface-container-lowest);
+}
+.lab-datasheet-label {
+  font-size: 10px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.07em;
+  color: var(--on-surface-variant);
+}
+.lab-datasheet-value {
+  font-size: 12.5px;
+  line-height: 1.55;
+  color: var(--on-surface);
+}
+
+/* ---------- comparison bar chart (step 07) ---------- */
+.lab-bars {
+  display: flex;
+  align-items: flex-end;
+  gap: 18px;
+  height: 140px;
+  padding-top: 8px;
+}
+.lab-bars-col {
+  display: flex;
+  flex: 1;
+  min-width: 0;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+  height: 100%;
+  justify-content: flex-end;
+}
+.lab-bars-fill {
+  width: 100%;
+  max-width: 40px;
+  border-radius: 6px 6px 2px 2px;
+  transition: height 400ms cubic-bezier(0.2, 0.7, 0.2, 1);
+}
+.lab-bars-value {
+  font-family: var(--font-jbmono);
+  font-size: 11px;
+  color: var(--on-surface-variant);
+}
+.lab-bars-label {
+  max-width: 100%;
+  font-size: 10px;
+  font-weight: 700;
+  text-transform: uppercase;
+  text-align: center;
+  color: var(--on-surface-variant);
+  overflow-wrap: anywhere;
+}
+
+/* ---------- conclusion checklist (step 09) ---------- */
+.lab-checklist-item {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  padding: 12px 4px;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+  font-size: 13px;
+  line-height: 1.5;
+  color: var(--on-surface-variant);
+}
+.lab-checklist-item:last-child {
+  border-bottom: none;
+}
+.lab-checklist-check {
+  display: flex;
+  flex-shrink: 0;
+  align-items: center;
+  justify-content: center;
+  width: 20px;
+  height: 20px;
+  margin-top: 1px;
+  border-radius: 50%;
+  background: color-mix(in srgb, #7ee0a8 20%, transparent);
+  color: #7ee0a8;
+  font-size: 13px;
+}
+
+/* ---------- /tutorial family-selector cards ---------- */
+.lab-family-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+  gap: 14px;
+}
+.lab-family-card {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  padding: 22px;
+  border-radius: 22px;
+  background: var(--surface-container-lowest);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  transition: border-color 150ms ease, transform 150ms ease;
+}
+a.lab-family-card:hover {
+  border-color: color-mix(in srgb, var(--primary) 40%, transparent);
+  transform: translateY(-2px);
+}
+.lab-family-card.disabled {
+  opacity: 0.5;
+}
+.lab-family-card-icon {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 40px;
+  height: 40px;
+  border-radius: 12px;
+  background: color-mix(in srgb, var(--primary) 14%, transparent);
+  color: var(--primary);
+}
+.lab-family-card-title {
+  font-size: 15px;
+  font-weight: 700;
+  color: var(--on-surface);
+}
+.lab-family-card-desc {
+  font-size: 12px;
+  line-height: 1.55;
+  color: var(--on-surface-variant);
+}
+.lab-family-card-badge {
+  align-self: flex-start;
+  margin-top: auto;
+  padding: 4px 10px;
+  border-radius: 999px;
+  font-size: 9.5px;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+}
+.lab-family-card-badge.ready {
+  background: color-mix(in srgb, #7ee0a8 18%, transparent);
+  color: #7ee0a8;
+}
+.lab-family-card-badge.soon {
+  background: rgba(255, 255, 255, 0.06);
+  color: var(--on-surface-variant);
 }
 
 /* Small accent-glow touch for the bolded values inside each problem page's StageHint corner

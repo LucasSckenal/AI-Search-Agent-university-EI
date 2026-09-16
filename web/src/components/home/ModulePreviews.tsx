@@ -468,3 +468,193 @@ export function TttPreview() {
     </div>
   );
 }
+
+/** Same beacon/route visual language as MazePreview (this module reuses its 3D scene), but zoomed
+ *  into a single node lighting up on a small explicit graph instead of a maze corridor - the
+ *  point here is "watch the frontier pick the next node", not "navigate a maze". */
+export function AstarPreview() {
+  return (
+    <div className="card-preview astar-preview">
+      <span className="badge">
+        <span className="material-symbols-outlined text-[13px]">route</span>
+      </span>
+      <svg viewBox="0 0 110 66" preserveAspectRatio="xMidYMid meet">
+        <line x1="14" y1="50" x2="40" y2="20" className="astar-edge" />
+        <line x1="40" y1="20" x2="70" y2="30" className="astar-edge" />
+        <line x1="70" y1="30" x2="96" y2="14" className="astar-edge" />
+        <line x1="14" y1="50" x2="46" y2="52" className="astar-edge astar-edge-dim" />
+        <line x1="46" y1="52" x2="70" y2="30" className="astar-edge astar-edge-dim" />
+        <line x1="70" y1="30" x2="60" y2="56" className="astar-edge astar-edge-dim" />
+        <circle cx="14" cy="50" r="3.4" className="astar-node astar-node-start" />
+        <circle cx="40" cy="20" r="3" className="astar-node" />
+        <circle cx="46" cy="52" r="3" className="astar-node" />
+        <circle cx="70" cy="30" r="3" className="astar-node astar-node-current" />
+        <circle cx="60" cy="56" r="3" className="astar-node" />
+        <circle cx="96" cy="14" r="3.4" className="astar-node astar-node-goal" />
+      </svg>
+    </div>
+  );
+}
+
+/** Mirrors the tutorial's static MinimaxTree SVG (components/tutorial/TutorialVisuals.tsx) - same
+ *  three-layer shape and pruned-branch language, but animated: nodes light up depth-first and the
+ *  right branch's pruned stubs fade in, echoing what the real 3D explainer page does node by node. */
+export function MinimaxPreview() {
+  return (
+    <div className="card-preview minimax-preview">
+      <span className="badge">
+        <span className="material-symbols-outlined text-[13px]">account_tree</span>
+      </span>
+      <svg viewBox="0 0 110 66" preserveAspectRatio="xMidYMid meet">
+        <path className="mm-edge mm-e1" d="M55,10 L26,32" />
+        <path className="mm-edge mm-e2" d="M55,10 L55,32" />
+        <path className="mm-edge mm-e3" d="M55,10 L84,32" />
+        <path className="mm-edge mm-e4" d="M26,32 L14,54" />
+        <path className="mm-edge mm-e5" d="M26,32 L38,54" />
+        <path className="mm-edge mm-e6" d="M55,32 L47,54" />
+        <path className="mm-edge mm-e7" d="M55,32 L63,54" />
+        <path className="mm-edge mm-e8 mm-pruned" strokeDasharray="2.5,2.5" d="M84,32 L76,54" />
+        <path className="mm-edge mm-e9 mm-pruned" strokeDasharray="2.5,2.5" d="M84,32 L92,54" />
+        <circle className="mm-node mm-n1" cx="55" cy="10" r="4.4" />
+        <circle className="mm-node mm-n2" cx="26" cy="32" r="3.6" />
+        <circle className="mm-node mm-n3" cx="55" cy="32" r="3.6" />
+        <circle className="mm-node mm-n4" cx="84" cy="32" r="3.6" />
+        <circle className="mm-node mm-n5" cx="14" cy="54" r="3" />
+        <circle className="mm-node mm-n6" cx="38" cy="54" r="3" />
+        <circle className="mm-node mm-n7" cx="47" cy="54" r="3" />
+        <circle className="mm-node mm-n8" cx="63" cy="54" r="3" />
+        <circle className="mm-node mm-n9 mm-pruned" cx="76" cy="54" r="3" />
+        <circle className="mm-node mm-n10 mm-pruned" cx="92" cy="54" r="3" />
+      </svg>
+    </div>
+  );
+}
+
+/** A little swarm of dots drifting from a scattered start toward the target, converging over the
+ *  loop's course - the "whole population moving at once" idea this module explains, compressed
+ *  into a 2s CSS loop instead of the full 3D arena. */
+export function AlgoritmoGeneticoPreview() {
+  return (
+    <div className="card-preview ag-preview">
+      <span className="badge">
+        <span className="material-symbols-outlined text-[13px]">biotech</span>
+      </span>
+      <svg viewBox="0 0 110 66" preserveAspectRatio="xMidYMid meet">
+        <circle cx="96" cy="14" r="4" className="ag-target" />
+        <circle className="ag-dot ag-d1" r="2.2" />
+        <circle className="ag-dot ag-d2" r="2.2" />
+        <circle className="ag-dot ag-d3" r="2.2" />
+        <circle className="ag-dot ag-d4" r="2.2" />
+        <circle className="ag-dot ag-d5" r="2.2" />
+        <circle className="ag-dot ag-d6" r="2.2" />
+      </svg>
+    </div>
+  );
+}
+
+export function PerceptronPreview() {
+  return (
+    <div className="card-preview perceptron-preview">
+      <span className="badge">
+        <span className="material-symbols-outlined text-[13px]">scatter_plot</span>
+      </span>
+      <svg viewBox="0 0 110 66" preserveAspectRatio="xMidYMid meet">
+        <line x1="8" y1="46" x2="100" y2="16" className="lc-boundary" />
+        <circle cx="18" cy="14" r="2.6" className="lc-dot-0" />
+        <circle cx="30" cy="10" r="2.6" className="lc-dot-0" />
+        <circle cx="16" cy="28" r="2.6" className="lc-dot-0" />
+        <circle cx="34" cy="22" r="2.6" className="lc-dot-0" />
+        <circle cx="76" cy="50" r="2.6" className="lc-dot-1" />
+        <circle cx="90" cy="40" r="2.6" className="lc-dot-1" />
+        <circle cx="70" cy="58" r="2.6" className="lc-dot-1" />
+        <circle cx="96" cy="54" r="2.6" className="lc-dot-1" />
+      </svg>
+    </div>
+  );
+}
+
+export function PenduloPreview() {
+  return (
+    <div className="card-preview pendulo-preview">
+      <span className="badge">
+        <span className="material-symbols-outlined text-[13px]">balance</span>
+      </span>
+      <svg viewBox="0 0 110 66" preserveAspectRatio="xMidYMid meet">
+        <line x1="15" y1="50" x2="95" y2="50" className="pendulo-track" />
+        <g className="pendulo-rig">
+          <rect x="-11" y="-8" width="22" height="12" rx="2" className="pendulo-cart" />
+          <g className="pendulo-pole">
+            <line x1="0" y1="-8" x2="0" y2="-30" className="pendulo-rod" />
+            <circle cx="0" cy="-30" r="3.4" className="pendulo-bob" />
+          </g>
+        </g>
+      </svg>
+    </div>
+  );
+}
+
+export function HopfieldPreview() {
+  // A 5x5 "X" - one of the actual stored patterns from the module's PATTERN_LIBRARY - flickering
+  // back to clean from two corrupted cells, standing in for energy-minimizing recall.
+  const CELL = 20;
+  const pattern = new Set(["0-0", "1-1", "2-2", "3-3", "4-4", "0-4", "1-3", "3-1", "4-0"]);
+  return (
+    <div className="card-preview hopfield-preview">
+      <span className="badge">
+        <span className="material-symbols-outlined text-[13px]">memory</span>
+      </span>
+      <svg viewBox="0 0 100 100" preserveAspectRatio="xMidYMid meet">
+        {Array.from({ length: 5 }).map((_, r) =>
+          Array.from({ length: 5 }).map((_, c) => {
+            const on = pattern.has(`${r}-${c}`);
+            return <rect key={`${r}-${c}`} className={on ? "hf-on" : "hf-off"} x={c * CELL + 1} y={r * CELL + 1} width={CELL - 2} height={CELL - 2} rx={2} />;
+          })
+        )}
+        <rect className="hf-noise hf-noise-a" x={2 * CELL + 1} y={0 * CELL + 1} width={CELL - 2} height={CELL - 2} rx={2} />
+        <rect className="hf-noise hf-noise-b" x={0 * CELL + 1} y={2 * CELL + 1} width={CELL - 2} height={CELL - 2} rx={2} />
+      </svg>
+    </div>
+  );
+}
+
+export function DigitosPreview() {
+  // A small pixel-art "2", the same shape as the module's own hand-authored template, with a scan
+  // line sweeping down it on a loop - standing in for live recognition as you draw.
+  const GRID = 8;
+  const CELL = 100 / GRID;
+  const rows = ["..####..", ".#....#.", "......#.", ".....#..", "....#...", "...#....", "..#.....", "#######."];
+  const cells: { r: number; c: number }[] = [];
+  rows.forEach((row, r) => row.split("").forEach((ch, c) => ch === "#" && cells.push({ r, c })));
+  return (
+    <div className="card-preview digitos-preview">
+      <span className="badge">
+        <span className="material-symbols-outlined text-[13px]">draw</span>
+      </span>
+      <svg viewBox="0 0 100 100" preserveAspectRatio="xMidYMid meet">
+        {cells.map(({ r, c }, i) => (
+          <rect key={i} className="dg-cell" x={c * CELL + 1} y={r * CELL + 1} width={CELL - 2} height={CELL - 2} rx={1.5} />
+        ))}
+        <rect className="dg-scan" x={0} y={0} width={100} height={14} />
+      </svg>
+    </div>
+  );
+}
+
+export function GatosCachorrosPreview() {
+  // Two of the module's own real (openly-licensed) training photos, crossfading - the one preview
+  // on the homepage built from actual photographs rather than a procedural/CSS illustration, since
+  // that real-photo-ness is the whole point of this module.
+  return (
+    <div className="card-preview gc-preview">
+      <span className="badge">
+        <span className="material-symbols-outlined text-[13px]">pets</span>
+      </span>
+      {/* eslint-disable-next-line @next/next/no-img-element -- small local static thumbnails, not worth Next/Image's remote-optimization machinery */}
+      <img className="gc-photo gc-photo-a" src="/gatos-cachorros/gato/gato-04.jpg" alt="" />
+      {/* eslint-disable-next-line @next/next/no-img-element -- small local static thumbnails, not worth Next/Image's remote-optimization machinery */}
+      <img className="gc-photo gc-photo-b" src="/gatos-cachorros/cachorro/cachorro-11.jpg" alt="" />
+      <span className="gc-chip gc-chip-a">gato</span>
+      <span className="gc-chip gc-chip-b">cachorro</span>
+    </div>
+  );
+}

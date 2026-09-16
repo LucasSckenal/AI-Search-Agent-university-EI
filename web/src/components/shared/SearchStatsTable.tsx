@@ -9,7 +9,16 @@ export const ALGO_COLOR: Record<AlgorithmId, string> = {
   astar: "#ff9b9b",
 };
 
-export function SearchStatsTable<S, A>({ results }: { results: SearchResult<S, A>[] }) {
+export function SearchStatsTable<S, A>({
+  results,
+  showOptimal = false,
+}: {
+  results: SearchResult<S, A>[];
+  /** Adds an "Ótimo?" column marking rows that both found a path and matched the best cost - used
+   *  by the tutorial's ComparisonPanel, where that column is the whole point of the table. Default
+   *  false keeps the two existing call sites (labirinto/page.tsx) visually unchanged. */
+  showOptimal?: boolean;
+}) {
   if (results.length === 0) {
     return <p className="text-xs text-on-surface-variant">Execute os algoritmos para ver a comparação aqui.</p>;
   }
@@ -24,6 +33,7 @@ export function SearchStatsTable<S, A>({ results }: { results: SearchResult<S, A
             <th className="px-2 py-2 text-left font-medium">Algoritmo</th>
             <th className="px-2 py-2 text-right font-medium">Encontrado</th>
             <th className="px-2 py-2 text-right font-medium">Custo</th>
+            {showOptimal && <th className="px-2 py-2 text-right font-medium">Ótimo?</th>}
             <th className="px-2 py-2 text-right font-medium">Nós expandidos</th>
             <th className="px-2 py-2 text-right font-medium">Nós gerados</th>
             <th className="px-2 py-2 text-right font-medium" title="Fator de ramificação que uma árvore uniforme da mesma profundidade precisaria ter para gerar esse número de nós. Quanto mais perto de 1, mais a heurística podou a busca.">
@@ -33,36 +43,40 @@ export function SearchStatsTable<S, A>({ results }: { results: SearchResult<S, A
           </tr>
         </thead>
         <tbody>
-          {results.map((r) => (
-            <tr key={r.algorithm} className="border-b border-white/5">
-              <td className="px-2 py-2">
-                <span className="inline-flex items-center gap-2">
-                  <span className="h-2 w-2 rounded-full" style={{ background: ALGO_COLOR[r.algorithm], boxShadow: `0 0 8px ${ALGO_COLOR[r.algorithm]}66` }} />
-                  {ALGORITHM_LABELS[r.algorithm]}
-                </span>
-              </td>
-              <td className="px-2 py-2 text-right">
-                {r.found ? (
-                  <span className="text-primary">sim</span>
-                ) : (
-                  <span className="text-error">{r.truncated ? "limite atingido" : "não"}</span>
+          {results.map((r) => {
+            const isOptimal = r.found && Math.abs(r.cost - bestCost) < 1e-9;
+            return (
+              <tr key={r.algorithm} className="border-b border-white/5">
+                <td className="px-2 py-2">
+                  <span className="inline-flex items-center gap-2">
+                    <span className="h-2 w-2 rounded-full" style={{ background: ALGO_COLOR[r.algorithm], boxShadow: `0 0 8px ${ALGO_COLOR[r.algorithm]}66` }} />
+                    {ALGORITHM_LABELS[r.algorithm]}
+                  </span>
+                </td>
+                <td className="px-2 py-2 text-right">
+                  {r.found ? (
+                    <span className="text-primary">sim</span>
+                  ) : (
+                    <span className="text-error">{r.truncated ? "limite atingido" : "não"}</span>
+                  )}
+                </td>
+                <td className={`px-2 py-2 text-right font-mono ${isOptimal ? "font-semibold text-primary" : ""}`}>
+                  {r.found ? r.cost.toFixed(2) : "—"}
+                </td>
+                {showOptimal && (
+                  <td className="px-2 py-2 text-right">
+                    {r.found ? (isOptimal ? <span className="text-primary">✓</span> : <span className="text-on-surface-variant/60">—</span>) : "—"}
+                  </td>
                 )}
-              </td>
-              <td
-                className={`px-2 py-2 text-right font-mono ${
-                  r.found && Math.abs(r.cost - bestCost) < 1e-9 ? "font-semibold text-primary" : ""
-                }`}
-              >
-                {r.found ? r.cost.toFixed(2) : "—"}
-              </td>
-              <td className="px-2 py-2 text-right font-mono">{r.nodesExpanded.toLocaleString("pt-BR")}</td>
-              <td className="px-2 py-2 text-right font-mono">{r.nodesGenerated.toLocaleString("pt-BR")}</td>
-              <td className="px-2 py-2 text-right font-mono">
-                {r.found ? (effectiveBranchingFactor(r.nodesGenerated, r.actions.length)?.toFixed(2) ?? "—") : "—"}
-              </td>
-              <td className="px-2 py-2 text-right font-mono">{r.timeMs.toFixed(2)}</td>
-            </tr>
-          ))}
+                <td className="px-2 py-2 text-right font-mono">{r.nodesExpanded.toLocaleString("pt-BR")}</td>
+                <td className="px-2 py-2 text-right font-mono">{r.nodesGenerated.toLocaleString("pt-BR")}</td>
+                <td className="px-2 py-2 text-right font-mono">
+                  {r.found ? (effectiveBranchingFactor(r.nodesGenerated, r.actions.length)?.toFixed(2) ?? "—") : "—"}
+                </td>
+                <td className="px-2 py-2 text-right font-mono">{r.timeMs.toFixed(2)}</td>
+              </tr>
+            );
+          })}
         </tbody>
       </table>
     </div>

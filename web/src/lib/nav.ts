@@ -43,22 +43,35 @@ const SNAKE: NavItem = { href: "/snake", label: "Cobrinha", icon: "polyline" };
 const CAMPO_MINADO: NavItem = { href: "/campo-minado", label: "Campo Minado", icon: "flag" };
 const BATALHA_NAVAL: NavItem = { href: "/batalha-naval", label: "Batalha Naval", icon: "radar" };
 const MASMORRA: NavItem = { href: "/pacman", label: "Masmorra", icon: "castle" };
+const PENDULO: NavItem = { href: "/pendulo", label: "Pêndulo Invertido", icon: "balance" };
+const ASTAR: NavItem = { href: "/astar", label: "Busca A*", icon: "route" };
+const MINIMAX: NavItem = { href: "/minimax", label: "Minimax", icon: "account_tree" };
+const ALGORITMO_GENETICO: NavItem = { href: "/algoritmo-genetico", label: "Algoritmo Genético", icon: "biotech" };
+const PERCEPTRON: NavItem = { href: "/perceptron", label: "Classificador Linear", icon: "scatter_plot" };
+const HOPFIELD: NavItem = { href: "/hopfield", label: "Hopfield", icon: "memory" };
+const DIGITOS: NavItem = { href: "/digitos", label: "Dígitos Manuscritos", icon: "draw" };
+const GATOS_CACHORROS: NavItem = { href: "/gatos-cachorros", label: "Gatos vs Cachorros", icon: "pets" };
 
 export const NAV_CATEGORIES: NavCategory[] = [
   {
     title: "Busca em Grafo",
     icon: "hub",
-    items: [LABIRINTO, CUBO, SNAKE],
+    items: [LABIRINTO, CUBO, SNAKE, ASTAR],
   },
   {
     title: "Busca Adversária & Multiagente",
     icon: "sports_esports",
-    items: [JOGO_DA_VELHA, LIG4, G2048, MASMORRA],
+    items: [JOGO_DA_VELHA, LIG4, G2048, MASMORRA, MINIMAX],
   },
   {
     title: "Algoritmo Genético",
     icon: "biotech",
-    items: [LABIRINTO, GOOSE, TSP, RAINHAS, G2048, TETRIS],
+    items: [ALGORITMO_GENETICO, LABIRINTO, GOOSE, TSP, RAINHAS, G2048, TETRIS, PENDULO],
+  },
+  {
+    title: "Redes Neurais",
+    icon: "device_hub",
+    items: [PENDULO, PERCEPTRON, HOPFIELD, DIGITOS, GATOS_CACHORROS],
   },
   {
     title: "Restrições (CSP)",
@@ -73,7 +86,7 @@ export const NAV_CATEGORIES: NavCategory[] = [
   {
     title: "Heurísticas & Probabilidade",
     icon: "insights",
-    items: [TSP, G2048, TETRIS, SNAKE, CAMPO_MINADO, BATALHA_NAVAL],
+    items: [TSP, G2048, TETRIS, SNAKE, CAMPO_MINADO, BATALHA_NAVAL, PENDULO, ASTAR],
   },
 ];
 
